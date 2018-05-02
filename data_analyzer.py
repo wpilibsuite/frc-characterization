@@ -52,6 +52,8 @@ TRIM_POS_COL = 2
 TRIM_VEL_COL = 3
 TRIM_ACC_COL = 4
 
+TRIM_MAX_COL = TRIM_ACC_COL
+
 def trim_quasi_testdata(data):
     # removes initial minimal velocity points
     for i,v  in enumerate(data[TRIM_VEL_COL]):
@@ -66,14 +68,14 @@ def trim_step_testdata(data):
 
 def prepare_data(data, trimfn):
     
+    # deal with incomplete data
+    if len(data) < WINDOW*2:
+        return np.zeros(shape=(TRIM_MAX_COL+1, 4)), np.zeros(shape=(TRIM_MAX_COL+1, 4))
+    
     # Transform the data into a numpy array to make it easier to use
     data = np.array(data).transpose()
     
-    # We only have position, so compute velocity/acceleration for each side
-    #l_vel = smoothDerivative(data[TIME_COL], data[L_ENCODER_V_COL], WINDOW, 0)
     l_acc = smoothDerivative(data[TIME_COL], data[L_ENCODER_V_COL], WINDOW, 0)
-    
-    #r_vel = smoothDerivative(data[TIME_COL], data[R_ENCODER_COL], WINDOW, 0)
     r_acc = smoothDerivative(data[TIME_COL], data[R_ENCODER_V_COL], WINDOW, 0)
     
     # trim data to ensure it's all the same length to ease analysis
@@ -144,18 +146,22 @@ def analyze_data(data):
         
         plt.figure(txt)
         
-        plt.subplot(211)
-        plt.plot(qu[TRIM_V_COL], qu[TRIM_VEL_COL])
+        ax = plt.subplot(211)
+        ax.set_xlabel('voltage')
+        ax.set_ylabel('velocity')
+        plt.scatter(volts, vel, marker='.', c='#000000')
         
         # show the fit
-        y = np.linspace(np.min(qu[TRIM_VEL_COL]), np.max(qu[TRIM_VEL_COL]))
+        y = np.linspace(np.min(vel), np.max(vel))
         plt.plot(kv*y + vi, y)
         
-        plt.subplot(212)
-        plt.plot(step[TRIM_V_COL], step[TRIM_ACC_COL])
+        ax = plt.subplot(212)
+        ax.set_xlabel('voltage')
+        ax.set_ylabel('acceleration')
+        plt.scatter(volts, accel, marker='.', c='#000000')
         
-        y = np.linspace(np.min(step[TRIM_ACC_COL]), np.max(step[TRIM_ACC_COL]))
-        plt.plot(ka*y + kai, y)
+        y = np.linspace(np.min(accel), np.max(accel))
+        plt.plot(ka*y, y)
     
     # kv and vintercept is computed from the first two tests, ka from the latter
     _print(1, 'Left forward  ', sf_l, ff_l)
