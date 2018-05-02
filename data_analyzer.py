@@ -126,12 +126,20 @@ def analyze_data(data):
     fb_l, fb_r = prepare_data(data['fast-backward'], trim_step_testdata)
     
     # Now that we have useful data, perform linear regression on it
-    # -> TODO: figure out how to combine the data...
+    def _ols(x1, x2, y):
+        '''multivariate linear regression using ordinary least squares'''
+        ox = np.array((x1, x2)).T
+        x = np.c_[np.ones(ox.shape[0]), ox]
+        return np.linalg.lstsq(x, y, rcond=None)[0]
     
     def _print(n, pfx, qu, step):
-        kv, vi = np.polyfit(qu[TRIM_VEL_COL], qu[TRIM_V_COL], 1)
-        ka, kai = np.polyfit(step[TRIM_ACC_COL], step[TRIM_V_COL], 1)
-        txt = "%s:  kv=%.3f ka=%.3f vintercept=%.3f" % (pfx, kv, ka, vi)
+        vel = np.concatenate((qu[TRIM_VEL_COL], step[TRIM_VEL_COL]))
+        accel = np.concatenate((qu[TRIM_ACC_COL], step[TRIM_ACC_COL]))
+        volts = np.concatenate((qu[TRIM_V_COL], step[TRIM_V_COL]))
+        
+        vi, kv, ka = _ols(vel, accel, volts)
+        
+        txt = "%s:  kv=%.4f ka=%.4f vintercept=%.4f" % (pfx, kv, ka, vi)
         print(txt)
         
         plt.figure(txt)
