@@ -8,8 +8,10 @@
 # specification at https://www.chiefdelphi.com/forums/showthread.php?t=161539
 #
 
+import argparse
+import csv
 import json
-import sys
+from os.path import basename, exists, dirname, join, splitext
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,19 +21,41 @@ import matplotlib.pyplot as plt
 # can be found at
 #
 
-TIME_COL = 0
-BATTERY_COL = 1
-AUTOSPEED_COL = 2
-L_VOLTS_COL = 3
-R_VOLTS_COL = 4
-L_ENCODER_P_COL = 5
-R_ENCODER_P_COL = 6
-L_ENCODER_V_COL = 7
-R_ENCODER_V_COL = 8
+columns = dict(
+    time=0,
+    battery=1,
+    autospeed=2,
+    l_volts=3,
+    r_volts=4,
+    l_encoder_pos=5,
+    r_encoder_pos=6,
+    l_encoder_vel=7,
+    r_encoder_vel=8,
+)
 
 WINDOW = 2
 MOTION_THRESHOLD = 0.1
 
+#
+# You probably don't have to change anything else
+#
+
+TIME_COL = columns['time']
+BATTERY_COL = columns['battery']
+AUTOSPEED_COL = columns['autospeed']
+L_VOLTS_COL = columns['l_volts']
+R_VOLTS_COL = columns['r_volts']
+L_ENCODER_P_COL = columns['l_encoder_pos']
+R_ENCODER_P_COL = columns['r_encoder_pos']
+L_ENCODER_V_COL = columns['l_encoder_vel']
+R_ENCODER_V_COL = columns['r_encoder_vel']
+
+JSON_DATA_KEYS = [
+    'slow-forward',
+    'slow-backward',
+    'fast-forward',
+    'fast-backward'
+]
 
 # From 449's R script
 def smoothDerivative(tm, value, n, off):
@@ -171,13 +195,44 @@ def analyze_data(data):
     _print(4, 'Right backward', sb_r, fb_r)
     
     plt.show()
+
+def split_to_csv(fname, stored_data):
     
+    outdir = dirname(fname)
+    fname = join(outdir, splitext(basename(fname))[0])
+    
+    header = ['']*(max(columns.values())+1)
+    for k, v in columns.items():
+        header[v] = k
+        
+    for d in JSON_DATA_KEYS:
+        fn = '%s-%s.csv' % (fname, d)
+        if exists(fn):
+            print("Error:", fn, "already exists")
+            return
+    
+    for d in JSON_DATA_KEYS:
+        fn = '%s-%s.csv' % (fname, d)
+        with open(fn, 'w') as fp:
+            c = csv.writer(fp)
+            c.writerow(header)
+            for r in stored_data[d]:
+                c.writerow(r)
 
 def main():
-    with open(sys.argv[1], 'r') as fp:
+    
+    parser = argparse.ArgumentParser(description="Analyze your data")
+    parser.add_argument('jsonfile', help="Input JSON file")
+    parser.add_argument('--to-csv', action='store_true', default=False)
+    args = parser.parse_args()
+    
+    with open(args.jsonfile, 'r') as fp:
         stored_data = json.load(fp)
-
-    analyze_data(stored_data)
+    
+    if args.to_csv:
+        split_to_csv(args.jsonfile, stored_data)
+    else:
+        analyze_data(stored_data)
 
 if __name__ == '__main__':
     main()
