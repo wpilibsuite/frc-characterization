@@ -88,11 +88,29 @@ this directory and a window should pop up that plots the data for you.
 Next steps
 ----------
 
-You can plug the generated kv/ka/vintercept parameters into the TankModel for
-your robot.
+If using RobotPy and the pyfrc robot simulator, you can plug the generated
+kv/ka/vintercept parameters into the TankModel for your robot for a more
+realistic simulation experience.
+
+Refer to the [original drivetrain characterization paper](https://www.chiefdelphi.com/media/papers/3402)
+for ideas on how to use these empirically measured constants to improve control
+of your drivetrain.
 
 Finally, help the rest of the FRC community! Post your raw json data + drivetrain
 characteristics at https://www.chiefdelphi.com/forums/showthread.php?t=161539
+
+Contributing new changes
+------------------------
+
+This is intended to be a project that all members of the FIRST community can
+quickly and easily contribute to. If you find a bug, or have an idea that you
+think others can use:
+
+1. [Fork this git repository](https://github.com/robotpy/robot-characterization/fork) to your github account
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push -u origin my-new-feature`)
+5. Create new Pull Request on github
 
 License
 -------
