@@ -274,6 +274,22 @@ class DataLogger:
                 print("ERROR: NT disconnected, results won't be reliable. Giving up.")
                 return
             
+            # output sanity check
+            if len(data) < 3:
+                print("WARNING: There wasn't a lot of data received during that last run")
+            else:
+                left_distance = data[-1][L_ENCODER_P_COL] - data[0][L_ENCODER_P_COL]
+                right_distance = data[-1][R_ENCODER_P_COL] - data[0][R_ENCODER_P_COL]
+                
+                print()
+                print("The robot reported traveling the following distance:")
+                print()
+                print("Left:  %.3f ft" % left_distance)
+                print("Right: %.3f ft" % right_distance)
+                print()
+                print("If that doesn't seem quite right... you should change the encoder calibration")
+                print("in the robot program or fix your encoders!")
+            
             stored_data[name] = data
         
         # In case the user decides to re-enable autonomous again..
@@ -288,6 +304,7 @@ class DataLogger:
         now = time.strftime('%Y%m%d-%H%M-%S')
         fname = '%s-data.json' % now
         
+        print()
         print("Data collection complete! saving to %s..." % fname)
         with open(fname, 'w') as fp:
             json.dump(stored_data, fp, indent=4, separators=(',', ': '))
