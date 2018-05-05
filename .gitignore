@@ -1,2 +1,6 @@
 *-data.json
 *.csv
+*.pyc
+
+.settings
+bin
