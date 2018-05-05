@@ -290,7 +290,7 @@ class DataLogger:
         
         print("Data collection complete! saving to %s..." % fname)
         with open(fname, 'w') as fp:
-            json.dump(stored_data, fp)
+            json.dump(stored_data, fp, indent=4, separators=(',', ': '))
         
         analyze_data(stored_data)
 
