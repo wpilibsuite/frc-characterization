@@ -90,20 +90,25 @@ def trim_step_testdata(data):
     max_accel_idx = np.argmax(np.abs(data[TRIM_ACC_COL]))
     return data[:,max_accel_idx:]
 
-def prepare_data(data, trimfn):
+def prepare_data(data, trimfn, scale, window):
     
     # deal with incomplete data
-    if len(data) < WINDOW*2:
+    if len(data) < window*2:
         return np.zeros(shape=(TRIM_MAX_COL+1, 4)), np.zeros(shape=(TRIM_MAX_COL+1, 4))
     
     # Transform the data into a numpy array to make it easier to use
     data = np.array(data).transpose()
     
-    l_acc = smoothDerivative(data[TIME_COL], data[L_ENCODER_V_COL], WINDOW, 0)
-    r_acc = smoothDerivative(data[TIME_COL], data[R_ENCODER_V_COL], WINDOW, 0)
+    data[L_ENCODER_P_COL] *= scale
+    data[R_ENCODER_P_COL] *= scale
+    data[L_ENCODER_V_COL] *= scale
+    data[R_ENCODER_V_COL] *= scale
+    
+    l_acc = smoothDerivative(data[TIME_COL], data[L_ENCODER_V_COL], window, 0)
+    r_acc = smoothDerivative(data[TIME_COL], data[R_ENCODER_V_COL], window, 0)
     
     # trim data to ensure it's all the same length to ease analysis
-    data = data[:,1:-WINDOW]
+    data = data[:,1:-window]
     
     l = np.vstack((data[TIME_COL], data[L_VOLTS_COL], data[L_ENCODER_P_COL], data[L_ENCODER_V_COL], l_acc))
     r = np.vstack((data[TIME_COL], data[R_VOLTS_COL], data[R_ENCODER_P_COL], data[R_ENCODER_V_COL], r_acc))
@@ -114,7 +119,7 @@ def prepare_data(data, trimfn):
     return l, r
 
 
-def analyze_data(data):
+def analyze_data(data, scale=1.0, window=WINDOW):
     '''
         Firstly, data should be "trimmed" to exclude any data points at which the
         robot was not being commanded to do anything. [we don't have to do this]
@@ -145,11 +150,11 @@ def analyze_data(data):
         coefficient of acceleration).
     '''
     
-    sf_l, sf_r = prepare_data(data['slow-forward'], trim_quasi_testdata)
-    sb_l, sb_r = prepare_data(data['slow-backward'], trim_quasi_testdata)
+    sf_l, sf_r = prepare_data(data['slow-forward'], trim_quasi_testdata, scale, window)
+    sb_l, sb_r = prepare_data(data['slow-backward'], trim_quasi_testdata, scale, window)
 
-    ff_l, ff_r = prepare_data(data['fast-forward'], trim_step_testdata)
-    fb_l, fb_r = prepare_data(data['fast-backward'], trim_step_testdata)
+    ff_l, ff_r = prepare_data(data['fast-forward'], trim_step_testdata, scale, window)
+    fb_l, fb_r = prepare_data(data['fast-backward'], trim_step_testdata, scale, window)
     
     # Now that we have useful data, perform linear regression on it
     def _ols(x1, x2, y):
@@ -224,6 +229,8 @@ def main():
     parser = argparse.ArgumentParser(description="Analyze your data")
     parser.add_argument('jsonfile', help="Input JSON file")
     parser.add_argument('--to-csv', action='store_true', default=False)
+    parser.add_argument('--scale', default=1, type=float, help="Multiply position/velocity values by this")
+    parser.add_argument('--window', default=WINDOW, type=int, help="Window size for computing acceleration")
     args = parser.parse_args()
     
     with open(args.jsonfile, 'r') as fp:
@@ -232,7 +239,7 @@ def main():
     if args.to_csv:
         split_to_csv(args.jsonfile, stored_data)
     else:
-        analyze_data(stored_data)
+        analyze_data(stored_data, scale=args.scale, window=args.window)
 
 if __name__ == '__main__':
     main()
