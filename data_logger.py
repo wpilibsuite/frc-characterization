@@ -210,7 +210,7 @@ class DataLogger:
         if team == 'sim':
             NetworkTables.initialize(server='localhost')
         else:
-            NetworkTables.startClientTeam(team)
+            NetworkTables.startClientTeam(int(team))
         
         # Use listeners to receive the data
         NetworkTables.addConnectionListener(self.connectionListener, immediateNotify=True)
