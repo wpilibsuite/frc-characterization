@@ -94,11 +94,11 @@ public class Robot extends TimedRobot {
 
 		leftFrontMotor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX, 10);
 		leftEncoderPosition = () -> leftFrontMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
-		leftEncoderRate = () -> leftFrontMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant * 0.1;
+		leftEncoderRate = () -> leftFrontMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 0.1;
 		
 		rightFrontMotor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX, 10);
 		rightEncoderPosition = () -> rightFrontMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
-		rightEncoderRate = () -> rightFrontMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant * 0.1;
+		rightEncoderRate = () -> rightFrontMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 0.1;
 		
 		
 		// Set the update rate instead of using flush because of a ntcore bug
