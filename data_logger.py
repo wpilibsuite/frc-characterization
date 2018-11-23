@@ -26,7 +26,7 @@ from networktables import NetworkTables, __version__ as ntversion
 from networktables.util import ntproperty
 
 # Older versions of pynetworktables (and ntcore) had bugs related to flush()
-if tuple(map(int, ntversion.split('.'))) < (2018, 1, 2):
+if tuple(map(int, ntversion.split('.')[:3])) < (2018, 1, 2):
     print("Requires pynetworktables >= 2018.1.3, %s is installed" % ntversion)
     exit(1)
 
