@@ -33,13 +33,14 @@ columns = dict(
     r_encoder_vel=8,
 )
 
-WINDOW = 2
+WINDOW = 8
 MOTION_THRESHOLD = 0.1
 
 #
 # You probably don't have to change anything else
 #
 
+# These are the indices of data stored in the json file
 TIME_COL = columns["time"]
 BATTERY_COL = columns["battery"]
 AUTOSPEED_COL = columns["autospeed"]
@@ -50,67 +51,67 @@ R_ENCODER_P_COL = columns["r_encoder_pos"]
 L_ENCODER_V_COL = columns["l_encoder_vel"]
 R_ENCODER_V_COL = columns["r_encoder_vel"]
 
+# The are the indices of data returned from prepare_data function
+PREPARED_TM_COL = 0
+PREPARED_V_COL = 1
+PREPARED_POS_COL = 2
+PREPARED_VEL_COL = 3
+PREPARED_ACC_COL = 4
+
+PREPARED_MAX_COL = PREPARED_ACC_COL
+
 JSON_DATA_KEYS = ["slow-forward", "slow-backward", "fast-forward", "fast-backward"]
 
-# From 449's R script
-def smoothDerivative(tm, value, n, off):
+# From 449's R script (note: R is 1-indexed)
+def smoothDerivative(tm, value, n):
     """
         :param tm: time column
         :param value: Value to take the derivative of
-        :param off: Offset of time column start position
+        :param n: smoothing parameter
     """
     dlen = len(value)
-    dt = tm[n + 1 + off : dlen + off] - tm[1 + off : (dlen - n) + off]
-    x = (value[(n + 1) : dlen] - value[1 : (dlen - n)]) / dt
-    return x
+    dt = tm[n:dlen] - tm[: (dlen - n)]
+    x = (value[(n):dlen] - value[: (dlen - n)]) / dt
 
-
-# trim functions: expect array of tm, volts, velocity, acceleration
-TRIM_TM_COL = 0
-TRIM_V_COL = 1
-TRIM_POS_COL = 2
-TRIM_VEL_COL = 3
-TRIM_ACC_COL = 4
-
-TRIM_MAX_COL = TRIM_ACC_COL
+    # pad to original length by adding zeros on either side
+    return np.pad(x, (int(np.ceil(n / 2.0)), int(np.floor(n / 2.0))), mode="constant")
 
 
 def trim_quasi_testdata(data):
-    # removes initial minimal velocity points
-    for i, v in enumerate(data[TRIM_VEL_COL]):
-        if abs(v) > 0.1:
-            break
-    return data[:, i:]
+    adata = np.abs(data)
+    truth = np.all(
+        [
+            adata[L_ENCODER_V_COL] > MOTION_THRESHOLD,
+            adata[L_VOLTS_COL] > 0,
+            adata[R_ENCODER_V_COL] > MOTION_THRESHOLD,
+            data[R_VOLTS_COL] > 0,
+        ],
+        axis=0,
+    )
+    return data.transpose()[truth].transpose()
 
 
 def trim_step_testdata(data):
     # removes anything before the max acceleration
-    max_accel_idx = np.argmax(np.abs(data[TRIM_ACC_COL]))
-    return data[:, max_accel_idx:]
+    max_accel_idx = np.argmax(np.abs(data[PREPARED_ACC_COL]))
+    return data[:, max_accel_idx + 1 :]
 
 
-def prepare_data(data, trimfn, scale, window):
+def prepare_data(data, window):
+    """
+        Returned data columns correspond to PREPARED_*
+    """
 
     # deal with incomplete data
-    if len(data) < window * 2:
+    if len(data[TIME_COL]) < window * 2:
         return (
-            np.zeros(shape=(TRIM_MAX_COL + 1, 4)),
-            np.zeros(shape=(TRIM_MAX_COL + 1, 4)),
+            np.zeros(shape=(PREPARED_MAX_COL + 1, 4)),
+            np.zeros(shape=(PREPARED_MAX_COL + 1, 4)),
         )
 
-    # Transform the data into a numpy array to make it easier to use
-    data = np.array(data).transpose()
-
-    data[L_ENCODER_P_COL] *= scale
-    data[R_ENCODER_P_COL] *= scale
-    data[L_ENCODER_V_COL] *= scale
-    data[R_ENCODER_V_COL] *= scale
-
-    l_acc = smoothDerivative(data[TIME_COL], data[L_ENCODER_V_COL], window, 0)
-    r_acc = smoothDerivative(data[TIME_COL], data[R_ENCODER_V_COL], window, 0)
-
-    # trim data to ensure it's all the same length to ease analysis
-    data = data[:, 1:-window]
+    # Compute left/right acceleration
+    l_acc = smoothDerivative(data[TIME_COL], data[L_ENCODER_V_COL], window)
+    r_acc = smoothDerivative(data[TIME_COL], data[R_ENCODER_V_COL], window)
 
     l = np.vstack(
         (
@@ -131,16 +132,13 @@ def prepare_data(data, trimfn, scale, window):
         )
     )
 
-    l = trimfn(l)
-    r = trimfn(r)
-
     return l, r
 
 
-def analyze_data(data, scale=1.0, window=WINDOW):
+def analyze_data(data, window=WINDOW):
     """
         Firstly, data should be "trimmed" to exclude any data points at which the
-        robot was not being commanded to do anything. [we don't have to do this]
+        robot was not being commanded to do anything.
         
         Secondly, robot acceleration should be calculated from robot velocity and time.
         We have found it effective to do this by taking the slope of the secant line
@@ -156,6 +154,7 @@ def analyze_data(data, scale=1.0, window=WINDOW):
         Finally, the data can be analyzed: pool your trimmed data into four data sets
         - one for each side of the robot (left or right) and each direction (forwards
         or backwards).
+
         For each set, run a linear regression of voltage seen at the motor
         (or battery voltage if you do not have Talon SRXs) versus velocity and
         acceleration.
@@ -168,11 +167,20 @@ def analyze_data(data, scale=1.0, window=WINDOW):
         coefficient of acceleration).
     """
 
-    sf_l, sf_r = prepare_data(data["slow-forward"], trim_quasi_testdata, scale, window)
-    sb_l, sb_r = prepare_data(data["slow-backward"], trim_quasi_testdata, scale, window)
+    # trim quasi data before computing acceleration
+    sf_trim = trim_quasi_testdata(data["slow-forward"])
+    sb_trim = trim_quasi_testdata(data["slow-backward"])
+    sf_l, sf_r = prepare_data(sf_trim, window)
+    sb_l, sb_r = prepare_data(sb_trim, window)
 
-    ff_l, ff_r = prepare_data(data["fast-forward"], trim_step_testdata, scale, window)
-    fb_l, fb_r = prepare_data(data["fast-backward"], trim_step_testdata, scale, window)
+    # trim step data after computing acceleration
+    ff_l, ff_r = prepare_data(data["fast-forward"], window)
+    fb_l, fb_r = prepare_data(data["fast-backward"], window)
+
+    ff_l = trim_step_testdata(ff_l)
+    ff_r = trim_step_testdata(ff_r)
+    fb_l = trim_step_testdata(fb_l)
+    fb_r = trim_step_testdata(fb_r)
 
     # Now that we have useful data, perform linear regression on it
     def _ols(x1, x2, y):
@@ -182,14 +190,16 @@ def analyze_data(data, scale=1.0, window=WINDOW):
         return np.linalg.lstsq(x, y, rcond=None)[0]
 
     def _print(n, pfx, qu, step):
-        vel = np.concatenate((qu[TRIM_VEL_COL], step[TRIM_VEL_COL]))
-        accel = np.concatenate((qu[TRIM_ACC_COL], step[TRIM_ACC_COL]))
-        volts = np.concatenate((qu[TRIM_V_COL], step[TRIM_V_COL]))
+        vel = np.concatenate((qu[PREPARED_VEL_COL], step[PREPARED_VEL_COL]))
+        accel = np.concatenate((qu[PREPARED_ACC_COL], step[PREPARED_ACC_COL]))
+        volts = np.concatenate((qu[PREPARED_V_COL], step[PREPARED_V_COL]))
 
         vi, kv, ka = _ols(vel, accel, volts)
 
-        txt = "%s:  kv=%.4f ka=%.4f vintercept=%.4f" % (pfx, kv, ka, vi)
+        txt = "%s:  kv=% .4f ka=% .4f vintercept=% .4f" % (pfx, kv, ka, vi)
         print(txt)
+
+        # TODO: are these plots useful?
 
         plt.figure(txt)
 
@@ -240,8 +250,22 @@ def split_to_csv(fname, stored_data):
         with open(fn, "w") as fp:
             c = csv.writer(fp)
             c.writerow(header)
-            for r in stored_data[d]:
+            for r in stored_data[d].transpose():
                 c.writerow(r)
+
+
+def fixup_data(stored_data, scale):
+    for d in JSON_DATA_KEYS:
+        # Transform the data into a numpy array to make it easier to use
+        # -> transpose it so we can deal with it in columns
+        data = np.array(stored_data[d]).transpose()
+
+        data[L_ENCODER_P_COL] *= scale
+        data[R_ENCODER_P_COL] *= scale
+        data[L_ENCODER_V_COL] *= scale
+        data[R_ENCODER_V_COL] *= scale
+
+        stored_data[d] = data
 
 
 def main():
@@ -266,10 +290,12 @@ def main():
     with open(args.jsonfile, "r") as fp:
         stored_data = json.load(fp)
 
+    fixup_data(stored_data, args.scale)
+
     if args.to_csv:
         split_to_csv(args.jsonfile, stored_data)
     else:
-        analyze_data(stored_data, scale=args.scale, window=args.window)
+        analyze_data(stored_data, window=args.window)
 
 
 if __name__ == "__main__":
