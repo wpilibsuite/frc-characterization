@@ -167,6 +167,11 @@ def analyze_data(data, window=WINDOW):
         coefficient of acceleration).
     """
 
+    # Transform the data into a numpy array to make it easier to use
+    # -> transpose it so we can deal with it in columns
+    for k in JSON_DATA_KEYS:
+        data[k] = np.array(data[k]).transpose()
+
     # trim quasi data before computing acceleration
     sf_trim = trim_quasi_testdata(data["slow-forward"])
     sb_trim = trim_quasi_testdata(data["slow-backward"])
@@ -256,8 +261,6 @@ def split_to_csv(fname, stored_data):
 
 def fixup_data(stored_data, scale):
     for d in JSON_DATA_KEYS:
-        # Transform the data into a numpy array to make it easier to use
-        # -> transpose it so we can deal with it in columns
         data = np.array(stored_data[d]).transpose()
 
         data[L_ENCODER_P_COL] *= scale
@@ -265,7 +268,7 @@ def fixup_data(stored_data, scale):
         data[L_ENCODER_V_COL] *= scale
         data[R_ENCODER_V_COL] *= scale
 
-        stored_data[d] = data
+        stored_data[d] = data.transpose()
 
 
 def main():
