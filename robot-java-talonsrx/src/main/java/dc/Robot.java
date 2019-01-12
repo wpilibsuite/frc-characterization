@@ -13,6 +13,7 @@ package dc;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -53,25 +54,29 @@ public class Robot extends TimedRobot {
 
 		stick = new Joystick(0);
 
-		leftFrontMotor = new WPI_TalonSRX(1);
-		leftFrontMotor.setInverted(false);
+		leftFrontMotor = new WPI_TalonSRX(6);
+		leftFrontMotor.setInverted(true);
 		leftFrontMotor.setSensorPhase(false);
+		leftFrontMotor.setNeutralMode(NeutralMode.Brake);
 
-		rightFrontMotor = new WPI_TalonSRX(2);
-		rightFrontMotor.setInverted(false);
-		rightFrontMotor.setSensorPhase(false);
+		rightFrontMotor = new WPI_TalonSRX(7);
+		rightFrontMotor.setInverted(true);
+		rightFrontMotor.setSensorPhase(true);
+		rightFrontMotor.setNeutralMode(NeutralMode.Brake);
 
 		// left rear follows front 
-		WPI_TalonSRX leftRearMotor = new WPI_TalonSRX(3);
-		leftRearMotor.setInverted(false);
+		WPI_TalonSRX leftRearMotor = new WPI_TalonSRX(5);
+		leftRearMotor.setInverted(true);
 		leftRearMotor.setSensorPhase(false);
 		leftRearMotor.follow(leftFrontMotor);
+		leftRearMotor.setNeutralMode(NeutralMode.Brake);
 
 		// right rear follows front 
-		WPI_TalonSRX rightRearMotor = new WPI_TalonSRX(4);
-		rightRearMotor.setInverted(false);
-		rightRearMotor.setSensorPhase(false);
+		WPI_TalonSRX rightRearMotor = new WPI_TalonSRX(8);
+		rightRearMotor.setInverted(true);
+		rightRearMotor.setSensorPhase(true);
 		rightRearMotor.follow(rightRearMotor);
+		rightRearMotor.setNeutralMode(NeutralMode.Brake);
 
 		
 		//
@@ -100,6 +105,9 @@ public class Robot extends TimedRobot {
 		rightEncoderPosition = () -> rightFrontMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
 		rightEncoderRate = () -> rightFrontMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 0.1;
 		
+		// Reset encoders
+		leftFrontMotor.setSelectedSensorPosition(0);
+		rightFrontMotor.setSelectedSensorPosition(0);
 		
 		// Set the update rate instead of using flush because of a ntcore bug
 		// -> probably don't want to do this on a robot in competition
@@ -179,8 +187,8 @@ public class Robot extends TimedRobot {
 		numberArray[3] = leftMotorVolts;
 		numberArray[4] = rightMotorVolts;
 		numberArray[5] = leftPosition;
-		numberArray[6] = leftRate;
-		numberArray[7] = rightPosition;
+		numberArray[6] = rightPosition;
+		numberArray[7] = leftRate;
 		numberArray[8] = rightRate;
 
 		telemetryEntry.setNumberArray(numberArray);
