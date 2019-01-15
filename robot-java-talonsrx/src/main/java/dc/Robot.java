@@ -54,25 +54,25 @@ public class Robot extends TimedRobot {
 
 		stick = new Joystick(0);
 
-		leftFrontMotor = new WPI_TalonSRX(6);
+		leftFrontMotor = new WPI_TalonSRX(1);
 		leftFrontMotor.setInverted(false);
 		leftFrontMotor.setSensorPhase(false);
 		leftFrontMotor.setNeutralMode(NeutralMode.Brake);
 
-		rightFrontMotor = new WPI_TalonSRX(7);
+		rightFrontMotor = new WPI_TalonSRX(2);
 		rightFrontMotor.setInverted(false);
 		rightFrontMotor.setSensorPhase(true);
 		rightFrontMotor.setNeutralMode(NeutralMode.Brake);
 
 		// left rear follows front 
-		WPI_TalonSRX leftRearMotor = new WPI_TalonSRX(5);
+		WPI_TalonSRX leftRearMotor = new WPI_TalonSRX(3);
 		leftRearMotor.setInverted(false);
 		leftRearMotor.setSensorPhase(false);
 		leftRearMotor.follow(leftFrontMotor);
 		leftRearMotor.setNeutralMode(NeutralMode.Brake);
 
 		// right rear follows front 
-		WPI_TalonSRX rightRearMotor = new WPI_TalonSRX(8);
+		WPI_TalonSRX rightRearMotor = new WPI_TalonSRX(4);
 		rightRearMotor.setInverted(false);
 		rightRearMotor.setSensorPhase(true);
 		rightRearMotor.follow(rightRearMotor);
