@@ -157,7 +157,7 @@ public class Robot extends TimedRobot {
 		priorAutospeed = autospeed;
 
 		// command motors to do things
-		drive.tankDrive(autospeed, autospeed, false);
+drive.tankDrive(autospeed, autospeed, false);
 
 		// send telemetry data array back to NT
 		numberArray[0] = now;
@@ -166,8 +166,8 @@ public class Robot extends TimedRobot {
 		numberArray[3] = leftMotorVolts;
 		numberArray[4] = rightMotorVolts;
 		numberArray[5] = leftPosition;
-		numberArray[6] = leftRate;
-		numberArray[7] = rightPosition;
+		numberArray[6] = rightPosition;
+		numberArray[7] = leftRate;
 		numberArray[8] = rightRate;
 
 		telemetryEntry.setNumberArray(numberArray);
