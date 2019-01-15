@@ -4,3 +4,8 @@
 
 .settings
 bin
+
+*/.gradle
+*/.vscode
+*/.wpilib
+*/build
