@@ -15,6 +15,7 @@ from os.path import basename, exists, dirname, join, splitext
 
 import numpy as np
 import matplotlib.pyplot as plt
+import statsmodels.api as sm
 
 #
 # These parameters are used to indicate which column of data each parameter
@@ -34,7 +35,7 @@ columns = dict(
 )
 
 WINDOW = 8
-MOTION_THRESHOLD = 0.1
+MOTION_THRESHOLD = .1
 
 #
 # You probably don't have to change anything else
@@ -139,11 +140,11 @@ def analyze_data(data, window=WINDOW):
     """
         Firstly, data should be "trimmed" to exclude any data points at which the
         robot was not being commanded to do anything.
-        
+
         Secondly, robot acceleration should be calculated from robot velocity and time.
         We have found it effective to do this by taking the slope of the secant line
         of velocity over a 60ms (3 standard loop iterations) window.
-        
+
         Thirdly, data from the quasi-static test should be trimmed to exclude the
         initial period in which the robot is not moving due to static friction
         Fourthly, data from the step-voltage acceleration tests must be trimmed to
@@ -190,40 +191,92 @@ def analyze_data(data, window=WINDOW):
     # Now that we have useful data, perform linear regression on it
     def _ols(x1, x2, y):
         """multivariate linear regression using ordinary least squares"""
-        ox = np.array((x1, x2)).T
-        x = np.c_[np.ones(ox.shape[0]), ox]
-        return np.linalg.lstsq(x, y, rcond=None)[0]
+        x = np.array((x1, x2)).T
+        x = sm.add_constant(x)
+        model = sm.OLS(y,x)
+        return model.fit()
 
     def _print(n, pfx, qu, step):
         vel = np.concatenate((qu[PREPARED_VEL_COL], step[PREPARED_VEL_COL]))
         accel = np.concatenate((qu[PREPARED_ACC_COL], step[PREPARED_ACC_COL]))
         volts = np.concatenate((qu[PREPARED_V_COL], step[PREPARED_V_COL]))
+        time = np.concatenate((qu[PREPARED_TM_COL], step[PREPARED_TM_COL]))
 
-        vi, kv, ka = _ols(vel, accel, volts)
+        fit = _ols(vel, accel, volts)
+        vi, kv, ka = fit.params
+        rsquare = fit.rsquared
 
-        txt = "%s:  kv=% .4f ka=% .4f vintercept=% .4f" % (pfx, kv, ka, vi)
+        txt = "%s:  kv=% .4f ka=% .4f vintercept=% .4f r-squared=% .4f" % (pfx, kv, ka, vi, rsquare)
         print(txt)
 
-        # TODO: are these plots useful?
+        #Time-domain plots.
+        #These should show if anything went horribly wrong during the tests.
+        #Useful for diagnosing the data trim; quasistatic test should look purely linear with no leading "tail"
 
-        plt.figure(txt)
+        plt.figure(pfx + " Time-Domain Plots")
 
+        #quasistatic vel and accel vs time
+        ax1 = plt.subplot(221)
+        ax1.set_xlabel("Time")
+        ax1.set_ylabel("Velocity")
+        ax1.set_title("Quasistatic velocity vs time")
+        plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_VEL_COL], marker=".", c="#000000")
+
+        ax = plt.subplot(222, sharey=ax1)
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Velocity")
+        ax.set_title("Dynamic velocity vs time")
+        plt.scatter(step[PREPARED_TM_COL], step[PREPARED_VEL_COL], marker=".", c="#000000")
+
+        #dynamic vel and accel vs time
+        ax2 = plt.subplot(223)
+        ax2.set_xlabel("Time")
+        ax2.set_ylabel("Acceleration")
+        ax2.set_title("Quasistatic acceleration vs time")
+        plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_ACC_COL], marker=".", c="#000000")
+
+        ax = plt.subplot(224, sharey=ax2)
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Acceleration")
+        ax.set_title("Dynamic acceleration vs time")
+        plt.scatter(step[PREPARED_TM_COL], step[PREPARED_ACC_COL], marker=".", c="#000000")
+
+        #Fix overlapping axis labels
+        plt.tight_layout(pad=.5)
+
+        #Voltage-domain plots
+        #These should show linearity of velocity/acceleration data with voltage
+        #X-axis is not raw voltage, but rather "portion of voltage corresponding to vel/acc"
+        #Both plots should be straight lines through the origin
+        #Fit lines will be straight lines through the origin by construction; data should match fit
+
+        plt.figure(pfx + " Voltage-Domain Plots")
+
+        #quasistatic vel vs. vel-causing voltage
         ax = plt.subplot(211)
-        ax.set_xlabel("voltage")
-        ax.set_ylabel("velocity")
-        plt.scatter(volts, vel, marker=".", c="#000000")
+        ax.set_xlabel("Velocity-Portion Voltage")
+        ax.set_ylabel("Velocity")
+        ax.set_title("Quasistatic velocity vs velocity-portion voltage")
+        plt.scatter(qu[PREPARED_V_COL] - vi - ka*qu[PREPARED_ACC_COL], qu[PREPARED_VEL_COL], marker=".", c="#000000")
 
-        # show the fit
-        y = np.linspace(np.min(vel), np.max(vel))
-        plt.plot(kv * y + vi, y)
+        #show fit line from multiple regression
+        y = np.linspace(np.min(qu[PREPARED_VEL_COL]), np.max(qu[PREPARED_VEL_COL]))
+        plt.plot(kv * y, y)
 
+        #dynamic accel vs. accel-causing voltage
         ax = plt.subplot(212)
-        ax.set_xlabel("voltage")
-        ax.set_ylabel("acceleration")
-        plt.scatter(volts, accel, marker=".", c="#000000")
+        ax.set_xlabel("Acceleration-Portion Voltage")
+        ax.set_ylabel("Acceleration")
+        ax.set_title("Dynamic acceleration vs acceleration-portion voltage")
+        plt.scatter(step[PREPARED_V_COL] - vi - kv*step[PREPARED_VEL_COL], step[PREPARED_ACC_COL], marker=".", c="#000000")
 
-        y = np.linspace(np.min(accel), np.max(accel))
+        # show fit line from multiple regression
+        y = np.linspace(np.min(step[PREPARED_ACC_COL]), np.max(step[PREPARED_ACC_COL]))
         plt.plot(ka * y, y)
+
+        #Fix overlapping axis labels
+        plt.tight_layout(pad=.5)
+
 
     # kv and vintercept is computed from the first two tests, ka from the latter
     _print(1, "Left forward  ", sf_l, ff_l)
