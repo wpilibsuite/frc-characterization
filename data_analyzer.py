@@ -84,7 +84,7 @@ def trim_quasi_testdata(data):
             adata[L_ENCODER_V_COL] > MOTION_THRESHOLD,
             adata[L_VOLTS_COL] > 0,
             adata[R_ENCODER_V_COL] > MOTION_THRESHOLD,
-            data[R_VOLTS_COL] > 0,
+            adata[R_VOLTS_COL] > 0,
         ],
         axis=0,
     )
@@ -139,11 +139,11 @@ def analyze_data(data, window=WINDOW):
     """
         Firstly, data should be "trimmed" to exclude any data points at which the
         robot was not being commanded to do anything.
-        
+
         Secondly, robot acceleration should be calculated from robot velocity and time.
         We have found it effective to do this by taking the slope of the secant line
         of velocity over a 60ms (3 standard loop iterations) window.
-        
+
         Thirdly, data from the quasi-static test should be trimmed to exclude the
         initial period in which the robot is not moving due to static friction
         Fourthly, data from the step-voltage acceleration tests must be trimmed to
