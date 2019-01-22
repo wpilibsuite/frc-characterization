@@ -3,7 +3,7 @@
  * the data_logger script to characterize your drivetrain. If you wish to use
  * your actual robot code, you only need to implement the simple logic in the
  * autonomousPeriodic function and change the NetworkTables update rate
- * 
+ *
  * This program assumes that you are using TalonSRX motor controllers and that
  * the drivetrain encoders are attached to the TalonSRX
  */
@@ -34,7 +34,7 @@ public class Robot extends TimedRobot {
 
 	Joystick stick;
 	DifferentialDrive drive;
-	
+
 	WPI_TalonSRX leftFrontMotor;
 	WPI_TalonSRX rightFrontMotor;
 
@@ -64,21 +64,21 @@ public class Robot extends TimedRobot {
 		rightFrontMotor.setSensorPhase(true);
 		rightFrontMotor.setNeutralMode(NeutralMode.Brake);
 
-		// left rear follows front 
+		// left rear follows front
 		WPI_TalonSRX leftRearMotor = new WPI_TalonSRX(3);
 		leftRearMotor.setInverted(false);
 		leftRearMotor.setSensorPhase(false);
 		leftRearMotor.follow(leftFrontMotor);
 		leftRearMotor.setNeutralMode(NeutralMode.Brake);
 
-		// right rear follows front 
+		// right rear follows front
 		WPI_TalonSRX rightRearMotor = new WPI_TalonSRX(4);
 		rightRearMotor.setInverted(false);
 		rightRearMotor.setSensorPhase(true);
 		rightRearMotor.follow(rightRearMotor);
 		rightRearMotor.setNeutralMode(NeutralMode.Brake);
 
-		
+
 		//
 		// Configure drivetrain movement
 		//
@@ -89,26 +89,26 @@ public class Robot extends TimedRobot {
 		drive = new DifferentialDrive(leftGroup, rightGroup);
 		drive.setDeadband(0);
 
-		
+
 		//
 		// Configure encoder related functions -- getDistance and getrate should return
 		// ft and ft/s
 		//
-		
+
 		double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * WHEEL_DIAMETER * Math.PI;
 
 		leftFrontMotor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX, 10);
 		leftEncoderPosition = () -> leftFrontMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
-		leftEncoderRate = () -> leftFrontMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 0.1;
-		
+		leftEncoderRate = () -> leftFrontMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
+
 		rightFrontMotor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX, 10);
 		rightEncoderPosition = () -> rightFrontMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
-		rightEncoderRate = () -> rightFrontMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 0.1;
-		
+		rightEncoderRate = () -> rightFrontMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
+
 		// Reset encoders
 		leftFrontMotor.setSelectedSensorPosition(0);
 		rightFrontMotor.setSelectedSensorPosition(0);
-		
+
 		// Set the update rate instead of using flush because of a ntcore bug
 		// -> probably don't want to do this on a robot in competition
 		NetworkTableInstance.getDefault().setUpdateRate(0.010);
@@ -152,7 +152,7 @@ public class Robot extends TimedRobot {
 	 * If you wish to just use your own robot program to use with the data logging
 	 * program, you only need to copy/paste the logic below into your code and
 	 * ensure it gets called periodically in autonomous mode
-	 * 
+	 *
 	 * Additionally, you need to set NetworkTables update rate to 10ms using the
 	 * setUpdateRate call.
 	 */
