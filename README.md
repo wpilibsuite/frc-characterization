@@ -30,10 +30,9 @@ Required to use the data_logger.py/data_analyzer.py scripts.
   the robot's network
 * Once finished, install matplotlib and statsmodels
 
-On Windows the command to install matplotlib and statsmodels are as follows:
+On Windows the command to install matplotlib and statsmodels is as follows:
 
-    py -3 -m pip install matplotlib
-    py -3 -m pip install statsmodels
+    py -3 -m pip install matplotlib statsmodels
 
 Prerequisites (Robot)
 ---------------------
