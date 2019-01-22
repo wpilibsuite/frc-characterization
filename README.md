@@ -28,11 +28,11 @@ Required to use the data_logger.py/data_analyzer.py scripts.
 
 * Install Python 3.6 on your data gathering computer that will be connected to
   the robot's network
-* Once finished, install matplotlib
-   
-On Windows the command to install matplotlib is as follows:
+* Once finished, install matplotlib and statsmodels
 
-    py -3 -m pip install matplotlib
+On Windows the command to install matplotlib and statsmodels is as follows:
+
+    py -3 -m pip install matplotlib statsmodels
 
 Prerequisites (Robot)
 ---------------------
@@ -65,7 +65,7 @@ Preparation: make sure the code won't make your robot go crazy
 5. Open SmartDashboard/Shuffleboard/OutlineViewer and ensure that the
    l_encoder and r_encoder values are incrementing positively the correct
    distance in **feet** when you push the robot forward
-   
+
 Now you're ready to characterize your robot! On your data gathering computer,
 launch data_logger.py (you can double-click it on Windows). Enter in your
 team number or robot IP address when prompted.
