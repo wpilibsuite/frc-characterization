@@ -35,7 +35,7 @@ columns = dict(
 )
 
 WINDOW = 8
-MOTION_THRESHOLD = .1
+MOTION_THRESHOLD = 0.1
 
 #
 # You probably don't have to change anything else
@@ -193,7 +193,7 @@ def analyze_data(data, window=WINDOW):
         """multivariate linear regression using ordinary least squares"""
         x = np.array((x1, x2)).T
         x = sm.add_constant(x)
-        model = sm.OLS(y,x)
+        model = sm.OLS(y, x)
         return model.fit()
 
     def _print(n, pfx, qu, step):
@@ -206,16 +206,22 @@ def analyze_data(data, window=WINDOW):
         vi, kv, ka = fit.params
         rsquare = fit.rsquared
 
-        txt = "%s:  kv=% .4f ka=% .4f vintercept=% .4f r-squared=% .4f" % (pfx, kv, ka, vi, rsquare)
+        txt = "%s:  kv=% .4f ka=% .4f vintercept=% .4f r-squared=% .4f" % (
+            pfx,
+            kv,
+            ka,
+            vi,
+            rsquare,
+        )
         print(txt)
 
-        #Time-domain plots.
-        #These should show if anything went horribly wrong during the tests.
-        #Useful for diagnosing the data trim; quasistatic test should look purely linear with no leading "tail"
+        # Time-domain plots.
+        # These should show if anything went horribly wrong during the tests.
+        # Useful for diagnosing the data trim; quasistatic test should look purely linear with no leading "tail"
 
         plt.figure(pfx + " Time-Domain Plots")
 
-        #quasistatic vel and accel vs time
+        # quasistatic vel and accel vs time
         ax1 = plt.subplot(221)
         ax1.set_xlabel("Time")
         ax1.set_ylabel("Velocity")
@@ -226,9 +232,11 @@ def analyze_data(data, window=WINDOW):
         ax.set_xlabel("Time")
         ax.set_ylabel("Velocity")
         ax.set_title("Dynamic velocity vs time")
-        plt.scatter(step[PREPARED_TM_COL], step[PREPARED_VEL_COL], marker=".", c="#000000")
+        plt.scatter(
+            step[PREPARED_TM_COL], step[PREPARED_VEL_COL], marker=".", c="#000000"
+        )
 
-        #dynamic vel and accel vs time
+        # dynamic vel and accel vs time
         ax2 = plt.subplot(223)
         ax2.set_xlabel("Time")
         ax2.set_ylabel("Acceleration")
@@ -239,44 +247,55 @@ def analyze_data(data, window=WINDOW):
         ax.set_xlabel("Time")
         ax.set_ylabel("Acceleration")
         ax.set_title("Dynamic acceleration vs time")
-        plt.scatter(step[PREPARED_TM_COL], step[PREPARED_ACC_COL], marker=".", c="#000000")
+        plt.scatter(
+            step[PREPARED_TM_COL], step[PREPARED_ACC_COL], marker=".", c="#000000"
+        )
 
-        #Fix overlapping axis labels
-        plt.tight_layout(pad=.5)
+        # Fix overlapping axis labels
+        plt.tight_layout(pad=0.5)
 
-        #Voltage-domain plots
-        #These should show linearity of velocity/acceleration data with voltage
-        #X-axis is not raw voltage, but rather "portion of voltage corresponding to vel/acc"
-        #Both plots should be straight lines through the origin
-        #Fit lines will be straight lines through the origin by construction; data should match fit
+        # Voltage-domain plots
+        # These should show linearity of velocity/acceleration data with voltage
+        # X-axis is not raw voltage, but rather "portion of voltage corresponding to vel/acc"
+        # Both plots should be straight lines through the origin
+        # Fit lines will be straight lines through the origin by construction; data should match fit
 
         plt.figure(pfx + " Voltage-Domain Plots")
 
-        #quasistatic vel vs. vel-causing voltage
+        # quasistatic vel vs. vel-causing voltage
         ax = plt.subplot(211)
         ax.set_xlabel("Velocity-Portion Voltage")
         ax.set_ylabel("Velocity")
         ax.set_title("Quasistatic velocity vs velocity-portion voltage")
-        plt.scatter(qu[PREPARED_V_COL] - vi - ka*qu[PREPARED_ACC_COL], qu[PREPARED_VEL_COL], marker=".", c="#000000")
+        plt.scatter(
+            qu[PREPARED_V_COL] - vi - ka * qu[PREPARED_ACC_COL],
+            qu[PREPARED_VEL_COL],
+            marker=".",
+            c="#000000",
+        )
 
-        #show fit line from multiple regression
+        # show fit line from multiple regression
         y = np.linspace(np.min(qu[PREPARED_VEL_COL]), np.max(qu[PREPARED_VEL_COL]))
         plt.plot(kv * y, y)
 
-        #dynamic accel vs. accel-causing voltage
+        # dynamic accel vs. accel-causing voltage
         ax = plt.subplot(212)
         ax.set_xlabel("Acceleration-Portion Voltage")
         ax.set_ylabel("Acceleration")
         ax.set_title("Dynamic acceleration vs acceleration-portion voltage")
-        plt.scatter(step[PREPARED_V_COL] - vi - kv*step[PREPARED_VEL_COL], step[PREPARED_ACC_COL], marker=".", c="#000000")
+        plt.scatter(
+            step[PREPARED_V_COL] - vi - kv * step[PREPARED_VEL_COL],
+            step[PREPARED_ACC_COL],
+            marker=".",
+            c="#000000",
+        )
 
         # show fit line from multiple regression
         y = np.linspace(np.min(step[PREPARED_ACC_COL]), np.max(step[PREPARED_ACC_COL]))
         plt.plot(ka * y, y)
 
-        #Fix overlapping axis labels
-        plt.tight_layout(pad=.5)
-
+        # Fix overlapping axis labels
+        plt.tight_layout(pad=0.5)
 
     # kv and vintercept is computed from the first two tests, ka from the latter
     _print(1, "Left forward  ", sf_l, ff_l)
