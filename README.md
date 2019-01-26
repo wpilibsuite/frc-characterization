@@ -28,11 +28,11 @@ Required to use the data_logger.py/data_analyzer.py scripts.
 
 * Install Python 3.6 on your data gathering computer that will be connected to
   the robot's network
-* Once finished, install matplotlib and statsmodels
+* Once finished, install matplotlib, scipy, and statsmodels
 
 On Windows the command to install matplotlib and statsmodels is as follows:
 
-    py -3 -m pip install matplotlib statsmodels
+    py -3 -m pip install matplotlib scipy statsmodels
 
 Prerequisites (Robot)
 ---------------------
