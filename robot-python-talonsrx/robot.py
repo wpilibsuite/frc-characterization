@@ -97,7 +97,7 @@ class MyRobot(wpilib.TimedRobot):
         self.l_encoder_getrate = (
             lambda: left_front_motor.getSelectedSensorVelocity(self.PIDIDX)
             * encoder_constant
-            * 0.1
+            * 10
         )
 
         right_front_motor.configSelectedFeedbackSensor(
@@ -110,7 +110,7 @@ class MyRobot(wpilib.TimedRobot):
         self.r_encoder_getrate = (
             lambda: left_front_motor.getSelectedSensorVelocity(self.PIDIDX)
             * encoder_constant
-            * 0.1
+            * 10
         )
 
         # Set the update rate instead of using flush because of a NetworkTables bug
@@ -147,10 +147,10 @@ class MyRobot(wpilib.TimedRobot):
             If you wish to just use your own robot program to use with the data
             logging program, you only need to copy/paste the logic below into
             your code and ensure it gets called periodically in autonomous mode
-            
+
             Additionally, you need to set NetworkTables update rate to 10ms using
             the setUpdateRate call.
-            
+
             Note that reading/writing self.autospeed and self.telemetry are
             NetworkTables operations (using pynetworktables's ntproperty), so
             if you don't read/write NetworkTables in your implementation it won't
