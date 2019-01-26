@@ -300,10 +300,9 @@ def analyze_data(data, window=WINDOW):
 
         # Interactive 3d plot of voltage over entire vel-accel plane
         # Really cool, not really any more diagnostically-useful than prior plots but worth seeing
-
         plt.figure(pfx + " 3D Vel-Accel Plane Plot")
 
-        ax = plt.subplot(111, projection='3d')
+        ax = plt.subplot(111, projection="3d")
 
         # 3D scatterplot
         ax.set_xlabel("Velocity")
@@ -313,9 +312,11 @@ def analyze_data(data, window=WINDOW):
         ax.scatter(vel, accel, volts)
 
         # Show best fit plane
-
-        vv, aa = np.meshgrid(np.linspace(np.min(vel), np.max(vel)), np.linspace(np.min(accel), np.max(accel)))
-        ax.plot_surface(vv, aa, vi + kv * vv + ka * aa, alpha=.2, color=[0,1,1])
+        vv, aa = np.meshgrid(
+            np.linspace(np.min(vel), np.max(vel)),
+            np.linspace(np.min(accel), np.max(accel)),
+        )
+        ax.plot_surface(vv, aa, vi + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1])
 
     # kv and vintercept is computed from the first two tests, ka from the latter
     _print(1, "Left forward  ", sf_l, ff_l)
