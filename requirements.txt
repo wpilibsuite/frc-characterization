@@ -1,0 +1,4 @@
+pyfrc
+statsmodels
+pynetworktables
+matplotlib
