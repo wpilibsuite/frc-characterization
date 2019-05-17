@@ -2,7 +2,12 @@ Robot Drivetrain Characterization
 =================================
 
 This contains a test procedure that you can use to characterize your drivetrain
-so that you can more accurately control and simulate it.
+so that you can more accurately control and simulate it.  The characterization will 
+determine the best-fit parameters for the equation
+
+![voltage balance equation](https://latex.codecogs.com/gif.latex?V_{applied}=kS&plus;kV\cdot\dot{d}&plus;kA\cdot\ddot{d})
+
+where d is the distance traveled by the robot in feet.
 
 The test procedure involves running your robot in autonomous mode several times
 while the data logger program gathers data. It is important to stop autonomous
@@ -28,17 +33,18 @@ Required to use the data_logger.py/data_analyzer.py scripts.
 
 * Install Python 3.6 on your data gathering computer that will be connected to
   the robot's network
-* Once finished, install matplotlib, scipy, and statsmodels
+* Once finished, install pynetworktables, matplotlib, scipy, and statsmodels
 
-On Windows the command to install matplotlib, scipy, and statsmodels is as follows:
+On Windows the command to install pynetworktables, matplotlib, scipy, and statsmodels 
+is as follows:
 
-    py -3 -m pip install matplotlib scipy statsmodels
+    py -3 -m pip install pynetworktables matplotlib scipy statsmodels
 
 Prerequisites (Robot)
 ---------------------
 
 Your robot must have encoders attached to the drivetrain to measure the robot's
-velocity.
+position and velocity.
 
 If using a Python robot program, see the RobotPy installation documentation to
 install software needed to deploy robot code, and how to install RobotPy on
@@ -98,26 +104,3 @@ of your drivetrain.
 
 Finally, help the rest of the FRC community! Post your raw json data + drivetrain
 characteristics at https://www.chiefdelphi.com/forums/showthread.php?t=161539
-
-Contributing new changes
-------------------------
-
-This is intended to be a project that all members of the FIRST community can
-quickly and easily contribute to. If you find a bug, or have an idea that you
-think others can use:
-
-1. [Fork this git repository](https://github.com/robotpy/robot-characterization/fork) to your github account
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push -u origin my-new-feature`)
-5. Create new Pull Request on github
-
-License
--------
-
-All code in this repository is available under the Apache v2 license.
-
-Author
-------
-
-Dustin Spicuzza (dustin@virtualroadside.com)
