@@ -30,6 +30,9 @@ public class Robot extends TimedRobot {
 
 	// The total gear reduction between the encoder and the arm
 	static private double GEARING = 1;
+	// The offset of encoder zero from horizontal, in degrees.
+	// It is CRUCIAL that this be set correctly, or the characterization will not work!
+	static private double OFFSET = 0;
 	static private double ENCODER_PULSE_PER_REV = 360;
 	static private int PIDIDX = 0;
 
@@ -64,7 +67,7 @@ public class Robot extends TimedRobot {
 		double encoderConstant = (1 / ENCODER_PULSE_PER_REV) / GEARING * 360.;
 
 		armMotor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX, 10);
-		encoderPosition = () -> armMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
+		encoderPosition = () -> armMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant + OFFSET;
 		encoderRate = () -> armMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
 
 		// Reset encoders

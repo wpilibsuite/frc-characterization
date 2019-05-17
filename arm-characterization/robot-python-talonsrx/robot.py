@@ -40,6 +40,9 @@ class MyRobot(wpilib.TimedRobot):
 
     #: The total gear reduction between the encoder and the arm
     GEARING = 0.5
+    #: The offset of encoder zero from horizontal, in degrees.
+	#: It is CRUCIAL that this be set correctly, or the characterization will not work!
+    OFFSET = 0
     ENCODER_PULSE_PER_REV = 4096
     PIDIDX = 0
 
@@ -67,7 +70,7 @@ class MyRobot(wpilib.TimedRobot):
         )
         self.encoder_getpos = (
             lambda: self.arm_motor.getSelectedSensorPosition(self.PIDIDX)
-            * encoder_constant
+            * encoder_constant + self.OFFSET
         )
         self.encoder_getrate = (
             lambda: self.arm_motor.getSelectedSensorVelocity(self.PIDIDX)
@@ -90,10 +93,8 @@ class MyRobot(wpilib.TimedRobot):
     def robotPeriodic(self):
         # feedback for users, but not used by the control program
         sd = wpilib.SmartDashboard
-        sd.putNumber("l_encoder_pos", self.encoder_getpos())
-        sd.putNumber("l_encoder_rate", self.encoder_getrate())
-        sd.putNumber("r_encoder_pos", self.r_encoder_getpos())
-        sd.putNumber("r_encoder_rate", self.r_encoder_getrate())
+        sd.putNumber("encoder_pos", self.encoder_getpos())
+        sd.putNumber("encoder_rate", self.encoder_getrate())
 
     def teleopInit(self):
         self.logger.info("Robot in operator control mode")

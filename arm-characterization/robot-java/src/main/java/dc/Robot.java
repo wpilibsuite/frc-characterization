@@ -25,6 +25,9 @@ public class Robot extends TimedRobot {
 
 	// The total gear reduction between the encoder and the arm
 	static private double GEARING = 1;
+	// The offset of encoder zero from horizontal, in degrees.
+	// It is CRUCIAL that this be set correctly, or the characterization will not work!
+	static private double OFFSET = 0;
 	static private double ENCODER_PULSE_PER_REV = 360;
 
 	Joystick stick;
@@ -55,7 +58,7 @@ public class Robot extends TimedRobot {
 
 		Encoder encoder = new Encoder(0, 1);
 		encoder.setDistancePerPulse(encoderConstant);
-		encoderPosition = encoder::getDistance;
+		encoderPosition = () -> encoder.getDistance() + OFFSET;
 		encoderRate = encoder::getRate;
 
 
