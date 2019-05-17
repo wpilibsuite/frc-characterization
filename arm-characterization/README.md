@@ -24,7 +24,8 @@ Sample robot code is available in several different variations.
 Prerequisites (PC)
 ------------------
 
-Required to use the data_logger.py/data_analyzer.py scripts.
+The following is required to use the data_logger.py/data_analyzer.py scripts for all
+of the characterization tools included in this repository:
 
 * Install Python 3.6 on your data gathering computer that will be connected to
   the robot's network
@@ -39,7 +40,7 @@ Prerequisites (Robot)
 ---------------------
 
 Your robot must have an encoder attached to the arm to measure its
-velocity.
+position and velocity.
 
 If using a Python robot program, see the RobotPy installation documentation to
 install software needed to deploy robot code, and how to install RobotPy on
@@ -55,7 +56,8 @@ installing the necessary software on your computer.
 Usage
 -----
 
-Preparation: make sure the code won't make your robot go crazy
+Preparation: make sure the code won't make your robot go crazy, and will perform the
+calculations correctly
 
 1. Select one of the included robot programs, modify it to reflect your
    robot's arm configuration and encoder settings
@@ -67,6 +69,8 @@ Preparation: make sure the code won't make your robot go crazy
 5. Open SmartDashboard/Shuffleboard/OutlineViewer and ensure that the
    encoder values are incrementing positively by the correct distance in **degrees** 
    when you push the robot forward
+6. Ensure that the `OFFSET` value in the robot code matches the physical offset of
+   the robot arm from horizontal, in degrees.  This step is *very important*.
 
 Now you're ready to characterize your robot! On your data gathering computer,
 launch data_logger.py (you can double-click it on Windows). Enter in your
