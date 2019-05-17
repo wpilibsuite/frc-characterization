@@ -8,6 +8,20 @@ sends data back to the application.  The application then processes the data and
 characterization parameters for the user's robot mechanism, as well as producing diagnostic plots.  Data
 can be saved (in JSON format) for future use, if desired.
 
+Included Characterization Tools
+-------------------------------
+
+The robot characterization toolsuite currently supports chracterization for:
+
+- Drivetrains
+- Arms
+
+Feature requests for additional characterization tools are welcome.  Also note that many
+mechanisms can be characterized by simply adapting the existing code in this library.
+
+Instructions for using the individual tools can be found in their respective project directories. 
+The procedures are highly-similar for all of the tools.
+
 Prerequisites (PC)
 ------------------
 
