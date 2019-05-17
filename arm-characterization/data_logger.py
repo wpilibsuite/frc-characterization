@@ -177,7 +177,7 @@ class DataLogger:
     def ramp_voltage_in_auto(self, initial_speed, ramp):
 
         logger.info(
-            "Activating robot at %.1f%%, adding %.3f per 50ms", initial_speed, ramp
+            "Activating arm at %.1f%%, adding %.3f per 50ms", initial_speed, ramp
         )
 
         self.discard_data = False
@@ -254,7 +254,7 @@ class DataLogger:
             print(
                 "WARNING: It will not automatically stop moving, so disable the robot"
             )
-            print("before it hits something!")
+            print("before the arm hits something!")
             print("")
 
             # Wait for robot to signal that it entered autonomous mode
