@@ -1,5 +1,5 @@
-Robot Drivetrain Characterization
-=================================
+Robot Arm Characterization
+==========================
 
 This contains a test procedure that you can use to characterize a robot arm
 so that you can more accurately control it.  The characterization will determine
@@ -63,12 +63,12 @@ calculations correctly
    robot's arm configuration and encoder settings
 2. Deploy the code to your robot
 3. Ensure that pressing forward on a joystick moves the arm in the desired
-   direction
+   direction\
 4. If not, modify the 'inverted' flag in the code, repeat steps 2/3/4 until
    the arm moves as desired
 5. Open SmartDashboard/Shuffleboard/OutlineViewer and ensure that the
    encoder values are incrementing positively by the correct distance in **degrees** 
-   when you push the robot forward
+   when you push the arm forward
 6. Ensure that the `OFFSET` value in the robot code matches the physical offset of
    the robot arm from horizontal, in degrees.  This step is *very important*.
 
