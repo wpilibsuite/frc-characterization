@@ -23,70 +23,42 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
-	static private double WHEEL_DIAMETER = 0.5;
+	// The total gear reduction between the encoder and the arm
+	static private double GEARING = 1;
 	static private double ENCODER_PULSE_PER_REV = 360;
 
 	Joystick stick;
-	DifferentialDrive drive;
 
-	Supplier<Double> leftEncoderPosition;
-	Supplier<Double> leftEncoderRate;
-	Supplier<Double> rightEncoderPosition;
-	Supplier<Double> rightEncoderRate;
+	Supplier<Double> encoderPosition;
+	Supplier<Double> encoderRate;
 
 	NetworkTableEntry autoSpeedEntry = NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
 	NetworkTableEntry telemetryEntry = NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
 
 	double priorAutospeed = 0;
-	Number[] numberArray = new Number[9];
+	Number[] numberArray = new Number[6];
 
 	@Override
 	public void robotInit() {
 
 		stick = new Joystick(0);
 
-		Spark leftFrontMotor = new Spark(1);
-		leftFrontMotor.setInverted(false);
-
-		Spark rightFrontMotor = new Spark(2);
-		rightFrontMotor.setInverted(false);
-
-		Spark leftRearMotor = new Spark(3);
-		leftRearMotor.setInverted(false);
-
-		Spark rightRearMotor = new Spark(4);
-		rightRearMotor.setInverted(false);
-
-		
-		//
-		// Configure drivetrain movement
-		//
-
-		SpeedControllerGroup leftGroup = new SpeedControllerGroup(leftFrontMotor, leftRearMotor);
-		SpeedControllerGroup rightGroup = new SpeedControllerGroup(rightFrontMotor, rightRearMotor);
-
-		drive = new DifferentialDrive(leftGroup, rightGroup);
-		drive.setDeadband(0);
-
+		Spark armMotor = new Spark(1);
+		armMotor.setInverted(false);
 		
 		//
 		// Configure encoder related functions -- getDistance and getrate should return
-		// ft and ft/s
+		// degrees and degrees/sec
 		//
-		
-		double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * WHEEL_DIAMETER * Math.PI;
 
-		Encoder leftEncoder = new Encoder(0, 1);
-		leftEncoder.setDistancePerPulse(encoderConstant);
-		leftEncoderPosition = leftEncoder::getDistance;
-		leftEncoderRate = leftEncoder::getRate;
+		double encoderConstant = (1 / ENCODER_PULSE_PER_REV) / GEARING * 360.;
 
-		Encoder rightEncoder = new Encoder(0, 1);
-		rightEncoder.setDistancePerPulse(encoderConstant);
-		rightEncoderPosition = rightEncoder::getDistance;
-		rightEncoderRate = rightEncoder::getRate;
+		Encoder encoder = new Encoder(0, 1);
+		encoder.setDistancePerPulse(encoderConstant);
+		encoderPosition = encoder::getDistance;
+		encoderRate = encoder::getRate;
 
-		
+
 		// Set the update rate instead of using flush because of a ntcore bug
 		// -> probably don't want to do this on a robot in competition
 		NetworkTableInstance.getDefault().setUpdateRate(0.010);
@@ -95,7 +67,7 @@ public class Robot extends TimedRobot {
 	@Override
 	public void disabledInit() {
 		System.out.println("Robot disabled");
-		drive.tankDrive(0, 0);
+		armMotor.set(0);
 	}
 
 	@Override
@@ -105,10 +77,8 @@ public class Robot extends TimedRobot {
 	@Override
 	public void robotPeriodic() {
 		// feedback for users, but not used by the control program
-		SmartDashboard.putNumber("l_encoder_pos", leftEncoderPosition.get());
-		SmartDashboard.putNumber("l_encoder_rate", leftEncoderRate.get());
-		SmartDashboard.putNumber("r_encoder_pos", rightEncoderPosition.get());
-		SmartDashboard.putNumber("r_encoder_rate", rightEncoderRate.get());
+		SmartDashboard.putNumber("encoder_pos", encoderPosition.get());
+		SmartDashboard.putNumber("encoder_rate", encoderRate.get());
 	}
 
 	@Override
@@ -118,7 +88,7 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void teleopPeriodic() {
-		drive.arcadeDrive(-stick.getY(), stick.getX());
+		armMotor.set(-stick.getY());
 	}
 
 	@Override
@@ -140,36 +110,26 @@ public class Robot extends TimedRobot {
 		// Retrieve values to send back before telling the motors to do something
 		double now = Timer.getFPGATimestamp();
 
-		double leftPosition = leftEncoderPosition.get();
-		double leftRate = leftEncoderRate.get();
-
-		double rightPosition = rightEncoderPosition.get();
-		double rightRate = rightEncoderRate.get();
+		double position = encoderPosition.get();
+		double rate = encoderRate.get();
 
 		double battery = RobotController.getBatteryVoltage();
 		double motorVolts = battery * Math.abs(priorAutospeed);
-
-		double leftMotorVolts = motorVolts;
-		double rightMotorVolts = motorVolts;
 
 		// Retrieve the commanded speed from NetworkTables
 		double autospeed = autoSpeedEntry.getDouble(0);
 		priorAutospeed = autospeed;
 
 		// command motors to do things
-drive.tankDrive(autospeed, autospeed, false);
+		armMotor.set(autospeed);
 
 		// send telemetry data array back to NT
 		numberArray[0] = now;
 		numberArray[1] = battery;
 		numberArray[2] = autospeed;
-		numberArray[3] = leftMotorVolts;
-		numberArray[4] = rightMotorVolts;
-		numberArray[5] = leftPosition;
-		numberArray[6] = rightPosition;
-		numberArray[7] = leftRate;
-		numberArray[8] = rightRate;
-
+		numberArray[3] = motorVolts;
+		numberArray[4] = position;
+		numberArray[5] = rate;
 		telemetryEntry.setNumberArray(numberArray);
 	}
 }

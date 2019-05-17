@@ -33,12 +33,13 @@ class MyRobot(wpilib.TimedRobot):
 
     #: Test data that the robot sends back
     telemetry = ntproperty(
-        "/robot/telemetry", defaultValue=(0,) * 9, writeDefault=False
+        "/robot/telemetry", defaultValue=(0,) * 6, writeDefault=False
     )
 
     prior_autospeed = 0
 
-    WHEEL_DIAMETER = 0.5
+    #: The total gear reduction between the encoder and the arm
+    GEARING = 0.5
     ENCODER_PULSE_PER_REV = 4096
     PIDIDX = 0
 
@@ -48,67 +49,28 @@ class MyRobot(wpilib.TimedRobot):
         self.lstick = wpilib.Joystick(0)
 
         # Left front
-        left_front_motor = ctre.WPI_TalonSRX(1)
-        left_front_motor.setInverted(False)
-        left_front_motor.setSensorPhase(False)
-        self.left_front_motor = left_front_motor
-
-        # Right front
-        right_front_motor = ctre.WPI_TalonSRX(2)
-        right_front_motor.setInverted(False)
-        right_front_motor.setSensorPhase(False)
-        self.right_front_motor = right_front_motor
-
-        # Left rear -- follows front
-        left_rear_motor = ctre.WPI_TalonSRX(3)
-        left_rear_motor.setInverted(False)
-        left_rear_motor.setSensorPhase(False)
-        left_rear_motor.follow(left_front_motor)
-
-        # Right rear -- follows front
-        right_rear_motor = ctre.WPI_TalonSRX(4)
-        right_rear_motor.setInverted(False)
-        right_rear_motor.setSensorPhase(False)
-        right_rear_motor.follow(right_front_motor)
-
-        #
-        # Configure drivetrain movement
-        #
-
-        self.drive = DifferentialDrive(left_front_motor, right_front_motor)
-        self.drive.setDeadband(0)
+        self.arm_motor = ctre.WPI_TalonSRX(1)
+        self.arm_motor.setInverted(False)
+        self.arm_motor.setSensorPhase(False)
 
         #
         # Configure encoder related functions -- getpos and getrate should return
-        # ft and ft/s
+        # degrees and degrees/sec
         #
 
         encoder_constant = (
-            (1 / self.ENCODER_PULSE_PER_REV) * self.WHEEL_DIAMETER * math.pi
+            (1 / self.ENCODER_PULSE_PER_REV) / self.GEARING * 360
         )
 
-        left_front_motor.configSelectedFeedbackSensor(
-            left_front_motor.FeedbackDevice.QuadEncoder, self.PIDIDX, 10
+        self.arm_motor.configSelectedFeedbackSensor(
+            self.arm_motor.FeedbackDevice.QuadEncoder, self.PIDIDX, 10
         )
-        self.l_encoder_getpos = (
-            lambda: left_front_motor.getSelectedSensorPosition(self.PIDIDX)
+        self.encoder_getpos = (
+            lambda: self.arm_motor.getSelectedSensorPosition(self.PIDIDX)
             * encoder_constant
         )
-        self.l_encoder_getrate = (
-            lambda: left_front_motor.getSelectedSensorVelocity(self.PIDIDX)
-            * encoder_constant
-            * 10
-        )
-
-        right_front_motor.configSelectedFeedbackSensor(
-            right_front_motor.FeedbackDevice.QuadEncoder, self.PIDIDX, 10
-        )
-        self.r_encoder_getpos = (
-            lambda: left_front_motor.getSelectedSensorPosition(self.PIDIDX)
-            * encoder_constant
-        )
-        self.r_encoder_getrate = (
-            lambda: left_front_motor.getSelectedSensorVelocity(self.PIDIDX)
+        self.encoder_getrate = (
+            lambda: self.arm_motor.getSelectedSensorVelocity(self.PIDIDX)
             * encoder_constant
             * 10
         )
@@ -120,7 +82,7 @@ class MyRobot(wpilib.TimedRobot):
 
     def disabledInit(self):
         self.logger.info("Robot disabled")
-        self.drive.tankDrive(0, 0)
+        self.arm_motor.set(0)
 
     def disabledPeriodic(self):
         pass
@@ -128,8 +90,8 @@ class MyRobot(wpilib.TimedRobot):
     def robotPeriodic(self):
         # feedback for users, but not used by the control program
         sd = wpilib.SmartDashboard
-        sd.putNumber("l_encoder_pos", self.l_encoder_getpos())
-        sd.putNumber("l_encoder_rate", self.l_encoder_getrate())
+        sd.putNumber("l_encoder_pos", self.encoder_getpos())
+        sd.putNumber("l_encoder_rate", self.encoder_getrate())
         sd.putNumber("r_encoder_pos", self.r_encoder_getpos())
         sd.putNumber("r_encoder_rate", self.r_encoder_getrate())
 
@@ -137,7 +99,7 @@ class MyRobot(wpilib.TimedRobot):
         self.logger.info("Robot in operator control mode")
 
     def teleopPeriodic(self):
-        self.drive.arcadeDrive(-self.lstick.getY(), self.lstick.getX())
+        self.arm_motor.set(-self.lstick.getY())
 
     def autonomousInit(self):
         self.logger.info("Robot in autonomous mode")
@@ -160,34 +122,27 @@ class MyRobot(wpilib.TimedRobot):
         # Retrieve values to send back before telling the motors to do something
         now = wpilib.Timer.getFPGATimestamp()
 
-        l_encoder_position = self.l_encoder_getpos()
-        l_encoder_rate = self.l_encoder_getrate()
-
-        r_encoder_position = self.r_encoder_getpos()
-        r_encoder_rate = self.r_encoder_getrate()
+        encoder_position = self.encoder_getpos()
+        encoder_rate = self.encoder_getrate()
 
         battery = self.ds.getBatteryVoltage()
-        l_motor_volts = self.left_front_motor.getMotorOutputVoltage()
-        r_motor_volts = self.right_front_motor.getMotorOutputVoltage()
+        motor_volts = self.arm_motor.getMotorOutputVoltage()
 
         # Retrieve the commanded speed from NetworkTables
         autospeed = self.autospeed
         self.prior_autospeed = autospeed
 
         # command motors to do things
-        self.drive.tankDrive(autospeed, autospeed, False)
+        self.arm_motor.set(autospeed)
 
         # send telemetry data array back to NT
         self.telemetry = (
             now,
             battery,
             autospeed,
-            l_motor_volts,
-            r_motor_volts,
-            l_encoder_position,
-            r_encoder_position,
-            l_encoder_rate,
-            r_encoder_rate,
+            motor_volts,
+            encoder_position,
+            encoder_rate
         )
 
 

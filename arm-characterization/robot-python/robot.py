@@ -28,12 +28,13 @@ class MyRobot(wpilib.TimedRobot):
 
     #: Test data that the robot sends back
     telemetry = ntproperty(
-        "/robot/telemetry", defaultValue=(0,) * 9, writeDefault=False
+        "/robot/telemetry", defaultValue=(0,) * 6, writeDefault=False
     )
 
     prior_autospeed = 0
 
-    WHEEL_DIAMETER = 0.5
+    #: The total gear reduction between the encoder and the arm
+    GEARING = 1
     ENCODER_PULSE_PER_REV = 360
 
     def robotInit(self):
@@ -41,47 +42,22 @@ class MyRobot(wpilib.TimedRobot):
 
         self.lstick = wpilib.Joystick(0)
 
-        left_front_motor = wpilib.Spark(1)
-        left_front_motor.setInverted(False)
-
-        right_front_motor = wpilib.Spark(2)
-        right_front_motor.setInverted(False)
-
-        left_rear_motor = wpilib.Spark(3)
-        left_rear_motor.setInverted(False)
-
-        right_rear_motor = wpilib.Spark(4)
-        right_rear_motor.setInverted(False)
-
-        #
-        # Configure drivetrain movement
-        #
-
-        l = wpilib.SpeedControllerGroup(left_front_motor, left_rear_motor)
-        r = wpilib.SpeedControllerGroup(right_front_motor, right_rear_motor)
-
-        self.drive = DifferentialDrive(l, r)
-        self.drive.setSafetyEnabled(False)
-        self.drive.setDeadband(0)
+        self.arm_motor = wpilib.Spark(1)
+        self.arm_motor.setInverted(False)
 
         #
         # Configure encoder related functions -- getpos and getrate should return
-        # ft and ft/s
+        # degrees and degrees/s
         #
 
         encoder_constant = (
-            (1 / self.ENCODER_PULSE_PER_REV) * self.WHEEL_DIAMETER * math.pi
+            (1 / self.ENCODER_PULSE_PER_REV) / self.GEARING * 360
         )
 
-        l_encoder = wpilib.Encoder(0, 1)
-        l_encoder.setDistancePerPulse(encoder_constant)
-        self.l_encoder_getpos = l_encoder.getDistance
-        self.l_encoder_getrate = l_encoder.getRate
-
-        r_encoder = wpilib.Encoder(2, 3)
-        r_encoder.setDistancePerPulse(encoder_constant)
-        self.r_encoder_getpos = r_encoder.getDistance
-        self.r_encoder_getrate = r_encoder.getRate
+        encoder = wpilib.Encoder(0, 1)
+        encoder.setDistancePerPulse(encoder_constant)
+        self.encoder_getpos = encoder.getDistance
+        self.encoder_getrate = encoder.getRate
 
         # Set the update rate instead of using flush because of a NetworkTables bug
         # that affects ntcore and pynetworktables
@@ -90,7 +66,7 @@ class MyRobot(wpilib.TimedRobot):
 
     def disabledInit(self):
         self.logger.info("Robot disabled")
-        self.drive.tankDrive(0, 0)
+        self.arm_motor.set(0)
 
     def disabledPeriodic(self):
         pass
@@ -98,8 +74,8 @@ class MyRobot(wpilib.TimedRobot):
     def robotPeriodic(self):
         # feedback for users, but not used by the control program
         sd = wpilib.SmartDashboard
-        sd.putNumber("l_encoder_pos", self.l_encoder_getpos())
-        sd.putNumber("l_encoder_rate", self.l_encoder_getrate())
+        sd.putNumber("l_encoder_pos", self.encoder_getpos())
+        sd.putNumber("l_encoder_rate", self.encoder_getrate())
         sd.putNumber("r_encoder_pos", self.r_encoder_getpos())
         sd.putNumber("r_encoder_rate", self.r_encoder_getrate())
 
@@ -107,7 +83,7 @@ class MyRobot(wpilib.TimedRobot):
         self.logger.info("Robot in operator control mode")
 
     def teleopPeriodic(self):
-        self.drive.arcadeDrive(-self.lstick.getY(), self.lstick.getX())
+        self.arm_motor.set(-self.lstick.getY())
 
     def autonomousInit(self):
         self.logger.info("Robot in autonomous mode")
@@ -130,36 +106,27 @@ class MyRobot(wpilib.TimedRobot):
         # Retrieve values to send back before telling the motors to do something
         now = wpilib.Timer.getFPGATimestamp()
 
-        l_encoder_position = self.l_encoder_getpos()
-        l_encoder_rate = self.l_encoder_getrate()
-
-        r_encoder_position = self.r_encoder_getpos()
-        r_encoder_rate = self.r_encoder_getrate()
+        encoder_position = self.encoder_getpos()
+        encoder_rate = self.encoder_getrate()
 
         battery = self.ds.getBatteryVoltage()
         motor_volts = battery * abs(self.prior_autospeed)
-
-        l_motor_volts = motor_volts
-        r_motor_volts = motor_volts
 
         # Retrieve the commanded speed from NetworkTables
         autospeed = self.autospeed
         self.prior_autospeed = autospeed
 
         # command motors to do things
-        self.drive.tankDrive(autospeed, autospeed, False)
+        self.arm_motor.set(autospeed)
 
         # send telemetry data array back to NT
         self.telemetry = (
             now,
             battery,
             autospeed,
-            l_motor_volts,
-            r_motor_volts,
-            l_encoder_position,
-            r_encoder_position,
-            l_encoder_rate,
-            r_encoder_rate,
+            motor_volts,
+            encoder_position,
+            encoder_rate
         )
 
 
