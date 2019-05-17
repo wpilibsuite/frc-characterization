@@ -73,4 +73,5 @@ Authors
 -------
 
 Dustin Spicuzza (dustin@virtualroadside.com)
+
 Eli Barnett (emichaelbarnett@gmail.com)
