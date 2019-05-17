@@ -124,6 +124,8 @@ public class Robot extends TimedRobot {
 		double position = encoderPosition.get();
 		double rate = encoderRate.get();
 
+		double battery = RobotController.getBatteryVoltage();
+
 		double motorVolts = armMotor.getMotorOutputVoltage();
 
 		// Retrieve the commanded speed from NetworkTables
