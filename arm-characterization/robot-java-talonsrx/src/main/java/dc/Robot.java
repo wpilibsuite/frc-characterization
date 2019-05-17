@@ -28,86 +28,47 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
-	static private double WHEEL_DIAMETER = 0.5;
-	static private double ENCODER_PULSE_PER_REV = 4096;
+	// The total gear reduction between the encoder and the arm
+	static private double GEARING = 1;
+	static private double ENCODER_PULSE_PER_REV = 360;
 	static private int PIDIDX = 0;
 
 	Joystick stick;
-	DifferentialDrive drive;
 
-	WPI_TalonSRX leftFrontMotor;
-	WPI_TalonSRX rightFrontMotor;
+	WPI_TalonSRX armMotor;
 
-	Supplier<Double> leftEncoderPosition;
-	Supplier<Double> leftEncoderRate;
-	Supplier<Double> rightEncoderPosition;
-	Supplier<Double> rightEncoderRate;
+	Supplier<Double> encoderPosition;
+	Supplier<Double> encoderRate;
 
 	NetworkTableEntry autoSpeedEntry = NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
 	NetworkTableEntry telemetryEntry = NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
 
 	double priorAutospeed = 0;
-	Number[] numberArray = new Number[9];
+	Number[] numberArray = new Number[6];
 
 	@Override
 	public void robotInit() {
 
 		stick = new Joystick(0);
 
-		leftFrontMotor = new WPI_TalonSRX(1);
-		leftFrontMotor.setInverted(false);
-		leftFrontMotor.setSensorPhase(false);
-		leftFrontMotor.setNeutralMode(NeutralMode.Brake);
-
-		rightFrontMotor = new WPI_TalonSRX(2);
-		rightFrontMotor.setInverted(false);
-		rightFrontMotor.setSensorPhase(true);
-		rightFrontMotor.setNeutralMode(NeutralMode.Brake);
-
-		// left rear follows front
-		WPI_TalonSRX leftRearMotor = new WPI_TalonSRX(3);
-		leftRearMotor.setInverted(false);
-		leftRearMotor.setSensorPhase(false);
-		leftRearMotor.follow(leftFrontMotor);
-		leftRearMotor.setNeutralMode(NeutralMode.Brake);
-
-		// right rear follows front
-		WPI_TalonSRX rightRearMotor = new WPI_TalonSRX(4);
-		rightRearMotor.setInverted(false);
-		rightRearMotor.setSensorPhase(true);
-		rightRearMotor.follow(rightRearMotor);
-		rightRearMotor.setNeutralMode(NeutralMode.Brake);
-
-
-		//
-		// Configure drivetrain movement
-		//
-
-		SpeedControllerGroup leftGroup = new SpeedControllerGroup(leftFrontMotor, leftRearMotor);
-		SpeedControllerGroup rightGroup = new SpeedControllerGroup(rightFrontMotor, rightRearMotor);
-
-		drive = new DifferentialDrive(leftGroup, rightGroup);
-		drive.setDeadband(0);
-
+		armMotor = new WPI_TalonSRX(1);
+		armMotor.setInverted(false);
+		armMotor.setSensorPhase(false);
+		armMotor.setNeutralMode(NeutralMode.Brake);
 
 		//
 		// Configure encoder related functions -- getDistance and getrate should return
-		// ft and ft/s
+		// degrees and degrees/sec
 		//
 
-		double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * WHEEL_DIAMETER * Math.PI;
+		double encoderConstant = (1 / ENCODER_PULSE_PER_REV) / GEARING * 360.;
 
-		leftFrontMotor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX, 10);
-		leftEncoderPosition = () -> leftFrontMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
-		leftEncoderRate = () -> leftFrontMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
-
-		rightFrontMotor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX, 10);
-		rightEncoderPosition = () -> rightFrontMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
-		rightEncoderRate = () -> rightFrontMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
+		armMotor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX, 10);
+		encoderPosition = () -> armMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
+		encoderRate = () -> armMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
 
 		// Reset encoders
-		leftFrontMotor.setSelectedSensorPosition(0);
-		rightFrontMotor.setSelectedSensorPosition(0);
+		armMotor.setSelectedSensorPosition(0);
 
 		// Set the update rate instead of using flush because of a ntcore bug
 		// -> probably don't want to do this on a robot in competition
@@ -117,7 +78,7 @@ public class Robot extends TimedRobot {
 	@Override
 	public void disabledInit() {
 		System.out.println("Robot disabled");
-		drive.tankDrive(0, 0);
+		armMotor.set(0);
 	}
 
 	@Override
@@ -127,10 +88,8 @@ public class Robot extends TimedRobot {
 	@Override
 	public void robotPeriodic() {
 		// feedback for users, but not used by the control program
-		SmartDashboard.putNumber("l_encoder_pos", leftEncoderPosition.get());
-		SmartDashboard.putNumber("l_encoder_rate", leftEncoderRate.get());
-		SmartDashboard.putNumber("r_encoder_pos", rightEncoderPosition.get());
-		SmartDashboard.putNumber("r_encoder_rate", rightEncoderRate.get());
+		SmartDashboard.putNumber("encoder_pos", encoderPosition.get());
+		SmartDashboard.putNumber("encoder_rate", encoderRate.get());
 	}
 
 	@Override
@@ -140,7 +99,7 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void teleopPeriodic() {
-		drive.arcadeDrive(-stick.getY(), stick.getX());
+		armMotor.set(-stick.getY());
 	}
 
 	@Override
@@ -152,7 +111,7 @@ public class Robot extends TimedRobot {
 	 * If you wish to just use your own robot program to use with the data logging
 	 * program, you only need to copy/paste the logic below into your code and
 	 * ensure it gets called periodically in autonomous mode
-	 *
+	 * 
 	 * Additionally, you need to set NetworkTables update rate to 10ms using the
 	 * setUpdateRate call.
 	 */
@@ -162,35 +121,25 @@ public class Robot extends TimedRobot {
 		// Retrieve values to send back before telling the motors to do something
 		double now = Timer.getFPGATimestamp();
 
-		double leftPosition = leftEncoderPosition.get();
-		double leftRate = leftEncoderRate.get();
+		double position = encoderPosition.get();
+		double rate = encoderRate.get();
 
-		double rightPosition = rightEncoderPosition.get();
-		double rightRate = rightEncoderRate.get();
-
-		double battery = RobotController.getBatteryVoltage();
-
-		double leftMotorVolts = leftFrontMotor.getMotorOutputVoltage();
-		double rightMotorVolts = rightFrontMotor.getMotorOutputVoltage();
+		double motorVolts = armMotor.getMotorOutputVoltage();
 
 		// Retrieve the commanded speed from NetworkTables
 		double autospeed = autoSpeedEntry.getDouble(0);
 		priorAutospeed = autospeed;
 
 		// command motors to do things
-		drive.tankDrive(autospeed, autospeed, false);
+		armMotor.set(autospeed);
 
 		// send telemetry data array back to NT
 		numberArray[0] = now;
 		numberArray[1] = battery;
 		numberArray[2] = autospeed;
-		numberArray[3] = leftMotorVolts;
-		numberArray[4] = rightMotorVolts;
-		numberArray[5] = leftPosition;
-		numberArray[6] = rightPosition;
-		numberArray[7] = leftRate;
-		numberArray[8] = rightRate;
-
+		numberArray[3] = motorVolts;
+		numberArray[4] = position;
+		numberArray[5] = rate;
 		telemetryEntry.setNumberArray(numberArray);
 	}
 }
