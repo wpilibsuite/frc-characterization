@@ -13,8 +13,12 @@ Included Characterization Tools
 
 The robot characterization toolsuite currently supports chracterization for:
 
-- Drivetrains
-- Arms
+* [Java](robot-java)
+* [Java TalonSRX](robot-java-talonsrx)
+* [Python](robot-python)
+* [Python TalonSRX](robot-python-talonsrx)
+* [C++](robot-cpp)
+* [C++ TalonSRX](robot-cpp-talonsrx)
 
 Feature requests for additional characterization tools are welcome.  Also note that many
 mechanisms can be characterized by simply adapting the existing code in this library.
@@ -46,7 +50,7 @@ your robot.
 
 * http://robotpy.readthedocs.io/en/stable/install/index.html
 
-If using a Java robot program, see the WPILIb screensteps documentation for
+If using a Java or C++ robot program, see the WPILIb screensteps documentation for
 installing the necessary software on your computer.
 
 * https://wpilib.screenstepslive.com/s/4485
