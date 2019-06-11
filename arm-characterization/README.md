@@ -85,7 +85,7 @@ what it will prompt you to do:
   arm hits something
 * Fast motion forward: Enable robot in autonomous mode, disable before the arm
   hits something
-* Fast driving backward: Enable robot in autonomous mode, disable before the arm
+* Fast motion backward: Enable robot in autonomous mode, disable before the arm
   hits something
 
 Once you have run the 4 autonomous modes, the data files will be written to
