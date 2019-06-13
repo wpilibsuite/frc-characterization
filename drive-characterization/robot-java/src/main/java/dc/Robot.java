@@ -57,6 +57,7 @@ public class Robot extends TimedRobot {
 		Spark rightRearMotor = new Spark(4);
 		rightRearMotor.setInverted(false);
 
+		
 		//
 		// Configure drivetrain movement
 		//
@@ -67,11 +68,12 @@ public class Robot extends TimedRobot {
 		drive = new DifferentialDrive(leftGroup, rightGroup);
 		drive.setDeadband(0);
 
+		
 		//
 		// Configure encoder related functions -- getDistance and getrate should return
 		// ft and ft/s
 		//
-
+		
 		double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * WHEEL_DIAMETER * Math.PI;
 
 		Encoder leftEncoder = new Encoder(0, 1);
@@ -84,6 +86,7 @@ public class Robot extends TimedRobot {
 		rightEncoderPosition = rightEncoder::getDistance;
 		rightEncoderRate = rightEncoder::getRate;
 
+		
 		// Set the update rate instead of using flush because of a ntcore bug
 		// -> probably don't want to do this on a robot in competition
 		NetworkTableInstance.getDefault().setUpdateRate(0.010);
@@ -154,7 +157,7 @@ public class Robot extends TimedRobot {
 		priorAutospeed = autospeed;
 
 		// command motors to do things
-		drive.tankDrive(autospeed, autospeed, false);
+drive.tankDrive(autospeed, autospeed, false);
 
 		// send telemetry data array back to NT
 		numberArray[0] = now;
