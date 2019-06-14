@@ -19,17 +19,17 @@ void Robot::RobotInit() {
     m_rightFrontMotor.SetSensorPhase(true);
     m_rightFrontMotor.SetNeutralMode(NeutralMode::Brake);
 
-    WPI_TalonSRX leftRearMotor{3};
-    leftRearMotor.SetInverted(false);
-    leftRearMotor.SetSensorPhase(false);
-    leftRearMotor.Follow(m_leftFrontMotor);
-    leftRearMotor.SetNeutralMode(NeutralMode::Brake);
+    
+    m_leftRearMotor.SetInverted(false);
+    m_leftRearMotor.SetSensorPhase(false);
+    m_leftRearMotor.Follow(m_leftFrontMotor);
+    m_leftRearMotor.SetNeutralMode(NeutralMode::Brake);
 
-    WPI_TalonSRX rightRearMotor{4};
-    rightRearMotor.SetInverted(false);
-    rightRearMotor.SetSensorPhase(true);
-    rightRearMotor.Follow(m_rightFrontMotor);
-    rightRearMotor.SetNeutralMode(NeutralMode::Brake);
+    
+    m_rightRearMotor.SetInverted(false);
+    m_rightRearMotor.SetSensorPhase(true);
+    m_rightRearMotor.Follow(m_rightFrontMotor);
+    m_rightRearMotor.SetNeutralMode(NeutralMode::Brake);
 
     m_drive.SetDeadband(0);
 

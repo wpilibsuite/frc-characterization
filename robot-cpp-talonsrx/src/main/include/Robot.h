@@ -13,6 +13,7 @@
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
 #include <frc/drive/DifferentialDrive.h>
+#include <frc/SpeedControllerGroup.h>
 
 class Robot : public frc::TimedRobot {
 public:
@@ -41,14 +42,19 @@ private:
     frc::Joystick m_joystick{0};
 
     WPI_TalonSRX m_leftFrontMotor{1};
-    WPI_TalonSRX m_rightFrontMotor{2};
+    WPI_TalonSRX m_rightFrontMotor{3};
+    WPI_TalonSRX m_leftRearMotor{2};
+    WPI_TalonSRX m_rightRearMotor{4};
 
     nt::NetworkTableEntry m_autoSpeedEntry =
         nt::NetworkTableInstance::GetDefault().GetEntry("/robot/autospeed");
     nt::NetworkTableEntry m_telemetryEntry =
         nt::NetworkTableInstance::GetDefault().GetEntry("/robot/telemetry");
 
-    frc::DifferentialDrive m_drive{m_leftFrontMotor, m_rightFrontMotor};
+    frc::SpeedControllerGroup m_leftGroup{m_leftFrontMotor, m_leftRearMotor};
+    frc::SpeedControllerGroup m_rightGroup{m_rightFrontMotor, m_rightRearMotor};
+
+    frc::DifferentialDrive m_drive{m_leftGroup, m_rightGroup};
 
     double m_numberArray[9];
 
