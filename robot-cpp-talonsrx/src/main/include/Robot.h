@@ -42,8 +42,8 @@ private:
     frc::Joystick m_joystick{0};
 
     WPI_TalonSRX m_leftFrontMotor{1};
-    WPI_TalonSRX m_rightFrontMotor{3};
-    WPI_TalonSRX m_leftRearMotor{2};
+    WPI_TalonSRX m_rightFrontMotor{2};
+    WPI_TalonSRX m_leftRearMotor{3};
     WPI_TalonSRX m_rightRearMotor{4};
 
     nt::NetworkTableEntry m_autoSpeedEntry =
