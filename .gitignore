@@ -4,6 +4,7 @@
 
 .settings
 bin
+.vscode
 
 */.gradle
 */.vscode
