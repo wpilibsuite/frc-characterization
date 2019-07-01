@@ -34,7 +34,7 @@ columns = dict(
 )
 
 WINDOW = 8
-MOTION_THRESHOLD = 0.1
+MOTION_THRESHOLD = 20
 
 #
 # You probably don't have to change anything else
@@ -109,8 +109,8 @@ def prepare_data(data, window):
     acc = smoothDerivative(data[TIME_COL], data[ENCODER_V_COL], window)
 
     # Compute cosine of angle
-    cos = math.cos(math.radians(data[ENCODER_P_COL]))
-
+    cos = np.array([math.cos(math.radians(x)) for x in data[ENCODER_P_COL]])
+    
     dat = np.vstack(
         (
             data[TIME_COL],
@@ -186,7 +186,7 @@ def analyze_data(data, window=WINDOW):
     def _print(n, pfx, qu, step):
         vel = np.concatenate((qu[PREPARED_VEL_COL], step[PREPARED_VEL_COL]))
         accel = np.concatenate((qu[PREPARED_ACC_COL], step[PREPARED_ACC_COL]))
-        cos = np.concatenate((qu[PREPARED_COS_COL]), step[PREPARED_COS_COL])
+        cos = np.concatenate((qu[PREPARED_COS_COL], step[PREPARED_COS_COL]))
         volts = np.concatenate((qu[PREPARED_V_COL], step[PREPARED_V_COL]))
         time = np.concatenate((qu[PREPARED_TM_COL], step[PREPARED_TM_COL]))
 
