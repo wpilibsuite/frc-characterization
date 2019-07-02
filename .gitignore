@@ -5,6 +5,7 @@
 .settings
 bin
 .vscode
+.mypy_cache
 
 */.gradle
 */.vscode
