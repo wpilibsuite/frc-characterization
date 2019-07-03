@@ -290,6 +290,24 @@ def analyze_data(data, window=WINDOW, threshold = MOTION_THRESHOLD):
         y = np.linspace(np.min(step[PREPARED_ACC_COL]), np.max(step[PREPARED_ACC_COL]))
         plt.plot(ka * y, y)
 
+        plt.figure(pfx + " Voltage-Domain Plots (supplemental)")
+
+        # quasistatic position vs. gravity (cosine-term) voltage
+        ax = plt.subplot(111)
+        ax.set_xlabel("Gravity (cosine)-Portion Voltage")
+        ax.set_ylabel("Angle")
+        ax.set_title("Quasistatic angle vs gravity-portion voltage")
+        plt.scatter(
+            qu[PREPARED_V_COL] - vi - kv * qu[PREPARED_VEL_COL] - ka * qu[PREPARED_ACC_COL],
+            qu[PREPARED_POS_COL],
+            marker=".",
+            c="#000000",
+        )
+
+        # show fit line from multiple regression
+        y = np.linspace(np.min(qu[PREPARED_POS_COL]), np.max(qu[PREPARED_POS_COL]))
+        plt.plot(kcos * np.cos(np.radians(y)), y)
+
         # Fix overlapping axis labels
         plt.tight_layout(pad=0.5)
 
