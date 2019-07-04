@@ -1,5 +1,5 @@
-Robot Arm Characterization
-==========================
+Robot Elevator Characterization
+===============================
 
 This contains a test procedure that you can use to characterize a robot elevator
 so that you can more accurately control it.  The characterization will determine
