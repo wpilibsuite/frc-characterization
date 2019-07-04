@@ -56,8 +56,6 @@ private:
 
     frc::DifferentialDrive m_drive{m_leftGroup, m_rightGroup};
 
-    double m_numberArray[9];
-
     std::function<double(void)> m_leftEncoderPosition = [this]() {
         return m_leftFrontMotor.GetSelectedSensorPosition(kPIDIdx) *
                kEncoderConstant;

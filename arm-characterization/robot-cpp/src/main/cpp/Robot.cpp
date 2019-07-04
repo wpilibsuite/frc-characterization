@@ -35,6 +35,9 @@ void Robot::DisabledInit() {
 
 void Robot::AutonomousInit() { std::cout << "Robot in autonomous mode"; }
 void Robot::AutonomousPeriodic() {
+
+    static double numberArray[6];
+
     double now = frc::Timer::GetFPGATimestamp();
 
     double position = m_encoderPosition();
@@ -48,14 +51,14 @@ void Robot::AutonomousPeriodic() {
 
     m_armMotor.Set(autoSpeed);
 
-    m_numberArray[0] = now;
-    m_numberArray[1] = battery;
-    m_numberArray[2] = autoSpeed;
-    m_numberArray[3] = motorVolts;
-    m_numberArray[4] = position;
-    m_numberArray[5] = rate;
+    numberArray[0] = now;
+    numberArray[1] = battery;
+    numberArray[2] = autoSpeed;
+    numberArray[3] = motorVolts;
+    numberArray[4] = position;
+    numberArray[5] = rate;
 
-    m_telemetryEntry.SetDoubleArray(m_numberArray);
+    m_telemetryEntry.SetDoubleArray(numberArray);
 }
 
 void Robot::TeleopInit() { std::cout << "Robot in operator control mode"; }
