@@ -13,8 +13,8 @@ Included Characterization Tools
 
 The robot characterization toolsuite currently supports chracterization for:
 
- - Drivetrains
- - Arms
+- Drivetrains
+- Arms
 
 Feature requests for additional characterization tools are welcome.  Also note that many
 mechanisms can be characterized by simply adapting the existing code in this library.
