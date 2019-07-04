@@ -5,7 +5,7 @@ This contains a test procedure that you can use to characterize a robot elevator
 so that you can more accurately control it.  The characterization will determine
 best-fit parameters for the equation
 
-![voltage balance equation](https://latex.codecogs.com/gif.latex?V_{applied}=kG&plus;kFr\cdotsgn(\dot{d})&plus;kV\cdot\dot{d}&plus;kA\cdot\ddot{d})
+![voltage balance equation](https://latex.codecogs.com/gif.latex?V_{applied}=kG&plus;kFr\cdot&space;sgn(\dot{d})&plus;kV\cdot\dot{d}&plus;kA\cdot\ddot{d})
 
 where d is the distance traveled by the elevator.
 
