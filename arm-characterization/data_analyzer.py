@@ -290,6 +290,9 @@ def analyze_data(data, window=WINDOW, threshold = MOTION_THRESHOLD):
         y = np.linspace(np.min(step[PREPARED_ACC_COL]), np.max(step[PREPARED_ACC_COL]))
         plt.plot(ka * y, y)
 
+        # Fix overlapping axis labels
+        plt.tight_layout(pad=0.5)
+
         plt.figure(pfx + " Voltage-Domain Plots (supplemental)")
 
         # quasistatic position vs. gravity (cosine-term) voltage
