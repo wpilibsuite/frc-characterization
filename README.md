@@ -13,12 +13,8 @@ Included Characterization Tools
 
 The robot characterization toolsuite currently supports chracterization for:
 
-* [Java](robot-java)
-* [Java TalonSRX](robot-java-talonsrx)
-* [Python](robot-python)
-* [Python TalonSRX](robot-python-talonsrx)
-* [C++](robot-cpp)
-* [C++ TalonSRX](robot-cpp-talonsrx)
+ - Drivetrains
+ - Arms
 
 Feature requests for additional characterization tools are welcome.  Also note that many
 mechanisms can be characterized by simply adapting the existing code in this library.
