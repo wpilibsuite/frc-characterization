@@ -56,8 +56,6 @@ private:
 
     frc::Encoder m_encoder{0, 1};
 
-    double m_numberArray[6];
-
     std::function<double(void)> m_encoderPosition = [this]() {
         return m_encoder.GetDistance() + kOffset;
     };

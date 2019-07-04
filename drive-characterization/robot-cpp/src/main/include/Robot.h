@@ -58,8 +58,6 @@ private:
     frc::Encoder m_leftEncoder{0, 1};
     frc::Encoder m_rightEncoder{0, 1};
 
-    double m_numberArray[9];
-
     std::function<double(void)> m_leftEncoderPosition = [this]() {
         return m_leftEncoder.GetDistance();
     };

@@ -55,8 +55,6 @@ private:
     nt::NetworkTableEntry m_telemetryEntry =
         nt::NetworkTableInstance::GetDefault().GetEntry("/robot/telemetry");
 
-    double m_numberArray[6];
-
     std::function<double(void)> m_encoderPosition = [this]() {
         return m_armMotor.GetSelectedSensorPosition(kPIDIdx) *
                    kEncoderConstant +
