@@ -19,13 +19,11 @@ void Robot::RobotInit() {
     m_rightFrontMotor.SetSensorPhase(true);
     m_rightFrontMotor.SetNeutralMode(NeutralMode::Brake);
 
-    
     m_leftRearMotor.SetInverted(false);
     m_leftRearMotor.SetSensorPhase(false);
     m_leftRearMotor.Follow(m_leftFrontMotor);
     m_leftRearMotor.SetNeutralMode(NeutralMode::Brake);
 
-    
     m_rightRearMotor.SetInverted(false);
     m_rightRearMotor.SetSensorPhase(true);
     m_rightRearMotor.Follow(m_rightFrontMotor);
@@ -58,36 +56,20 @@ void Robot::DisabledInit() {
 
 void Robot::AutonomousInit() { std::cout << "Robot in autonomous mode"; }
 void Robot::AutonomousPeriodic() {
-
-    static double numberArray[9];
-
-    double now = frc::Timer::GetFPGATimestamp();
-
-    double leftPosition = m_leftEncoderPosition();
-    double leftRate = m_leftEncoderRate();
-
-    double rightPosition = m_rightEncoderPosition();
-    double rightRate = m_rightEncoderRate();
-
-    double battery = frc::RobotController::GetInputVoltage();
-
-    double leftMotorVolts = m_leftFrontMotor.GetMotorOutputVoltage();
-    double rightMotorVolts = m_rightFrontMotor.GetMotorOutputVoltage();
-
     double autoSpeed = m_autoSpeedEntry.GetDouble(0);
     priorAutoSpeed = autoSpeed;
 
-    m_drive.TankDrive(autoSpeed, autoSpeed, false);
+    double numberArray[]{frc::Timer::GetFPGATimestamp(),
+                         frc::RobotController::GetInputVoltage(),
+                         autoSpeed,
+                         m_leftFrontMotor.GetMotorOutputVoltage(),
+                         m_rightFrontMotor.GetMotorOutputVoltage(),
+                         m_leftEncoderPosition(),
+                         m_rightEncoderPosition(),
+                         m_leftEncoderRate(),
+                         m_rightEncoderRate()};
 
-    numberArray[0] = now;
-    numberArray[1] = battery;
-    numberArray[2] = autoSpeed;
-    numberArray[3] = leftMotorVolts;
-    numberArray[4] = rightMotorVolts;
-    numberArray[5] = leftPosition;
-    numberArray[6] = rightPosition;
-    numberArray[7] = leftRate;
-    numberArray[8] = rightRate;
+    m_drive.TankDrive(autoSpeed, autoSpeed, false);
 
     m_telemetryEntry.SetDoubleArray(numberArray);
 }

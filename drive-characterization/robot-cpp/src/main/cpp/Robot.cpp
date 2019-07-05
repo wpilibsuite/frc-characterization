@@ -43,37 +43,24 @@ void Robot::DisabledInit() {
 
 void Robot::AutonomousInit() { std::cout << "Robot in autonomous mode"; }
 void Robot::AutonomousPeriodic() {
-
-    static double numberArray[9];
-
-    double now = frc::Timer::GetFPGATimestamp();
-
-    double leftPosition = m_leftEncoderPosition();
-    double leftRate = m_leftEncoderRate();
-
-    double rightPosition = m_rightEncoderPosition();
-    double rightRate = m_rightEncoderRate();
-
     double battery = frc::RobotController::GetInputVoltage();
-    double motorVolts = battery * std::abs(priorAutoSpeed);
-
-    double leftMotorVolts = motorVolts;
-    double rightMotorVolts = motorVolts;
 
     double autoSpeed = m_autoSpeedEntry.GetDouble(0);
     priorAutoSpeed = autoSpeed;
 
-    m_drive.TankDrive(autoSpeed, autoSpeed, false);
+    double motorVolts = battery * std::abs(priorAutoSpeed);
 
-    numberArray[0] = now;
-    numberArray[1] = battery;
-    numberArray[2] = autoSpeed;
-    numberArray[3] = leftMotorVolts;
-    numberArray[4] = rightMotorVolts;
-    numberArray[5] = leftPosition;
-    numberArray[6] = rightPosition;
-    numberArray[7] = leftRate;
-    numberArray[8] = rightRate;
+    double numberArray[]{frc::Timer::GetFPGATimestamp(),
+                         battery,
+                         autoSpeed,
+                         motorVolts,
+                         motorVolts,
+                         m_leftEncoderPosition(),
+                         m_rightEncoderPosition(),
+                         m_leftEncoderRate(),
+                         m_rightEncoderRate()};
+
+    m_drive.TankDrive(autoSpeed, autoSpeed, false);
 
     m_telemetryEntry.SetDoubleArray(numberArray);
 }
