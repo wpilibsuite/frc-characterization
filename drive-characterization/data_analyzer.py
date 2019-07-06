@@ -13,6 +13,8 @@ import csv
 import json
 from os.path import basename, exists, dirname, join, splitext
 
+import control as ct
+import frccontrol as fct
 import numpy as np
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
@@ -214,6 +216,26 @@ def analyze_data(data, window=WINDOW):
             vi,
             rsquare,
         )
+        print(txt)
+
+        A = np.array([[0, 1], [0, -kv / ka]])
+        B = np.array([[0], [1 / ka]])
+        C = np.array([[1, 0]])
+        D = np.array([[0]])
+        sys = ct.StateSpace(A, B, C, D)
+
+        # Assign Q and R matrices according to Bryson's rule [1]. The elements
+        # of q and r are tunable by the user.
+        #
+        # [1] "Bryson's rule" in
+        #     https://file.tavsys.net/control/state-space-guide.pdf
+        q = [0.02, 0.4] # 0.02m and 0.4m/s acceptable errors
+        r = [12.0] # 12V acceptable actuation effort
+        Q = np.diag(1.0 / np.square(q))
+        R = np.diag(1.0 / np.square(r))
+        K = fct.lqr(sys, Q, R)
+
+        txt = "Optimal PID controller:  kp=% .4f kd=% .4f" % (K[0, 0], K[0, 1])
         print(txt)
 
         # Time-domain plots.
