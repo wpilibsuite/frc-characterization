@@ -69,6 +69,13 @@ class ProgramState:
     kcos = DoubleVar(mainGUI)
     r_square = DoubleVar(mainGUI)
 
+    qv = DoubleVar(mainGUI)
+    qa = DoubleVar(mainGUI)
+    max_effort = DoubleVar(mainGUI)
+
+    kp = DoubleVar(mainGUI)
+    kd = DoubleVar(mainGUI)
+
     def __init__(self):
         self.window_size.set(8)
         self.motion_threshold.set(20)
@@ -79,6 +86,13 @@ class ProgramState:
         self.ka.set(0)
         self.kcos.set(0)
         self.r_square.set(0)
+
+        self.qv.set(2)
+        self.qa.set(4)
+        self.max_effort.set(7)
+
+        self.kp.set(0)
+        self.kd.set(0)
 
 
 # Set up main window
@@ -119,6 +133,8 @@ def configure_gui():
         STATE.kcos.set("%.4f" % kcos)
         STATE.r_square.set("%.4f" % rsquare)
 
+        calcGains()
+
     def plotTimeDomain():
         if STATE.direction.get() == 'Forward':
             _plotTimeDomain('Forward', STATE.quasi_forward, STATE.step_forward)
@@ -136,6 +152,11 @@ def configure_gui():
             _plot3D('Forward', STATE.quasi_forward, STATE.step_forward)
         else:
             _plot3D('Backward', STATE.quasi_backward, STATE.step_backward)
+
+    def calcGains():
+        kp, kd = _calcGains(STATE.kv.get(), STATE.ka.get(), STATE.qv.get(), STATE.qa.get(), STATE.max_effort.get())
+        STATE.kp.set("%.4f" % kp)
+        STATE.kd.set("%.4f" % kd)
 
     def validateInt(P):
         if str.isdigit(P) or P == "":
@@ -200,6 +221,29 @@ def configure_gui():
     rSquareEntry = Entry(mainGUI, textvariable=STATE.r_square, width=10)
     rSquareEntry.grid(row=6, column=2)
     rSquareEntry.configure(state='readonly')
+
+    Label(mainGUI, text='Max Acceptable Velocity (deg/s)').grid(row=2, column=3, columnspan=2)
+    qVEntry = Entry(mainGUI, textvariable=STATE.qv, width=10,
+        validate = 'all', validatecommand = (valFloat, '%P'))
+    qVEntry.grid(row=2, column=5)
+
+    Label(mainGUI, text='Max Acceptable Acceleration (deg/s^2)').grid(row=3, column=3, columnspan=2)
+    qAEntry = Entry(mainGUI, textvariable=STATE.qa, width=10,
+        validate = 'all', validatecommand = (valFloat, '%P'))
+    qAEntry.grid(row=3, column=5)
+
+    Label(mainGUI, text='Max Acceptable Correction Effort (V)').grid(row=4, column=3, columnspan=2)
+    effortEntry = Entry(mainGUI, textvariable=STATE.max_effort, width=10,
+        validate = 'all', validatecommand = (valFloat, '%P'))
+    effortEntry.grid(row=4, column=5)
+
+    Button(mainGUI, text='Calculate Optimal Controller Gains:', command = calcGains).grid(row=5, column=3, columnspan=4)
+
+    Label(mainGUI, text='kP').grid(row=6, column=3)
+    kPEntry = Entry(mainGUI, textvariable=STATE.kp, width=10, state='readonly').grid(row=6, column=4)
+
+    Label(mainGUI, text='kD').grid(row=6, column=5)
+    kDEntry = Entry(mainGUI, textvariable=STATE.kd, width=10, state='readonly').grid(row=6, column=6)
 
 
 #
@@ -556,26 +600,30 @@ def main():
         split_to_csv(args.jsonfile, STATE.stored_data)
 
 
-def calc_optimal_gains(kv, ka):
+def _calcGains(kv, ka, qv, qa, effort):
+
     A = np.array([[0, 1], [0, -kv / ka]])
     B = np.array([[0], [1 / ka]])
     C = np.array([[1, 0]])
     D = np.array([[0]])
     sys = cnt.ss(A, B, C, D)
+    dsys = sys.sample(.05)
 
     # Assign Q and R matrices according to Bryson's rule [1]. The elements
     # of q and r are tunable by the user.
     #
     # [1] "Bryson's rule" in
     #     https://file.tavsys.net/control/state-space-guide.pdf
-    q = [0.02, 0.4]  # 0.02rad and 0.4rad/s acceptable errors
-    r = [12.0]  # 12V acceptable actuation effort
+    q = [qv, qa]  # deg and deg/s acceptable errors
+    r = [effort]  # V acceptable actuation effort
     Q = np.diag(1.0 / np.square(q))
     R = np.diag(1.0 / np.square(r))
-    K = frccnt.lqr(sys, Q, R)
+    K = frccnt.lqr(dsys, Q, R)
 
-    txt = "Optimal PID controller:  kp=% .4f kd=% .4f" % (K[0, 0], K[0, 1])
-    print(txt)
+    kp = K[0,0]
+    kd = K[0,1]
+
+    return kp, kd
 
 
 if __name__ == "__main__":
