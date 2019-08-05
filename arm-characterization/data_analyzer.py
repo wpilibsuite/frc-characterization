@@ -51,11 +51,6 @@ columns = dict(
     encoder_vel=5,
 )
 
-WINDOW = 8
-MOTION_THRESHOLD = 20
-SCALE = 1
-
-
 class ProgramState:
     window_size = IntVar(mainGUI)
     motion_threshold = IntVar(mainGUI)
@@ -90,12 +85,6 @@ class ProgramState:
 
 def configure_gui():
 
-    def read_only_insert(entry, text):
-        entry.configure(state='normal')
-        entry.delete(0, END)
-        entry.insert(0, text)
-        entry.configure(state='readonly')
-
     def getFile():
         dataFile = tkinter.filedialog.askopenfile(
             parent=mainGUI, mode='rb', title='Choose the data file (.JSON)')
@@ -104,7 +93,6 @@ def configure_gui():
         fileEntry.configure(state='readonly')
 
         data = json.load(dataFile)
-        fixup_data(data, SCALE)
 
         # Transform the data into a numpy array to make it easier to use
         # -> transpose it so we can deal with it in columns
@@ -115,15 +103,15 @@ def configure_gui():
 
     def runAnalysis():
 
-        STATE.quForward, STATE.quBackward, STATE.stepForward, STATE.stepBackward = prepare_data(
+        STATE.quasi_forward, STATE.quasi_backward, STATE.step_forward, STATE.step_backward = prepare_data(
             STATE.stored_data, window=STATE.window_size.get())
 
         if STATE.direction.get() == 'Forward':
             ks, kv, ka, kcos, rsquare = calcFit(
-                STATE.quForward, STATE.stepForward)
+                STATE.quasi_forward, STATE.step_forward)
         else:
             ks, kv, ka, kcos, rsquare = calcFit(
-                STATE.quBackward, STATE.stepBackward)
+                STATE.quasi_backward, STATE.step_backward)
         
         STATE.ks.set("%.4f" % ks)
         STATE.kv.set("%.4f" % kv)
@@ -131,6 +119,23 @@ def configure_gui():
         STATE.kcos.set("%.4f" % kcos)
         STATE.r_square.set("%.4f" % rsquare)
 
+    def plotTimeDomain():
+        if STATE.direction.get() == 'Forward':
+            _plotTimeDomain('Forward', STATE.quasi_forward, STATE.step_forward)
+        else:
+            _plotTimeDomain('Backward', STATE.quasi_backward, STATE.step_backward)
+
+    def plotVoltageDomain():
+        if STATE.direction.get() == 'Forward':
+            _plotVoltageDomain('Forward', STATE.quasi_forward, STATE.step_forward)
+        else:
+            _plotVoltageDomain('Backward', STATE.quasi_backward, STATE.step_backward)
+
+    def plot3D():
+        if STATE.direction.get() == 'Forward':
+            _plot3D('Forward', STATE.quasi_forward, STATE.step_forward)
+        else:
+            _plot3D('Backward', STATE.quasi_backward, STATE.step_backward)
 
     def validateInt(P):
         if str.isdigit(P) or P == "":
@@ -155,6 +160,12 @@ def configure_gui():
 
     Button(mainGUI, text="Analyze Data",
            command=runAnalysis).grid(row=1, column=0)
+
+    Button(mainGUI, text="Time-Domain Diagnostics", command=plotTimeDomain).grid(row=2, column=0)
+    Button(mainGUI, text="Voltage-Domain Diagnostics", command=plotVoltageDomain).grid(row=3, column=0)
+    Button(mainGUI, text="3D Diagonistcs", command=plot3D).grid(row=4, column=0)
+
+
     Label(mainGUI, text='Window').grid(row=1, column=1)
     windowEntry = Entry(mainGUI, textvariable=STATE.window_size,
                         width=5, validate='all', validatecommand=(valInt, '%P'))
@@ -169,25 +180,25 @@ def configure_gui():
     dirMenu = OptionMenu(mainGUI, STATE.direction, *directions)
     dirMenu.grid(row=1, column=7)
 
-    Label(mainGUI, text='kS').grid(row=2, column=0)
-    Label(mainGUI, text='kV').grid(row=3, column=0)
-    Label(mainGUI, text='kA').grid(row=4, column=0)
-    Label(mainGUI, text='kCos').grid(row=5, column=0)
-    Label(mainGUI, text='r-squared').grid(row=5, column=0)
+    Label(mainGUI, text='kS').grid(row=2, column=1)
+    Label(mainGUI, text='kV').grid(row=3, column=1)
+    Label(mainGUI, text='kA').grid(row=4, column=1)
+    Label(mainGUI, text='kCos').grid(row=5, column=1)
+    Label(mainGUI, text='r-squared').grid(row=6, column=1)
     kSEntry = Entry(mainGUI, textvariable=STATE.ks, width=10)
-    kSEntry.grid(row=2, column=1)
+    kSEntry.grid(row=2, column=2)
     kSEntry.configure(state='readonly')
     kVEntry = Entry(mainGUI, textvariable=STATE.kv, width=10)
-    kVEntry.grid(row=3, column=1)
+    kVEntry.grid(row=3, column=2)
     kVEntry.configure(state='readonly')
     kAEntry = Entry(mainGUI, textvariable=STATE.ka, width=10)
-    kAEntry.grid(row=4, column=1)
+    kAEntry.grid(row=4, column=2)
     kAEntry.configure(state='readonly')
     kCosEntry = Entry(mainGUI, textvariable=STATE.kcos, width=10)
-    kCosEntry.grid(row=5, column=1)
+    kCosEntry.grid(row=5, column=2)
     kCosEntry.configure(state='readonly')
     rSquareEntry = Entry(mainGUI, textvariable=STATE.r_square, width=10)
-    rSquareEntry.grid(row=6, column=1)
+    rSquareEntry.grid(row=6, column=2)
     rSquareEntry.configure(state='readonly')
 
 
@@ -237,7 +248,7 @@ def trim_quasi_testdata(data):
     adata = np.abs(data)
     truth = np.all(
         [
-            adata[ENCODER_V_COL] > MOTION_THRESHOLD,
+            adata[ENCODER_V_COL] > STATE.motion_threshold.get(),
             adata[VOLTS_COL] > 0
         ],
         axis=0,
@@ -283,7 +294,7 @@ def compute_accel(data, window):
     return dat
 
 
-def prepare_data(data, window=WINDOW):
+def prepare_data(data, window):
     """
         Firstly, data should be "trimmed" to exclude any data points at which the
         robot was not being commanded to do anything.
@@ -341,22 +352,18 @@ def ols(x1, x2, x3, y):
     return model.fit()
 
 
-def print(n, pfx, qu, step):
+def _plotTimeDomain(direction, qu, step):
     vel = np.concatenate((qu[PREPARED_VEL_COL], step[PREPARED_VEL_COL]))
     accel = np.concatenate((qu[PREPARED_ACC_COL], step[PREPARED_ACC_COL]))
     cos = np.concatenate((qu[PREPARED_COS_COL], step[PREPARED_COS_COL]))
     volts = np.concatenate((qu[PREPARED_V_COL], step[PREPARED_V_COL]))
     time = np.concatenate((qu[PREPARED_TM_COL], step[PREPARED_TM_COL]))
 
-    fit = ols(vel, accel, cos, volts)
-    vi, kv, ka, kcos = fit.params
-    rsquare = fit.rsquared
-
     # Time-domain plots.
     # These should show if anything went horribly wrong during the tests.
     # Useful for diagnosing the data trim; quasistatic test should look purely linear with no leading "tail"
 
-    plt.figure(pfx + " Time-Domain Plots")
+    plt.figure(direction + " Time-Domain Plots")
 
     # quasistatic vel and accel vs time
     ax1 = plt.subplot(221)
@@ -393,13 +400,29 @@ def print(n, pfx, qu, step):
     # Fix overlapping axis labels
     plt.tight_layout(pad=0.5)
 
+    plt.show()
+
+def _plotVoltageDomain(direction, qu, step):
+
     # Voltage-domain plots
     # These should show linearity of velocity/acceleration data with voltage
     # X-axis is not raw voltage, but rather "portion of voltage corresponding to vel/acc"
     # Both plots should be straight lines through the origin
     # Fit lines will be straight lines through the origin by construction; data should match fit
 
-    plt.figure(pfx + " Voltage-Domain Plots")
+    vel = np.concatenate((qu[PREPARED_VEL_COL], step[PREPARED_VEL_COL]))
+    accel = np.concatenate((qu[PREPARED_ACC_COL], step[PREPARED_ACC_COL]))
+    cos = np.concatenate((qu[PREPARED_COS_COL], step[PREPARED_COS_COL]))
+    volts = np.concatenate((qu[PREPARED_V_COL], step[PREPARED_V_COL]))
+    time = np.concatenate((qu[PREPARED_TM_COL], step[PREPARED_TM_COL]))
+
+    ks = STATE.ks.get()
+    kv = STATE.kv.get()
+    ka = STATE.ka.get()
+    kcos = STATE.kcos.get()
+    r_square = STATE.r_square.get()
+
+    plt.figure(direction + " Voltage-Domain Plots")
 
     # quasistatic vel vs. vel-causing voltage
     ax = plt.subplot(211)
@@ -407,7 +430,7 @@ def print(n, pfx, qu, step):
     ax.set_ylabel("Velocity")
     ax.set_title("Quasistatic velocity vs velocity-portion voltage")
     plt.scatter(
-        qu[PREPARED_V_COL] - vi - ka *
+        qu[PREPARED_V_COL] - ks - ka *
         qu[PREPARED_ACC_COL] - kcos * qu[PREPARED_COS_COL],
         qu[PREPARED_VEL_COL],
         marker=".",
@@ -424,7 +447,7 @@ def print(n, pfx, qu, step):
     ax.set_ylabel("Acceleration")
     ax.set_title("Dynamic acceleration vs acceleration-portion voltage")
     plt.scatter(
-        step[PREPARED_V_COL] - vi - kv *
+        step[PREPARED_V_COL] - ks - kv *
         step[PREPARED_VEL_COL] - kcos * step[PREPARED_COS_COL],
         step[PREPARED_ACC_COL],
         marker=".",
@@ -439,9 +462,25 @@ def print(n, pfx, qu, step):
     # Fix overlapping axis labels
     plt.tight_layout(pad=0.5)
 
+    plt.show()
+
+def _plot3D(direction, qu, step):
+
+    vel = np.concatenate((qu[PREPARED_VEL_COL], step[PREPARED_VEL_COL]))
+    accel = np.concatenate((qu[PREPARED_ACC_COL], step[PREPARED_ACC_COL]))
+    cos = np.concatenate((qu[PREPARED_COS_COL], step[PREPARED_COS_COL]))
+    volts = np.concatenate((qu[PREPARED_V_COL], step[PREPARED_V_COL]))
+    time = np.concatenate((qu[PREPARED_TM_COL], step[PREPARED_TM_COL]))
+
+    ks = STATE.ks.get()
+    kv = STATE.kv.get()
+    ka = STATE.ka.get()
+    kcos = STATE.kcos.get()
+    r_square = STATE.r_square.get()
+
     # Interactive 3d plot of voltage over entire vel-accel plane
     # Really cool, not really any more diagnostically-useful than prior plots but worth seeing
-    plt.figure(pfx + " 3D Vel-Accel Plane Plot")
+    plt.figure(direction + " 3D Vel-Accel Plane Plot")
 
     ax = plt.subplot(111, projection="3d")
 
@@ -457,7 +496,9 @@ def print(n, pfx, qu, step):
         np.linspace(np.min(vel), np.max(vel)),
         np.linspace(np.min(accel), np.max(accel)),
     )
-    ax.plot_surface(vv, aa, vi + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1])
+    ax.plot_surface(vv, aa, ks + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1])
+
+    plt.show()
 
 
 def calcFit(qu, step):
@@ -468,10 +509,10 @@ def calcFit(qu, step):
     time = np.concatenate((qu[PREPARED_TM_COL], step[PREPARED_TM_COL]))
 
     fit = ols(vel, accel, cos, volts)
-    vi, kv, ka, kcos = fit.params
+    ks, kv, ka, kcos = fit.params
     rsquare = fit.rsquared
 
-    return vi, kv, ka, kcos, rsquare
+    return ks, kv, ka, kcos, rsquare
 
 
 def split_to_csv(fname, stored_data):
@@ -498,34 +539,12 @@ def split_to_csv(fname, stored_data):
                 c.writerow(r)
 
 
-def fixup_data(stored_data, scale):
-    for d in JSON_DATA_KEYS:
-        data = np.array(stored_data[d]).transpose()
-
-        data[ENCODER_P_COL] *= scale
-        data[ENCODER_V_COL] *= scale
-
-        stored_data[d] = data.transpose()
-
-
 def main():
 
     global STATE
 
     parser = argparse.ArgumentParser(description="Analyze your data")
     parser.add_argument("--to-csv", action="store_true", default=False)
-    parser.add_argument(
-        "--scale",
-        default=1,
-        type=float,
-        help="Multiply position/velocity values by this",
-    )
-    parser.add_argument(
-        "--window",
-        default=WINDOW,
-        type=int,
-        help="Window size for computing acceleration",
-    )
     args = parser.parse_args()
 
     STATE = ProgramState()
@@ -534,7 +553,7 @@ def main():
     mainGUI.mainloop()
 
     if args.to_csv:
-        split_to_csv(args.jsonfile, stored_data)
+        split_to_csv(args.jsonfile, STATE.stored_data)
 
 
 def calc_optimal_gains(kv, ka):
