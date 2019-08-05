@@ -12,6 +12,9 @@ import argparse
 import csv
 import json
 import math
+import tkinter
+from tkinter import *
+from tkinter import filedialog
 from os.path import basename, exists, dirname, join, splitext
 
 import control as cnt
@@ -20,6 +23,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from mpl_toolkits.mplot3d import Axes3D
+
+dataFile = None
+
+# Set up main windor
+
+mainGUI = tkinter.Tk()
+fileEntry = Entry(mainGUI, width = 48)
+fileEntry.grid(row = 0, column = 1)
+
+def getFile():
+    global dataFile
+    dataFile = tkinter.filedialog.askopenfile(parent=mainGUI, mode = 'rb', title = 'Choose the data file (.JSON)')
+    fileEntry.insert(0, dataFile.name)
+
+Button(mainGUI, text = "Selected File", command = getFile).grid(row=0)
 
 #
 # These parameters are used to indicate which column of data each parameter
@@ -206,26 +224,6 @@ def analyze_data(data, window=WINDOW):
         )
         print(txt)
 
-        A = np.array([[0, 1], [0, -kv / ka]])
-        B = np.array([[0], [1 / ka]])
-        C = np.array([[1, 0]])
-        D = np.array([[0]])
-        sys = cnt.ss(A, B, C, D)
-
-        # Assign Q and R matrices according to Bryson's rule [1]. The elements
-        # of q and r are tunable by the user.
-        #
-        # [1] "Bryson's rule" in
-        #     https://file.tavsys.net/control/state-space-guide.pdf
-        q = [0.02, 0.4] # 0.02rad and 0.4rad/s acceptable errors
-        r = [12.0] # 12V acceptable actuation effort
-        Q = np.diag(1.0 / np.square(q))
-        R = np.diag(1.0 / np.square(r))
-        K = frccnt.lqr(sys, Q, R)
-
-        txt = "Optimal PID controller:  kp=% .4f kd=% .4f" % (K[0, 0], K[0, 1])
-        print(txt)
-
         # Time-domain plots.
         # These should show if anything went horribly wrong during the tests.
         # Useful for diagnosing the data trim; quasistatic test should look purely linear with no leading "tail"
@@ -372,7 +370,6 @@ def fixup_data(stored_data, scale):
 def main():
 
     parser = argparse.ArgumentParser(description="Analyze your data")
-    parser.add_argument("jsonfile", help="Input JSON file")
     parser.add_argument("--to-csv", action="store_true", default=False)
     parser.add_argument(
         "--scale",
@@ -388,8 +385,9 @@ def main():
     )
     args = parser.parse_args()
 
-    with open(args.jsonfile, "r") as fp:
-        stored_data = json.load(fp)
+    mainGUI.mainloop()
+
+    stored_data = json.load(dataFile)
 
     fixup_data(stored_data, args.scale)
 
@@ -397,6 +395,27 @@ def main():
         split_to_csv(args.jsonfile, stored_data)
     else:
         analyze_data(stored_data, window=args.window)
+
+def calc_optimal_gains(kv, ka):
+    A = np.array([[0, 1], [0, -kv / ka]])
+    B = np.array([[0], [1 / ka]])
+    C = np.array([[1, 0]])
+    D = np.array([[0]])
+    sys = cnt.ss(A, B, C, D)
+
+    # Assign Q and R matrices according to Bryson's rule [1]. The elements
+    # of q and r are tunable by the user.
+    #
+    # [1] "Bryson's rule" in
+    #     https://file.tavsys.net/control/state-space-guide.pdf
+    q = [0.02, 0.4] # 0.02rad and 0.4rad/s acceptable errors
+    r = [12.0] # 12V acceptable actuation effort
+    Q = np.diag(1.0 / np.square(q))
+    R = np.diag(1.0 / np.square(r))
+    K = frccnt.lqr(sys, Q, R)
+
+    txt = "Optimal PID controller:  kp=% .4f kd=% .4f" % (K[0, 0], K[0, 1])
+    print(txt)
 
 
 if __name__ == "__main__":
