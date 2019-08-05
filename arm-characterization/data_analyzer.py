@@ -24,20 +24,18 @@ import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from mpl_toolkits.mplot3d import Axes3D
 
-dataFile = None
 
-# Set up main windor
+def isfloat(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
 
 mainGUI = tkinter.Tk()
-fileEntry = Entry(mainGUI, width = 48)
-fileEntry.grid(row = 0, column = 1)
 
-def getFile():
-    global dataFile
-    dataFile = tkinter.filedialog.askopenfile(parent=mainGUI, mode = 'rb', title = 'Choose the data file (.JSON)')
-    fileEntry.insert(0, dataFile.name)
-
-Button(mainGUI, text = "Selected File", command = getFile).grid(row=0)
+STATE = None
 
 #
 # These parameters are used to indicate which column of data each parameter
@@ -55,6 +53,143 @@ columns = dict(
 
 WINDOW = 8
 MOTION_THRESHOLD = 20
+SCALE = 1
+
+
+class ProgramState:
+    window_size = IntVar(mainGUI)
+    motion_threshold = IntVar(mainGUI)
+    direction = StringVar(mainGUI)
+
+    stored_data = None
+
+    quasi_forward = None
+    quasi_backward = None
+    step_forward = None
+    step_backward = None
+
+    ks = DoubleVar(mainGUI)
+    kv = DoubleVar(mainGUI)
+    ka = DoubleVar(mainGUI)
+    kcos = DoubleVar(mainGUI)
+    r_square = DoubleVar(mainGUI)
+
+    def __init__(self):
+        self.window_size.set(8)
+        self.motion_threshold.set(20)
+        self.direction.set('Forward')
+
+        self.ks.set(0)
+        self.kv.set(0)
+        self.ka.set(0)
+        self.kcos.set(0)
+        self.r_square.set(0)
+
+
+# Set up main window
+
+def configure_gui():
+
+    def read_only_insert(entry, text):
+        entry.configure(state='normal')
+        entry.delete(0, END)
+        entry.insert(0, text)
+        entry.configure(state='readonly')
+
+    def getFile():
+        dataFile = tkinter.filedialog.askopenfile(
+            parent=mainGUI, mode='rb', title='Choose the data file (.JSON)')
+        fileEntry.configure(state='normal')
+        fileEntry.insert(0, dataFile.name)
+        fileEntry.configure(state='readonly')
+
+        data = json.load(dataFile)
+        fixup_data(data, SCALE)
+
+        # Transform the data into a numpy array to make it easier to use
+        # -> transpose it so we can deal with it in columns
+        for k in JSON_DATA_KEYS:
+            data[k] = np.array(data[k]).transpose()
+
+        STATE.stored_data = data
+
+    def runAnalysis():
+
+        STATE.quForward, STATE.quBackward, STATE.stepForward, STATE.stepBackward = prepare_data(
+            STATE.stored_data, window=STATE.window_size.get())
+
+        if STATE.direction.get() == 'Forward':
+            ks, kv, ka, kcos, rsquare = calcFit(
+                STATE.quForward, STATE.stepForward)
+        else:
+            ks, kv, ka, kcos, rsquare = calcFit(
+                STATE.quBackward, STATE.stepBackward)
+        
+        STATE.ks.set("%.4f" % ks)
+        STATE.kv.set("%.4f" % kv)
+        STATE.ka.set("%.4f" % ka)
+        STATE.kcos.set("%.4f" % kcos)
+        STATE.r_square.set("%.4f" % rsquare)
+
+
+    def validateInt(P):
+        if str.isdigit(P) or P == "":
+            return True
+        else:
+            return False
+
+    def validateFloat(P):
+        if isfloat(P) or P == "":
+            return True
+        else:
+            return False
+
+    valInt = mainGUI.register(validateInt)
+    valFloat = mainGUI.register(validateFloat)
+
+    fileEntry = Entry(mainGUI, width=48)
+    fileEntry.grid(row=0, column=1, columnspan=6)
+    fileEntry.configure(state='readonly')
+    Button(mainGUI, text="Select Data File",
+           command=getFile).grid(row=0, column=0)
+
+    Button(mainGUI, text="Analyze Data",
+           command=runAnalysis).grid(row=1, column=0)
+    Label(mainGUI, text='Window').grid(row=1, column=1)
+    windowEntry = Entry(mainGUI, textvariable=STATE.window_size,
+                        width=5, validate='all', validatecommand=(valInt, '%P'))
+    windowEntry.grid(row=1, column=2)
+
+    Label(mainGUI, text='Threshold').grid(row=1, column=3)
+    thresholdEntry = Entry(mainGUI, textvariable=STATE.motion_threshold,
+                           width=5, validate='all', validatecommand=(valInt, '%P'))
+    thresholdEntry.grid(row=1, column=4)
+
+    directions = {'Forward', 'Backward'}
+    dirMenu = OptionMenu(mainGUI, STATE.direction, *directions)
+    dirMenu.grid(row=1, column=7)
+
+    Label(mainGUI, text='kS').grid(row=2, column=0)
+    Label(mainGUI, text='kV').grid(row=3, column=0)
+    Label(mainGUI, text='kA').grid(row=4, column=0)
+    Label(mainGUI, text='kCos').grid(row=5, column=0)
+    Label(mainGUI, text='r-squared').grid(row=5, column=0)
+    kSEntry = Entry(mainGUI, textvariable=STATE.ks, width=10)
+    kSEntry.grid(row=2, column=1)
+    kSEntry.configure(state='readonly')
+    kVEntry = Entry(mainGUI, textvariable=STATE.kv, width=10)
+    kVEntry.grid(row=3, column=1)
+    kVEntry.configure(state='readonly')
+    kAEntry = Entry(mainGUI, textvariable=STATE.ka, width=10)
+    kAEntry.grid(row=4, column=1)
+    kAEntry.configure(state='readonly')
+    kCosEntry = Entry(mainGUI, textvariable=STATE.kcos, width=10)
+    kCosEntry.grid(row=5, column=1)
+    kCosEntry.configure(state='readonly')
+    rSquareEntry = Entry(mainGUI, textvariable=STATE.r_square, width=10)
+    rSquareEntry.grid(row=6, column=1)
+    rSquareEntry.configure(state='readonly')
+
 
 #
 # You probably don't have to change anything else
@@ -78,9 +213,12 @@ PREPARED_COS_COL = 5
 
 PREPARED_MAX_COL = PREPARED_ACC_COL
 
-JSON_DATA_KEYS = ["slow-forward", "slow-backward", "fast-forward", "fast-backward"]
+JSON_DATA_KEYS = ["slow-forward", "slow-backward",
+                  "fast-forward", "fast-backward"]
 
 # From 449's R script (note: R is 1-indexed)
+
+
 def smoothDerivative(tm, value, n):
     """
         :param tm: time column
@@ -110,10 +248,10 @@ def trim_quasi_testdata(data):
 def trim_step_testdata(data):
     # removes anything before the max acceleration
     max_accel_idx = np.argmax(np.abs(data[PREPARED_ACC_COL]))
-    return data[:, max_accel_idx + 1 :]
+    return data[:, max_accel_idx + 1:]
 
 
-def prepare_data(data, window):
+def compute_accel(data, window):
     """
         Returned data columns correspond to PREPARED_*
     """
@@ -130,7 +268,7 @@ def prepare_data(data, window):
 
     # Compute cosine of angle
     cos = np.array([math.cos(math.radians(x)) for x in data[ENCODER_P_COL]])
-    
+
     dat = np.vstack(
         (
             data[TIME_COL],
@@ -145,7 +283,7 @@ def prepare_data(data, window):
     return dat
 
 
-def analyze_data(data, window=WINDOW):
+def prepare_data(data, window=WINDOW):
     """
         Firstly, data should be "trimmed" to exclude any data points at which the
         robot was not being commanded to do anything.
@@ -177,160 +315,163 @@ def analyze_data(data, window=WINDOW):
         coefficient of acceleration).
     """
 
-    # Transform the data into a numpy array to make it easier to use
-    # -> transpose it so we can deal with it in columns
-    for k in JSON_DATA_KEYS:
-        data[k] = np.array(data[k]).transpose()
-
     # trim quasi data before computing acceleration
     sf_trim = trim_quasi_testdata(data["slow-forward"])
     sb_trim = trim_quasi_testdata(data["slow-backward"])
-    sf = prepare_data(sf_trim, window)
-    sb = prepare_data(sb_trim, window)
+    sf = compute_accel(sf_trim, window)
+    sb = compute_accel(sb_trim, window)
 
     # trim step data after computing acceleration
-    ff = prepare_data(data["fast-forward"], window)
-    fb = prepare_data(data["fast-backward"], window)
+    ff = compute_accel(data["fast-forward"], window)
+    fb = compute_accel(data["fast-backward"], window)
 
     ff = trim_step_testdata(ff)
     fb = trim_step_testdata(fb)
 
-    # Now that we have useful data, perform linear regression on it
-    def _ols(x1, x2, x3, y):
-        """multivariate linear regression using ordinary least squares"""
-        x = np.array((x1, x2, x3)).T
-        x = sm.add_constant(x)
-        model = sm.OLS(y, x)
-        return model.fit()
+    return sf, sb, ff, fb
 
-    def _print(n, pfx, qu, step):
-        vel = np.concatenate((qu[PREPARED_VEL_COL], step[PREPARED_VEL_COL]))
-        accel = np.concatenate((qu[PREPARED_ACC_COL], step[PREPARED_ACC_COL]))
-        cos = np.concatenate((qu[PREPARED_COS_COL], step[PREPARED_COS_COL]))
-        volts = np.concatenate((qu[PREPARED_V_COL], step[PREPARED_V_COL]))
-        time = np.concatenate((qu[PREPARED_TM_COL], step[PREPARED_TM_COL]))
+# Now that we have useful data, perform linear regression on it
 
-        fit = _ols(vel, accel, cos, volts)
-        vi, kv, ka, kcos = fit.params
-        rsquare = fit.rsquared
 
-        txt = "%s:  kv=% .4f ka=% .4f kcos=% .4f vintercept=% .4f r-squared=% .4f" % (
-            pfx,
-            kv,
-            ka,
-            kcos,
-            vi,
-            rsquare,
-        )
-        print(txt)
+def ols(x1, x2, x3, y):
+    """multivariate linear regression using ordinary least squares"""
+    x = np.array((x1, x2, x3)).T
+    x = sm.add_constant(x)
+    model = sm.OLS(y, x)
+    return model.fit()
 
-        # Time-domain plots.
-        # These should show if anything went horribly wrong during the tests.
-        # Useful for diagnosing the data trim; quasistatic test should look purely linear with no leading "tail"
 
-        plt.figure(pfx + " Time-Domain Plots")
+def print(n, pfx, qu, step):
+    vel = np.concatenate((qu[PREPARED_VEL_COL], step[PREPARED_VEL_COL]))
+    accel = np.concatenate((qu[PREPARED_ACC_COL], step[PREPARED_ACC_COL]))
+    cos = np.concatenate((qu[PREPARED_COS_COL], step[PREPARED_COS_COL]))
+    volts = np.concatenate((qu[PREPARED_V_COL], step[PREPARED_V_COL]))
+    time = np.concatenate((qu[PREPARED_TM_COL], step[PREPARED_TM_COL]))
 
-        # quasistatic vel and accel vs time
-        ax1 = plt.subplot(221)
-        ax1.set_xlabel("Time")
-        ax1.set_ylabel("Velocity")
-        ax1.set_title("Quasistatic velocity vs time")
-        plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_VEL_COL], marker=".", c="#000000")
+    fit = ols(vel, accel, cos, volts)
+    vi, kv, ka, kcos = fit.params
+    rsquare = fit.rsquared
 
-        ax = plt.subplot(222, sharey=ax1)
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Velocity")
-        ax.set_title("Dynamic velocity vs time")
-        plt.scatter(
-            step[PREPARED_TM_COL], step[PREPARED_VEL_COL], marker=".", c="#000000"
-        )
+    # Time-domain plots.
+    # These should show if anything went horribly wrong during the tests.
+    # Useful for diagnosing the data trim; quasistatic test should look purely linear with no leading "tail"
 
-        # dynamic vel and accel vs time
-        ax2 = plt.subplot(223)
-        ax2.set_xlabel("Time")
-        ax2.set_ylabel("Acceleration")
-        ax2.set_title("Quasistatic acceleration vs time")
-        plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_ACC_COL], marker=".", c="#000000")
+    plt.figure(pfx + " Time-Domain Plots")
 
-        ax = plt.subplot(224, sharey=ax2)
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Acceleration")
-        ax.set_title("Dynamic acceleration vs time")
-        plt.scatter(
-            step[PREPARED_TM_COL], step[PREPARED_ACC_COL], marker=".", c="#000000"
-        )
+    # quasistatic vel and accel vs time
+    ax1 = plt.subplot(221)
+    ax1.set_xlabel("Time")
+    ax1.set_ylabel("Velocity")
+    ax1.set_title("Quasistatic velocity vs time")
+    plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_VEL_COL],
+                marker=".", c="#000000")
 
-        # Fix overlapping axis labels
-        plt.tight_layout(pad=0.5)
+    ax = plt.subplot(222, sharey=ax1)
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Velocity")
+    ax.set_title("Dynamic velocity vs time")
+    plt.scatter(
+        step[PREPARED_TM_COL], step[PREPARED_VEL_COL], marker=".", c="#000000"
+    )
 
-        # Voltage-domain plots
-        # These should show linearity of velocity/acceleration data with voltage
-        # X-axis is not raw voltage, but rather "portion of voltage corresponding to vel/acc"
-        # Both plots should be straight lines through the origin
-        # Fit lines will be straight lines through the origin by construction; data should match fit
+    # dynamic vel and accel vs time
+    ax2 = plt.subplot(223)
+    ax2.set_xlabel("Time")
+    ax2.set_ylabel("Acceleration")
+    ax2.set_title("Quasistatic acceleration vs time")
+    plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_ACC_COL],
+                marker=".", c="#000000")
 
-        plt.figure(pfx + " Voltage-Domain Plots")
+    ax = plt.subplot(224, sharey=ax2)
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Acceleration")
+    ax.set_title("Dynamic acceleration vs time")
+    plt.scatter(
+        step[PREPARED_TM_COL], step[PREPARED_ACC_COL], marker=".", c="#000000"
+    )
 
-        # quasistatic vel vs. vel-causing voltage
-        ax = plt.subplot(211)
-        ax.set_xlabel("Velocity-Portion Voltage")
-        ax.set_ylabel("Velocity")
-        ax.set_title("Quasistatic velocity vs velocity-portion voltage")
-        plt.scatter(
-            qu[PREPARED_V_COL] - vi - ka * qu[PREPARED_ACC_COL] - kcos * qu[PREPARED_COS_COL],
-            qu[PREPARED_VEL_COL],
-            marker=".",
-            c="#000000",
-        )
+    # Fix overlapping axis labels
+    plt.tight_layout(pad=0.5)
 
-        # show fit line from multiple regression
-        y = np.linspace(np.min(qu[PREPARED_VEL_COL]), np.max(qu[PREPARED_VEL_COL]))
-        plt.plot(kv * y, y)
+    # Voltage-domain plots
+    # These should show linearity of velocity/acceleration data with voltage
+    # X-axis is not raw voltage, but rather "portion of voltage corresponding to vel/acc"
+    # Both plots should be straight lines through the origin
+    # Fit lines will be straight lines through the origin by construction; data should match fit
 
-        # dynamic accel vs. accel-causing voltage
-        ax = plt.subplot(212)
-        ax.set_xlabel("Acceleration-Portion Voltage")
-        ax.set_ylabel("Acceleration")
-        ax.set_title("Dynamic acceleration vs acceleration-portion voltage")
-        plt.scatter(
-            step[PREPARED_V_COL] - vi - kv * step[PREPARED_VEL_COL] - kcos * step[PREPARED_COS_COL],
-            step[PREPARED_ACC_COL],
-            marker=".",
-            c="#000000",
-        )
+    plt.figure(pfx + " Voltage-Domain Plots")
 
-        # show fit line from multiple regression
-        y = np.linspace(np.min(step[PREPARED_ACC_COL]), np.max(step[PREPARED_ACC_COL]))
-        plt.plot(ka * y, y)
+    # quasistatic vel vs. vel-causing voltage
+    ax = plt.subplot(211)
+    ax.set_xlabel("Velocity-Portion Voltage")
+    ax.set_ylabel("Velocity")
+    ax.set_title("Quasistatic velocity vs velocity-portion voltage")
+    plt.scatter(
+        qu[PREPARED_V_COL] - vi - ka *
+        qu[PREPARED_ACC_COL] - kcos * qu[PREPARED_COS_COL],
+        qu[PREPARED_VEL_COL],
+        marker=".",
+        c="#000000",
+    )
 
-        # Fix overlapping axis labels
-        plt.tight_layout(pad=0.5)
+    # show fit line from multiple regression
+    y = np.linspace(np.min(qu[PREPARED_VEL_COL]), np.max(qu[PREPARED_VEL_COL]))
+    plt.plot(kv * y, y)
 
-        # Interactive 3d plot of voltage over entire vel-accel plane
-        # Really cool, not really any more diagnostically-useful than prior plots but worth seeing
-        plt.figure(pfx + " 3D Vel-Accel Plane Plot")
+    # dynamic accel vs. accel-causing voltage
+    ax = plt.subplot(212)
+    ax.set_xlabel("Acceleration-Portion Voltage")
+    ax.set_ylabel("Acceleration")
+    ax.set_title("Dynamic acceleration vs acceleration-portion voltage")
+    plt.scatter(
+        step[PREPARED_V_COL] - vi - kv *
+        step[PREPARED_VEL_COL] - kcos * step[PREPARED_COS_COL],
+        step[PREPARED_ACC_COL],
+        marker=".",
+        c="#000000",
+    )
 
-        ax = plt.subplot(111, projection="3d")
+    # show fit line from multiple regression
+    y = np.linspace(np.min(step[PREPARED_ACC_COL]),
+                    np.max(step[PREPARED_ACC_COL]))
+    plt.plot(ka * y, y)
 
-        # 3D scatterplot
-        ax.set_xlabel("Velocity")
-        ax.set_ylabel("Acceleration")
-        ax.set_zlabel("Voltage")
-        ax.set_title("Cosine-adjusted Voltage vs velocity and acceleration")
-        ax.scatter(vel, accel, volts - kcos * cos)
+    # Fix overlapping axis labels
+    plt.tight_layout(pad=0.5)
 
-        # Show best fit plane
-        vv, aa = np.meshgrid(
-            np.linspace(np.min(vel), np.max(vel)),
-            np.linspace(np.min(accel), np.max(accel)),
-        )
-        ax.plot_surface(vv, aa, vi + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1])
+    # Interactive 3d plot of voltage over entire vel-accel plane
+    # Really cool, not really any more diagnostically-useful than prior plots but worth seeing
+    plt.figure(pfx + " 3D Vel-Accel Plane Plot")
 
-    # kv and vintercept is computed from the first two tests, ka from the latter
-    _print(1, "Left forward  ", sf, ff)
-    _print(2, "Left backward ", sb, fb)
+    ax = plt.subplot(111, projection="3d")
 
-    plt.show()
+    # 3D scatterplot
+    ax.set_xlabel("Velocity")
+    ax.set_ylabel("Acceleration")
+    ax.set_zlabel("Voltage")
+    ax.set_title("Cosine-adjusted Voltage vs velocity and acceleration")
+    ax.scatter(vel, accel, volts - kcos * cos)
+
+    # Show best fit plane
+    vv, aa = np.meshgrid(
+        np.linspace(np.min(vel), np.max(vel)),
+        np.linspace(np.min(accel), np.max(accel)),
+    )
+    ax.plot_surface(vv, aa, vi + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1])
+
+
+def calcFit(qu, step):
+    vel = np.concatenate((qu[PREPARED_VEL_COL], step[PREPARED_VEL_COL]))
+    accel = np.concatenate((qu[PREPARED_ACC_COL], step[PREPARED_ACC_COL]))
+    cos = np.concatenate((qu[PREPARED_COS_COL], step[PREPARED_COS_COL]))
+    volts = np.concatenate((qu[PREPARED_V_COL], step[PREPARED_V_COL]))
+    time = np.concatenate((qu[PREPARED_TM_COL], step[PREPARED_TM_COL]))
+
+    fit = ols(vel, accel, cos, volts)
+    vi, kv, ka, kcos = fit.params
+    rsquare = fit.rsquared
+
+    return vi, kv, ka, kcos, rsquare
 
 
 def split_to_csv(fname, stored_data):
@@ -369,6 +510,8 @@ def fixup_data(stored_data, scale):
 
 def main():
 
+    global STATE
+
     parser = argparse.ArgumentParser(description="Analyze your data")
     parser.add_argument("--to-csv", action="store_true", default=False)
     parser.add_argument(
@@ -385,16 +528,14 @@ def main():
     )
     args = parser.parse_args()
 
+    STATE = ProgramState()
+
+    configure_gui()
     mainGUI.mainloop()
-
-    stored_data = json.load(dataFile)
-
-    fixup_data(stored_data, args.scale)
 
     if args.to_csv:
         split_to_csv(args.jsonfile, stored_data)
-    else:
-        analyze_data(stored_data, window=args.window)
+
 
 def calc_optimal_gains(kv, ka):
     A = np.array([[0, 1], [0, -kv / ka]])
@@ -408,8 +549,8 @@ def calc_optimal_gains(kv, ka):
     #
     # [1] "Bryson's rule" in
     #     https://file.tavsys.net/control/state-space-guide.pdf
-    q = [0.02, 0.4] # 0.02rad and 0.4rad/s acceptable errors
-    r = [12.0] # 12V acceptable actuation effort
+    q = [0.02, 0.4]  # 0.02rad and 0.4rad/s acceptable errors
+    r = [12.0]  # 12V acceptable actuation effort
     Q = np.diag(1.0 / np.square(q))
     R = np.diag(1.0 / np.square(r))
     K = frccnt.lqr(sys, Q, R)
