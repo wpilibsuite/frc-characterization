@@ -81,18 +81,23 @@ def smoothDerivative(tm, value, n):
     return np.pad(x, (int(np.ceil(n / 2.0)), int(np.floor(n / 2.0))), mode="constant")
 
 
-def trim_quasi_testdata(data):
+def trim_quasi_testdata(data, threshold):
     adata = np.abs(data)
     truth = np.all(
         [
-            adata[L_ENCODER_V_COL] > MOTION_THRESHOLD,
+            adata[L_ENCODER_V_COL] > threshold,
             adata[L_VOLTS_COL] > 0,
-            adata[R_ENCODER_V_COL] > MOTION_THRESHOLD,
+            adata[R_ENCODER_V_COL] > threshold,
             adata[R_VOLTS_COL] > 0,
         ],
         axis=0,
     )
-    return data.transpose()[truth].transpose()
+    temp = data.transpose()[truth].transpose()
+    if temp[PREPARED_TM_COL].size == 0:
+        print("Error! No data in quasistatic test is above motion threshold.")
+        print("Try running with a smaller motion threshold (use --motion_threshold)")
+        print("and make sure your encoder is reporting correctly!")
+    return temp
 
 
 def trim_step_testdata(data):
@@ -108,6 +113,8 @@ def prepare_data(data, window):
 
     # deal with incomplete data
     if len(data[TIME_COL]) < window * 2:
+        print("Error! Not enough data points to compute acceleration.")
+        print("Try running with a smaller window setting (use --window)")
         return (
             np.zeros(shape=(PREPARED_MAX_COL + 1, 4)),
             np.zeros(shape=(PREPARED_MAX_COL + 1, 4)),
@@ -139,7 +146,7 @@ def prepare_data(data, window):
     return l, r
 
 
-def analyze_data(data, window=WINDOW):
+def analyze_data(data, window=WINDOW, threshold = MOTION_THRESHOLD):
     """
         Firstly, data should be "trimmed" to exclude any data points at which the
         robot was not being commanded to do anything.
@@ -403,6 +410,12 @@ def main():
         type=int,
         help="Window size for computing acceleration",
     )
+    parser.add_argument(
+        "--motion_threshold",
+        default=MOTION_THRESHOLD,
+        type=float,
+        help="Minimum velocity, used for data trimming",
+    )
     args = parser.parse_args()
 
     with open(args.jsonfile, "r") as fp:
@@ -413,7 +426,7 @@ def main():
     if args.to_csv:
         split_to_csv(args.jsonfile, stored_data)
     else:
-        analyze_data(stored_data, window=args.window)
+        analyze_data(stored_data, window=args.window, threshold = args.motion_threshold)
 
 
 if __name__ == "__main__":

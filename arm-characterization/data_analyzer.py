@@ -460,7 +460,7 @@ def smoothDerivative(tm, value, n):
     return np.pad(x, (int(np.ceil(n / 2.0)), int(np.floor(n / 2.0))), mode="constant")
 
 
-def trim_quasi_testdata(data):
+def trim_quasi_testdata(data, threshold):
     adata = np.abs(data)
     truth = np.all(
         [
@@ -469,7 +469,12 @@ def trim_quasi_testdata(data):
         ],
         axis=0,
     )
-    return data.transpose()[truth].transpose()
+    temp = data.transpose()[truth].transpose()
+    if temp[PREPARED_TM_COL].size == 0:
+        print("Error! No data in quasistatic test is above motion threshold.")
+        print("Try running with a smaller motion threshold (use --motion_threshold)")
+        print("and make sure your encoder is reporting correctly!")
+    return temp
 
 
 def trim_step_testdata(data):
@@ -485,6 +490,8 @@ def compute_accel(data, window):
 
     # deal with incomplete data
     if len(data[TIME_COL]) < window * 2:
+        print("Error! Not enough data points to compute acceleration.")
+        print("Try running with a smaller window setting (use --window)")
         return (
             np.zeros(shape=(PREPARED_MAX_COL + 1, 4)),
             np.zeros(shape=(PREPARED_MAX_COL + 1, 4)),
