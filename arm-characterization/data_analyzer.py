@@ -77,6 +77,11 @@ class ProgramState:
     max_controller_output = DoubleVar(mainGUI)
     controller_time_normalized = BooleanVar(mainGUI)
 
+    gearing = DoubleVar(mainGUI)
+
+    controller_type = StringVar(mainGUI)
+    encoder_ppr = IntVar(mainGUI)
+
     gain_units_preset = StringVar(mainGUI)
 
     kp = DoubleVar(mainGUI)
@@ -99,6 +104,11 @@ class ProgramState:
         self.period.set(.02)
         self.max_controller_output.set(12)
         self.controller_time_normalized.set(True)
+
+        self.gearing.set(1)
+
+        self.controller_type.set("Onboard")
+        self.encoder_ppr.set(4096)
 
         self.gain_units_preset.set('Default')
 
@@ -141,11 +151,11 @@ def configure_gui():
             ks, kv, ka, kcos, rsquare = calcFit(
                 STATE.quasi_backward, STATE.step_backward)
 
-        STATE.ks.set("%.4f" % ks)
-        STATE.kv.set("%.4f" % kv)
-        STATE.ka.set("%.4f" % ka)
-        STATE.kcos.set("%.4f" % kcos)
-        STATE.r_square.set("%.4f" % rsquare)
+        STATE.ks.set('%s' % float('%.3g' % ks))
+        STATE.kv.set('%s' % float('%.3g' % kv))
+        STATE.ka.set('%s' % float('%.3g' % ka))
+        STATE.kcos.set('%s' % float('%.3g' % kcos))
+        STATE.r_square.set('%s' % float('%.3g' % rsquare))
 
         calcGains()
 
@@ -176,17 +186,34 @@ def configure_gui():
             _plot3D('Backward', STATE.quasi_backward, STATE.step_backward)
 
     def calcGains():
-        kp, kd = _calcGains(STATE.kv.get(), STATE.ka.get(), STATE.qv.get(
-        ), STATE.qa.get(), STATE.max_effort.get(), STATE.period.get())
 
+        kp, kd = _calcGains(
+            STATE.kv.get(), 
+            STATE.ka.get(), 
+            STATE.qv.get(), 
+            STATE.qa.get(), 
+            STATE.max_effort.get(), 
+            STATE.period.get())
+
+        # Scale gains to output
         kp = kp / 12 * STATE.max_controller_output.get()
         kd = kd / 12 * STATE.max_controller_output.get()
 
+        # Rescale kD if not time-normalized
         if not STATE.controller_time_normalized.get():
             kd = kd/STATE.period.get()
 
-        STATE.kp.set("%.4f" % kp)
-        STATE.kd.set("%.4f" % kd)
+        # Scale by gearing if controller is offboard
+        if not STATE.controller_type.get() == 'Onboard':
+            kp = kp / STATE.gearing.get()
+            kd = kd / STATE.gearing.get()
+
+        if STATE.controller_type.get() == 'Talon':
+            kp = kp * 360 / STATE.encoder_ppr.get()
+            kd = kd * 360 / STATE.encoder_ppr.get()
+
+        STATE.kp.set('%s' % float('%.3g' % kp))
+        STATE.kd.set('%s' % float('%.3g' % kd))
 
     def presetGains(*args):
 
@@ -194,32 +221,46 @@ def configure_gui():
             'Default': lambda: (
                 STATE.max_controller_output.set(12),
                 STATE.period.set(.02),
-                STATE.controller_time_normalized.set(True)),
+                STATE.controller_time_normalized.set(True),
+                STATE.controller_type.set('Onboard')),
             'WPILib (new)': lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(.02),
-                STATE.controller_time_normalized.set(True)),
+                STATE.controller_time_normalized.set(True),
+                STATE.controller_type.set('Onboard')),
             'WPILib (old)': lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(.05),
-                STATE.controller_time_normalized.set(False)),
+                STATE.controller_time_normalized.set(False),
+                STATE.controller_type.set('Onboard')),
             'Talon (new)': lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(.001),
-                STATE.controller_time_normalized.set(True)),
+                STATE.controller_time_normalized.set(False),
+                STATE.controller_type.set('Talon')),
             'Talon (old)': lambda: (
                 STATE.max_controller_output.set(1023),
                 STATE.period.set(.001),
-                STATE.controller_time_normalized.set(False)),
+                STATE.controller_time_normalized.set(False),
+                STATE.controller_type.set('Talon')),
             'Spark MAX': lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(.001),
-                STATE.controller_time_normalized.set(True)),
+                STATE.controller_time_normalized.set(True),
+                STATE.controller_type.set('Spark')),
         }
 
         presets.get(STATE.gain_units_preset.get(), "Default")()
 
         calcGains()
+
+    def enableOffboard(*args):
+        if STATE.controller_type.get() == 'Onboard':
+            gearingEntry.configure(state='disabled')
+            pprEntry.configure(state='disabled')
+        else:
+            gearingEntry.configure(state='normal')
+            pprEntry.configure(state='normal')
 
     def validateInt(P):
         if str.isdigit(P) or P == "":
@@ -314,18 +355,6 @@ def configure_gui():
                         validate='all', validatecommand=(valFloat, '%P'))
     effortEntry.grid(row=4, column=5)
 
-    calcGainsButton = Button(mainGUI, text='Calculate Optimal Controller Gains:',
-                             command=calcGains, state='disabled')
-    calcGainsButton.grid(row=5, column=3, columnspan=4)
-
-    Label(mainGUI, text='kP').grid(row=6, column=3)
-    kPEntry = Entry(mainGUI, textvariable=STATE.kp, width=10,
-                    state='readonly').grid(row=6, column=4)
-
-    Label(mainGUI, text='kD').grid(row=6, column=5)
-    kDEntry = Entry(mainGUI, textvariable=STATE.kd, width=10,
-                    state='readonly').grid(row=6, column=6)
-
     Label(mainGUI, text='Controller Period (s)').grid(row=2, column=6)
     periodEntry = Entry(mainGUI, textvariable=STATE.period, width=10,
                         validate='all', validatecommand=(valFloat, '%P'))
@@ -341,6 +370,24 @@ def configure_gui():
         mainGUI, variable=STATE.controller_time_normalized)
     normalizedButton.grid(row=4, column=7)
 
+    Label(mainGUI, text='Controller Type').grid(row=5, column=6)
+    controllerTypes = {'Onboard', 'Talon', 'Spark'}
+    controllerTypeMenu = OptionMenu(mainGUI, STATE.controller_type, *sorted(controllerTypes))
+    controllerTypeMenu.grid(row=5, column=7)
+    STATE.controller_type.trace_add('write', enableOffboard)
+
+    Label(mainGUI, text='Post-Encoder Gearing').grid(row=6, column=6)
+    gearingEntry = Entry(mainGUI, textvariable = STATE.gearing, width=10,
+                            validate='all', validatecommand=(valFloat, '%P'))
+    gearingEntry.configure(state='disabled')
+    gearingEntry.grid(row=6, column=7)
+    
+    Label(mainGUI, text='Encoder PPR').grid(row=7, column=6)
+    pprEntry = Entry(mainGUI, textvariable=STATE.encoder_ppr, width=10,
+                        validate='all', validatecommand=(valInt, '%P'))
+    pprEntry.configure(state='disabled')
+    pprEntry.grid(row=7, column=7)
+
     Label(mainGUI, text='Gain Settings Preset').grid(row=1, column=6)
     presetChoices = {
         'Default', 'WPILib (new)', 'WPILib (old)', 'Talon (new)', 'Talon (old)', 'Spark MAX'}
@@ -348,6 +395,18 @@ def configure_gui():
     presetMenu.grid(row=1, column=7)
     presetMenu.config(width=12)
     STATE.gain_units_preset.trace_add('write', presetGains)
+
+    calcGainsButton = Button(mainGUI, text='Calculate Optimal Controller Gains:',
+                             command=calcGains, state='disabled')
+    calcGainsButton.grid(row=8, column=3, columnspan=4)
+
+    Label(mainGUI, text='kP').grid(row=9, column=3)
+    kPEntry = Entry(mainGUI, textvariable=STATE.kp, width=10,
+                    state='readonly').grid(row=9, column=4)
+
+    Label(mainGUI, text='kD').grid(row=9, column=5)
+    kDEntry = Entry(mainGUI, textvariable=STATE.kd, width=10,
+                    state='readonly').grid(row=9, column=6)
 
 
 #
