@@ -57,6 +57,8 @@ class ProgramState:
     motion_threshold = IntVar(mainGUI)
     direction = StringVar(mainGUI)
 
+    units = StringVar(mainGUI)
+
     stored_data = None
 
     quasi_forward = None
@@ -91,6 +93,8 @@ class ProgramState:
         self.window_size.set(8)
         self.motion_threshold.set(20)
         self.direction.set('Forward')
+
+        self.units.set('Degrees')
 
         self.ks.set(0)
         self.kv.set(0)
@@ -214,9 +218,21 @@ def configure_gui():
             kp = kp / STATE.gearing.get()
             kd = kd / STATE.gearing.get()
 
+        # Get correct conversion factor for rotations
+        if STATE.units.get() == 'Degrees':
+            rotation = 360
+        elif STATE.units.get() == 'Radians':
+            rotation = 2*math.pi
+        elif STATE.units.get() == 'Rotations':
+            rotation = 1
+
+        # Convert to controller-native units
         if STATE.controller_type.get() == 'Talon':
-            kp = kp * 360 / STATE.encoder_ppr.get()
-            kd = kd * 360 / STATE.encoder_ppr.get()
+            kp = kp * rotation / STATE.encoder_ppr.get()
+            kd = kd * rotation / STATE.encoder_ppr.get()
+        elif STATE.controller_type.get() == 'Spark':
+            kp = kp * rotation
+            kd = kd * rotation
 
         STATE.kp.set('%s' % float('%.3g' % kp))
         STATE.kd.set('%s' % float('%.3g' % kd))
@@ -299,28 +315,32 @@ def configure_gui():
     Button(mainGUI, text="Select Data File",
            command=getFile).grid(row=0, column=0)
 
+    unitChoices = {'Degrees', 'Radians', 'Rotations'}
+    unitsMenu = OptionMenu(mainGUI, STATE.units, *sorted(unitChoices))
+    unitsMenu.grid(row=1, column=0)
+
     analyzeButton = Button(mainGUI, text="Analyze Data",
                            command=runAnalysis, state='disabled')
-    analyzeButton.grid(row=1, column=0)
+    analyzeButton.grid(row=2, column=0)
 
     timePlotsButton = Button(mainGUI, text="Time-Domain Diagnostics",
                              command=plotTimeDomain, state='disabled')
-    timePlotsButton.grid(row=2, column=0)
+    timePlotsButton.grid(row=3, column=0)
 
     voltPlotsButton = Button(mainGUI, text="Voltage-Domain Diagnostics",
                              command=plotVoltageDomain, state='disabled')
-    voltPlotsButton.grid(row=3, column=0)
+    voltPlotsButton.grid(row=4, column=0)
 
     fancyPlotButton = Button(mainGUI, text="3D Diagnostics",
                              command=plot3D, state='disabled')
-    fancyPlotButton.grid(row=4, column=0)
+    fancyPlotButton.grid(row=5, column=0)
 
     Label(mainGUI, text='Accel Window Size').grid(row=1, column=1)
     windowEntry = Entry(mainGUI, textvariable=STATE.window_size,
                         width=5, validate='all', validatecommand=(valInt, '%P'))
     windowEntry.grid(row=1, column=2)
 
-    Label(mainGUI, text='Motion Threshold (deg/s)').grid(row=1, column=3)
+    Label(mainGUI, text='Motion Threshold (units/s)').grid(row=1, column=3)
     thresholdEntry = Entry(mainGUI, textvariable=STATE.motion_threshold,
                            width=5, validate='all', validatecommand=(valInt, '%P'))
     thresholdEntry.grid(row=1, column=4)
@@ -350,13 +370,13 @@ def configure_gui():
     rSquareEntry.grid(row=6, column=2)
     rSquareEntry.configure(state='readonly')
 
-    Label(mainGUI, text='Max Acceptable Position Error (deg)').grid(
+    Label(mainGUI, text='Max Acceptable Position Error (units)').grid(
         row=2, column=3, columnspan=2)
     qVEntry = Entry(mainGUI, textvariable=STATE.qv, width=10,
                     validate='all', validatecommand=(valFloat, '%P'))
     qVEntry.grid(row=2, column=5)
 
-    Label(mainGUI, text='Max Acceptable Velocity Error (deg/s)').grid(
+    Label(mainGUI, text='Max Acceptable Velocity Error (units/s)').grid(
         row=3, column=3, columnspan=2)
     qAEntry = Entry(mainGUI, textvariable=STATE.qa, width=10,
                     validate='all', validatecommand=(valFloat, '%P'))
@@ -822,7 +842,7 @@ def _calcGains(kv, ka, qv, qa, effort, period):
     #
     # [1] "Bryson's rule" in
     #     https://file.tavsys.net/control/state-space-guide.pdf
-    q = [qv, qa]  # deg and deg/s acceptable errors
+    q = [qv, qa]  # units and units/s acceptable errors
     r = [effort]  # V acceptable actuation effort
     Q = np.diag(1.0 / np.square(q))
     R = np.diag(1.0 / np.square(r))
