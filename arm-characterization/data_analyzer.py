@@ -77,7 +77,7 @@ class ProgramState:
     max_controller_output = DoubleVar(mainGUI)
     controller_time_normalized = BooleanVar(mainGUI)
 
-    gain_units_preset = DoubleVar(mainGUI)
+    gain_units_preset = StringVar(mainGUI)
 
     kp = DoubleVar(mainGUI)
     kd = DoubleVar(mainGUI)
@@ -96,7 +96,7 @@ class ProgramState:
         self.qv.set(2)
         self.qa.set(4)
         self.max_effort.set(7)
-        self.period.set(.05)
+        self.period.set(.02)
         self.max_controller_output.set(12)
         self.controller_time_normalized.set(True)
 
@@ -188,6 +188,37 @@ def configure_gui():
         STATE.kp.set("%.4f" % kp)
         STATE.kd.set("%.4f" % kd)
 
+    def presetGains(*args):
+        
+        presets = {
+            'Default' : lambda: (
+                            STATE.max_controller_output.set(12),
+                            STATE.period.set(.02),
+                            STATE.controller_time_normalized.set(True)),
+            'WPILib (new)' : lambda: (
+                            STATE.max_controller_output.set(1),
+                            STATE.period.set(.02),
+                            STATE.controller_time_normalized.set(True)),
+            'WPILib (old)' : lambda: (
+                            STATE.max_controller_output.set(1),
+                            STATE.period.set(.05),
+                            STATE.controller_time_normalized.set(False)),
+            'Talon (new)' : lambda: (
+                            STATE.max_controller_output.set(1),
+                            STATE.period.set(.001),
+                            STATE.controller_time_normalized.set(True)),
+            'Talon (old)' : lambda: (
+                            STATE.max_controller_output.set(1023),
+                            STATE.period.set(.001),
+                            STATE.controller_time_normalized.set(False)),
+            'Spark MAX' : lambda: (
+                            STATE.max_controller_output.set(1),
+                            STATE.period.set(.001),
+                            STATE.controller_time_normalized.set(True)),
+        }
+        
+        presets.get(STATE.gain_units_preset.get(), "Default")()
+
     def validateInt(P):
         if str.isdigit(P) or P == "":
             return True
@@ -228,7 +259,7 @@ def configure_gui():
            command=plotVoltageDomain, state='disabled')
     voltPlotsButton.grid(row=3, column=0)
 
-    fancyPlotButton = Button(mainGUI, text="3D Diagonistcs",
+    fancyPlotButton = Button(mainGUI, text="3D Diagnostics",
            command=plot3D, state='disabled')
     fancyPlotButton.grid(row=4, column=0)
 
@@ -306,6 +337,13 @@ def configure_gui():
     Label(mainGUI, text='Time-Normalized Controller').grid(row=4, column=6)
     normalizedButton = Checkbutton(mainGUI, variable=STATE.controller_time_normalized)
     normalizedButton.grid(row=4, column=7)
+
+    Label(mainGUI, text='Gain Settings Preset').grid(row=1, column=6)
+    presetChoices = {'Default', 'WPILib (new)', 'WPILib (old)', 'Talon (new)', 'Talon (old)', 'Spark MAX'}
+    presetMenu = OptionMenu(mainGUI, STATE.gain_units_preset, *presetChoices)
+    presetMenu.grid(row=1, column=7)
+    presetMenu.config(width=12)
+    STATE.gain_units_preset.trace_add('write', presetGains)
 
 
 #
