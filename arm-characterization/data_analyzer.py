@@ -305,21 +305,23 @@ def configure_gui():
     Button(mainGUI, text="Select Data File",
            command=getFile).grid(row=0, column=0)
 
-    fileEntry = Entry(mainGUI, width=60)
-    fileEntry.grid(row=0, column=1, columnspan=2)
+    fileEntry = Entry(mainGUI, width=90)
+    fileEntry.grid(row=0, column=1, columnspan=3)
     fileEntry.configure(state='readonly')
 
-    Label(mainGUI, text='Units:').grid(row=0, column=3)
+    Label(mainGUI, text='Units:', width=10).grid(row=0, column=4)
 
     unitChoices = {'Degrees', 'Radians', 'Rotations'}
     unitsMenu = OptionMenu(mainGUI, STATE.units, *sorted(unitChoices))
-    unitsMenu.grid(row=0, column=4)
+    unitsMenu.configure(width=10)
+    unitsMenu.grid(row=0, column=5, sticky='ew')
 
-    Label(mainGUI, text='Direction:').grid(row=0, column=5)
+    Label(mainGUI, text='Direction:', width=10).grid(row=0, column=6)
     directions = {'Forward', 'Backward'}
     
     dirMenu = OptionMenu(mainGUI, STATE.direction, *sorted(directions))
-    dirMenu.grid(row=0, column=6, sticky='ew')
+    dirMenu.configure(width=10)
+    dirMenu.grid(row=0, column=7)
 
     ## FEEDFORWARD ANALYSIS FRAME
 
