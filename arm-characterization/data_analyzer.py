@@ -334,19 +334,19 @@ def configure_gui():
 
     analyzeButton = Button(ffFrame, text="Analyze Data",
                            command=runAnalysis, state='disabled')
-    analyzeButton.grid(row=1, column=0)
+    analyzeButton.grid(row=1, column=0, sticky='ew')
 
     timePlotsButton = Button(ffFrame, text="Time-Domain Diagnostics",
                              command=plotTimeDomain, state='disabled')
-    timePlotsButton.grid(row=2, column=0)
+    timePlotsButton.grid(row=2, column=0, sticky='ew')
 
     voltPlotsButton = Button(ffFrame, text="Voltage-Domain Diagnostics",
                              command=plotVoltageDomain, state='disabled')
-    voltPlotsButton.grid(row=3, column=0)
+    voltPlotsButton.grid(row=3, column=0, sticky='ew')
 
     fancyPlotButton = Button(ffFrame, text="3D Diagnostics",
                              command=plot3D, state='disabled')
-    fancyPlotButton.grid(row=4, column=0)
+    fancyPlotButton.grid(row=4, column=0, sticky='ew')
 
     Label(ffFrame, text='Accel Window Size').grid(row=1, column=1)
     windowEntry = Entry(ffFrame, textvariable=STATE.window_size,
