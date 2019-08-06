@@ -32,7 +32,6 @@ def isfloat(value):
     except ValueError:
         return False
 
-
 mainGUI = tkinter.Tk()
 
 STATE = None
@@ -821,8 +820,9 @@ def split_to_csv(fname, stored_data):
 def main():
 
     global STATE
-
     STATE = ProgramState()
+
+    mainGUI.title("RobotPy Arm Characterization Tool")
 
     configure_gui()
     mainGUI.mainloop()
