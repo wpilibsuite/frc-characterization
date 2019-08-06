@@ -128,6 +128,7 @@ def configure_gui():
         dataFile = tkinter.filedialog.askopenfile(
             parent=mainGUI, mode='rb', title='Choose the data file (.JSON)')
         fileEntry.configure(state='normal')
+        fileEntry.delete(0, END)
         fileEntry.insert(0, dataFile.name)
         fileEntry.configure(state='readonly')
 
@@ -611,6 +612,9 @@ def prepare_data(data, window):
     # trim step data after computing acceleration
     ff = compute_accel(data["fast-forward"], window)
     fb = compute_accel(data["fast-backward"], window)
+
+    if ff is None or fb is None:
+        return None, None, None, None
 
     ff = trim_step_testdata(ff)
     fb = trim_step_testdata(fb)
