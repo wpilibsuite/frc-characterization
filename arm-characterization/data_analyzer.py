@@ -460,7 +460,7 @@ def smoothDerivative(tm, value, n):
     return np.pad(x, (int(np.ceil(n / 2.0)), int(np.floor(n / 2.0))), mode="constant")
 
 
-def trim_quasi_testdata(data, threshold):
+def trim_quasi_testdata(data):
     adata = np.abs(data)
     truth = np.all(
         [
@@ -682,6 +682,27 @@ def _plotVoltageDomain(direction, qu, step):
     y = np.linspace(np.min(step[PREPARED_ACC_COL]),
                     np.max(step[PREPARED_ACC_COL]))
     plt.plot(ka * y, y)
+
+    # Fix overlapping axis labels
+    plt.tight_layout(pad=0.5)
+
+    plt.figure(direction + " Voltage-Domain Cosine Plot")
+
+    # quasistatic position vs. gravity (cosine-term) voltage
+    ax = plt.subplot(111)
+    ax.set_xlabel("Gravity (cosine)-Portion Voltage")
+    ax.set_ylabel("Angle")
+    ax.set_title("Quasistatic angle vs gravity-portion voltage")
+    plt.scatter(
+        qu[PREPARED_V_COL] - ks - kv * qu[PREPARED_VEL_COL] - ka * qu[PREPARED_ACC_COL],
+        qu[PREPARED_POS_COL],
+        marker=".",
+        c="#000000",
+    )
+
+    # show fit line from multiple regression
+    y = np.linspace(np.min(qu[PREPARED_POS_COL]), np.max(qu[PREPARED_POS_COL]))
+    plt.plot(kcos * np.cos(np.radians(y)), y)
 
     # Fix overlapping axis labels
     plt.tight_layout(pad=0.5)
