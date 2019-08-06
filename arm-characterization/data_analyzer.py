@@ -144,6 +144,12 @@ def configure_gui():
         STATE.quasi_forward, STATE.quasi_backward, STATE.step_forward, STATE.step_backward = prepare_data(
             STATE.stored_data, window=STATE.window_size.get())
 
+        if (STATE.quasi_forward is None
+            or STATE.quasi_backward is None
+            or STATE.step_forward is None
+            or STATE.step_backward is None):
+            return
+
         if STATE.direction.get() == 'Forward':
             ks, kv, ka, kcos, rsquare = calcFit(
                 STATE.quasi_forward, STATE.step_forward)
@@ -471,10 +477,12 @@ def trim_quasi_testdata(data):
     )
     temp = data.transpose()[truth].transpose()
     if temp[PREPARED_TM_COL].size == 0:
-        print("Error! No data in quasistatic test is above motion threshold.")
-        print("Try running with a smaller motion threshold (use --motion_threshold)")
-        print("and make sure your encoder is reporting correctly!")
-    return temp
+        tkinter.messagebox.showinfo("Error!", "No data in quasistatic test is above motion threshold. "
+                                    + "Try running with a smaller motion threshold "
+                                    + "and make sure your encoder is reporting correctly!")
+        return None
+    else:
+        return temp
 
 
 def trim_step_testdata(data):
@@ -490,12 +498,9 @@ def compute_accel(data, window):
 
     # deal with incomplete data
     if len(data[TIME_COL]) < window * 2:
-        print("Error! Not enough data points to compute acceleration.")
-        print("Try running with a smaller window setting (use --window)")
-        return (
-            np.zeros(shape=(PREPARED_MAX_COL + 1, 4)),
-            np.zeros(shape=(PREPARED_MAX_COL + 1, 4)),
-        )
+        tkinter.messagebox.showinfo("Error!", "Not enough data points to compute acceleration. "
+                                    + "Try running with a smaller window setting or a larger threshold.")
+        return None
 
     # Compute left/right acceleration
     acc = smoothDerivative(data[TIME_COL], data[ENCODER_V_COL], window)
@@ -552,8 +557,15 @@ def prepare_data(data, window):
     # trim quasi data before computing acceleration
     sf_trim = trim_quasi_testdata(data["slow-forward"])
     sb_trim = trim_quasi_testdata(data["slow-backward"])
+
+    if sf_trim is None or sb_trim is None:
+        return None, None, None, None
+
     sf = compute_accel(sf_trim, window)
     sb = compute_accel(sb_trim, window)
+
+    if sf is None or sb is None:
+        return None, None, None, None
 
     # trim step data after computing acceleration
     ff = compute_accel(data["fast-forward"], window)
@@ -694,7 +706,8 @@ def _plotVoltageDomain(direction, qu, step):
     ax.set_ylabel("Angle")
     ax.set_title("Quasistatic angle vs gravity-portion voltage")
     plt.scatter(
-        qu[PREPARED_V_COL] - ks - kv * qu[PREPARED_VEL_COL] - ka * qu[PREPARED_ACC_COL],
+        qu[PREPARED_V_COL] - ks - kv *
+        qu[PREPARED_VEL_COL] - ka * qu[PREPARED_ACC_COL],
         qu[PREPARED_POS_COL],
         marker=".",
         c="#000000",
@@ -793,7 +806,6 @@ def main():
 
     configure_gui()
     mainGUI.mainloop()
-
 
 
 def _calcGains(kv, ka, qv, qa, effort, period):
