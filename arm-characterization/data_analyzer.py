@@ -32,6 +32,7 @@ def isfloat(value):
     except ValueError:
         return False
 
+
 mainGUI = tkinter.Tk()
 
 STATE = None
@@ -149,7 +150,7 @@ def configure_gui():
         if (STATE.quasi_forward is None
             or STATE.quasi_backward is None
             or STATE.step_forward is None
-            or STATE.step_backward is None):
+                or STATE.step_backward is None):
             return
 
         if STATE.direction.get() == 'Forward':
@@ -300,7 +301,7 @@ def configure_gui():
     valInt = mainGUI.register(validateInt)
     valFloat = mainGUI.register(validateFloat)
 
-    ## TOP OF WINDOW (FILE SELECTION)
+    # TOP OF WINDOW (FILE SELECTION)
 
     Button(mainGUI, text="Select Data File",
            command=getFile).grid(row=0, column=0)
@@ -318,17 +319,18 @@ def configure_gui():
 
     Label(mainGUI, text='Direction:', width=10).grid(row=0, column=6)
     directions = {'Forward', 'Backward'}
-    
+
     dirMenu = OptionMenu(mainGUI, STATE.direction, *sorted(directions))
     dirMenu.configure(width=10)
     dirMenu.grid(row=0, column=7)
 
-    ## FEEDFORWARD ANALYSIS FRAME
+    # FEEDFORWARD ANALYSIS FRAME
 
-    ffFrame = Frame(mainGUI, bd = 2, relief = 'groove')
-    ffFrame.grid(row=1, column=0, columnspan=3, sticky = 'ns')
+    ffFrame = Frame(mainGUI, bd=2, relief='groove')
+    ffFrame.grid(row=1, column=0, columnspan=3, sticky='ns')
 
-    Label(ffFrame, text="Feedforward Analysis").grid(row=0, column=0, columnspan=5)
+    Label(ffFrame, text="Feedforward Analysis").grid(
+        row=0, column=0, columnspan=5)
 
     analyzeButton = Button(ffFrame, text="Analyze Data",
                            command=runAnalysis, state='disabled')
@@ -381,12 +383,13 @@ def configure_gui():
     rSquareEntry.grid(row=5, column=4)
     rSquareEntry.configure(state='readonly')
 
-    ## FEEDBACK ANALYSIS FRAME
+    # FEEDBACK ANALYSIS FRAME
 
-    fbFrame = Frame(mainGUI, bd = 2, relief = 'groove')
+    fbFrame = Frame(mainGUI, bd=2, relief='groove')
     fbFrame.grid(row=1, column=3, columnspan=5)
 
-    Label(fbFrame, text = 'Feedback Analysis').grid(row = 0, column = 0, columnspan=5)
+    Label(fbFrame, text='Feedback Analysis').grid(
+        row=0, column=0, columnspan=5)
 
     Label(fbFrame, text='Gain Settings Preset').grid(row=1, column=0)
     presetChoices = {
