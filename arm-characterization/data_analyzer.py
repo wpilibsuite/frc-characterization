@@ -140,7 +140,6 @@ def configure_gui():
         STATE.stored_data = data
 
         analyzeButton.configure(state='normal')
-        dirMenu.configure(state='normal')
 
     def runAnalysis():
 
@@ -301,146 +300,164 @@ def configure_gui():
     valInt = mainGUI.register(validateInt)
     valFloat = mainGUI.register(validateFloat)
 
-    fileEntry = Entry(mainGUI, width=60)
-    fileEntry.grid(row=0, column=1, columnspan=4)
-    fileEntry.configure(state='readonly')
-
-    Label(mainGUI, text='Direction:').grid(row=0, column=5)
-    directions = {'Forward', 'Backward'}
-    dirMenu = OptionMenu(mainGUI, STATE.direction, *sorted(directions))
-    dirMenu.configure(state='disabled')
-    dirMenu.grid(row=0, column=6, sticky='ew')
+    ## TOP OF WINDOW (FILE SELECTION)
 
     Button(mainGUI, text="Select Data File",
            command=getFile).grid(row=0, column=0)
 
+    fileEntry = Entry(mainGUI, width=60)
+    fileEntry.grid(row=0, column=1, columnspan=2)
+    fileEntry.configure(state='readonly')
+
+    Label(mainGUI, text='Units:').grid(row=0, column=3)
+
     unitChoices = {'Degrees', 'Radians', 'Rotations'}
     unitsMenu = OptionMenu(mainGUI, STATE.units, *sorted(unitChoices))
-    unitsMenu.grid(row=1, column=0)
+    unitsMenu.grid(row=0, column=4)
 
-    analyzeButton = Button(mainGUI, text="Analyze Data",
+    Label(mainGUI, text='Direction:').grid(row=0, column=5)
+    directions = {'Forward', 'Backward'}
+    
+    dirMenu = OptionMenu(mainGUI, STATE.direction, *sorted(directions))
+    dirMenu.grid(row=0, column=6, sticky='ew')
+
+    ## FEEDFORWARD ANALYSIS FRAME
+
+    ffFrame = Frame(mainGUI, bd = 2, relief = 'groove')
+    ffFrame.grid(row=1, column=0, columnspan=3, sticky = 'ns')
+
+    Label(ffFrame, text="Feedforward Analysis").grid(row=0, column=0, columnspan=5)
+
+    analyzeButton = Button(ffFrame, text="Analyze Data",
                            command=runAnalysis, state='disabled')
-    analyzeButton.grid(row=2, column=0)
+    analyzeButton.grid(row=1, column=0)
 
-    timePlotsButton = Button(mainGUI, text="Time-Domain Diagnostics",
+    timePlotsButton = Button(ffFrame, text="Time-Domain Diagnostics",
                              command=plotTimeDomain, state='disabled')
-    timePlotsButton.grid(row=3, column=0)
+    timePlotsButton.grid(row=2, column=0)
 
-    voltPlotsButton = Button(mainGUI, text="Voltage-Domain Diagnostics",
+    voltPlotsButton = Button(ffFrame, text="Voltage-Domain Diagnostics",
                              command=plotVoltageDomain, state='disabled')
-    voltPlotsButton.grid(row=4, column=0)
+    voltPlotsButton.grid(row=3, column=0)
 
-    fancyPlotButton = Button(mainGUI, text="3D Diagnostics",
+    fancyPlotButton = Button(ffFrame, text="3D Diagnostics",
                              command=plot3D, state='disabled')
-    fancyPlotButton.grid(row=5, column=0)
+    fancyPlotButton.grid(row=4, column=0)
 
-    Label(mainGUI, text='Accel Window Size').grid(row=1, column=1)
-    windowEntry = Entry(mainGUI, textvariable=STATE.window_size,
+    Label(ffFrame, text='Accel Window Size').grid(row=1, column=1)
+    windowEntry = Entry(ffFrame, textvariable=STATE.window_size,
                         width=5, validate='all', validatecommand=(valInt, '%P'))
     windowEntry.grid(row=1, column=2)
 
-    Label(mainGUI, text='Motion Threshold (units/s)').grid(row=1, column=3)
-    thresholdEntry = Entry(mainGUI, textvariable=STATE.motion_threshold,
+    Label(ffFrame, text='Motion Threshold (units/s)').grid(row=2, column=1)
+    thresholdEntry = Entry(ffFrame, textvariable=STATE.motion_threshold,
                            width=5, validate='all', validatecommand=(valInt, '%P'))
-    thresholdEntry.grid(row=1, column=4)
+    thresholdEntry.grid(row=2, column=2)
 
-    Label(mainGUI, text='kS').grid(row=2, column=1)
-    kSEntry = Entry(mainGUI, textvariable=STATE.ks, width=10)
-    kSEntry.grid(row=2, column=2)
+    Label(ffFrame, text='kS').grid(row=1, column=3)
+    kSEntry = Entry(ffFrame, textvariable=STATE.ks, width=10)
+    kSEntry.grid(row=1, column=4)
     kSEntry.configure(state='readonly')
 
-    Label(mainGUI, text='kV').grid(row=3, column=1)
-    kVEntry = Entry(mainGUI, textvariable=STATE.kv, width=10)
-    kVEntry.grid(row=3, column=2)
+    Label(ffFrame, text='kV').grid(row=2, column=3)
+    kVEntry = Entry(ffFrame, textvariable=STATE.kv, width=10)
+    kVEntry.grid(row=2, column=4)
     kVEntry.configure(state='readonly')
 
-    Label(mainGUI, text='kA').grid(row=4, column=1)
-    kAEntry = Entry(mainGUI, textvariable=STATE.ka, width=10)
-    kAEntry.grid(row=4, column=2)
+    Label(ffFrame, text='kA').grid(row=3, column=3)
+    kAEntry = Entry(ffFrame, textvariable=STATE.ka, width=10)
+    kAEntry.grid(row=3, column=4)
     kAEntry.configure(state='readonly')
 
-    Label(mainGUI, text='kCos').grid(row=5, column=1)
-    kCosEntry = Entry(mainGUI, textvariable=STATE.kcos, width=10)
-    kCosEntry.grid(row=5, column=2)
+    Label(ffFrame, text='kCos').grid(row=4, column=3)
+    kCosEntry = Entry(ffFrame, textvariable=STATE.kcos, width=10)
+    kCosEntry.grid(row=4, column=4)
     kCosEntry.configure(state='readonly')
 
-    Label(mainGUI, text='r-squared').grid(row=6, column=1)
-    rSquareEntry = Entry(mainGUI, textvariable=STATE.r_square, width=10)
-    rSquareEntry.grid(row=6, column=2)
+    Label(ffFrame, text='r-squared').grid(row=5, column=3)
+    rSquareEntry = Entry(ffFrame, textvariable=STATE.r_square, width=10)
+    rSquareEntry.grid(row=5, column=4)
     rSquareEntry.configure(state='readonly')
 
-    Label(mainGUI, text='Max Acceptable Position Error (units)').grid(
-        row=2, column=3, columnspan=2)
-    qVEntry = Entry(mainGUI, textvariable=STATE.qv, width=10,
-                    validate='all', validatecommand=(valFloat, '%P'))
-    qVEntry.grid(row=2, column=5)
+    ## FEEDBACK ANALYSIS FRAME
 
-    Label(mainGUI, text='Max Acceptable Velocity Error (units/s)').grid(
-        row=3, column=3, columnspan=2)
-    qAEntry = Entry(mainGUI, textvariable=STATE.qa, width=10,
-                    validate='all', validatecommand=(valFloat, '%P'))
-    qAEntry.grid(row=3, column=5)
+    fbFrame = Frame(mainGUI, bd = 2, relief = 'groove')
+    fbFrame.grid(row=1, column=3, columnspan=5)
 
-    Label(mainGUI, text='Max Acceptable Control Effort (V)').grid(
-        row=4, column=3, columnspan=2)
-    effortEntry = Entry(mainGUI, textvariable=STATE.max_effort, width=10,
-                        validate='all', validatecommand=(valFloat, '%P'))
-    effortEntry.grid(row=4, column=5)
+    Label(fbFrame, text = 'Feedback Analysis').grid(row = 0, column = 0, columnspan=5)
 
-    Label(mainGUI, text='Controller Period (s)').grid(row=2, column=6)
-    periodEntry = Entry(mainGUI, textvariable=STATE.period, width=10,
-                        validate='all', validatecommand=(valFloat, '%P'))
-    periodEntry.grid(row=2, column=7)
-
-    Label(mainGUI, text='Max Controller Output').grid(row=3, column=6)
-    controllerMaxEntry = Entry(mainGUI, textvariable=STATE.max_controller_output, width=10,
-                               validate='all', validatecommand=(valFloat, '%P'))
-    controllerMaxEntry.grid(row=3, column=7)
-
-    Label(mainGUI, text='Time-Normalized Controller').grid(row=4, column=6)
-    normalizedButton = Checkbutton(
-        mainGUI, variable=STATE.controller_time_normalized)
-    normalizedButton.grid(row=4, column=7)
-
-    Label(mainGUI, text='Controller Type').grid(row=5, column=6)
-    controllerTypes = {'Onboard', 'Talon', 'Spark'}
-    controllerTypeMenu = OptionMenu(
-        mainGUI, STATE.controller_type, *sorted(controllerTypes))
-    controllerTypeMenu.grid(row=5, column=7)
-    STATE.controller_type.trace_add('write', enableOffboard)
-
-    Label(mainGUI, text='Post-Encoder Gearing').grid(row=6, column=6)
-    gearingEntry = Entry(mainGUI, textvariable=STATE.gearing, width=10,
-                         validate='all', validatecommand=(valFloat, '%P'))
-    gearingEntry.configure(state='disabled')
-    gearingEntry.grid(row=6, column=7)
-
-    Label(mainGUI, text='Encoder PPR').grid(row=7, column=6)
-    pprEntry = Entry(mainGUI, textvariable=STATE.encoder_ppr, width=10,
-                     validate='all', validatecommand=(valInt, '%P'))
-    pprEntry.configure(state='disabled')
-    pprEntry.grid(row=7, column=7)
-
-    Label(mainGUI, text='Gain Settings Preset').grid(row=1, column=6)
+    Label(fbFrame, text='Gain Settings Preset').grid(row=1, column=0)
     presetChoices = {
         'Default', 'WPILib (new)', 'WPILib (old)', 'Talon (new)', 'Talon (old)', 'Spark MAX'}
     presetMenu = OptionMenu(
-        mainGUI, STATE.gain_units_preset, *sorted(presetChoices))
-    presetMenu.grid(row=1, column=7)
+        fbFrame, STATE.gain_units_preset, *sorted(presetChoices))
+    presetMenu.grid(row=1, column=1)
     presetMenu.config(width=12)
     STATE.gain_units_preset.trace_add('write', presetGains)
 
-    calcGainsButton = Button(mainGUI, text='Calculate Optimal Controller Gains:',
+    Label(fbFrame, text='Controller Period (s)').grid(row=2, column=0)
+    periodEntry = Entry(fbFrame, textvariable=STATE.period, width=10,
+                        validate='all', validatecommand=(valFloat, '%P'))
+    periodEntry.grid(row=2, column=1)
+
+    Label(fbFrame, text='Max Controller Output').grid(row=3, column=0)
+    controllerMaxEntry = Entry(fbFrame, textvariable=STATE.max_controller_output, width=10,
+                               validate='all', validatecommand=(valFloat, '%P'))
+    controllerMaxEntry.grid(row=3, column=1)
+
+    Label(fbFrame, text='Time-Normalized Controller').grid(row=4, column=0)
+    normalizedButton = Checkbutton(
+        fbFrame, variable=STATE.controller_time_normalized)
+    normalizedButton.grid(row=4, column=1)
+
+    Label(fbFrame, text='Controller Type').grid(row=5, column=0)
+    controllerTypes = {'Onboard', 'Talon', 'Spark'}
+    controllerTypeMenu = OptionMenu(
+        fbFrame, STATE.controller_type, *sorted(controllerTypes))
+    controllerTypeMenu.grid(row=5, column=1)
+    STATE.controller_type.trace_add('write', enableOffboard)
+
+    Label(fbFrame, text='Post-Encoder Gearing').grid(row=6, column=0)
+    gearingEntry = Entry(fbFrame, textvariable=STATE.gearing, width=10,
+                         validate='all', validatecommand=(valFloat, '%P'))
+    gearingEntry.configure(state='disabled')
+    gearingEntry.grid(row=6, column=1)
+
+    Label(fbFrame, text='Encoder PPR').grid(row=7, column=0)
+    pprEntry = Entry(fbFrame, textvariable=STATE.encoder_ppr, width=10,
+                     validate='all', validatecommand=(valInt, '%P'))
+    pprEntry.configure(state='disabled')
+    pprEntry.grid(row=7, column=1)
+
+    Label(fbFrame, text='Max Acceptable Position Error (units)').grid(
+        row=1, column=2, columnspan=2)
+    qVEntry = Entry(fbFrame, textvariable=STATE.qv, width=10,
+                    validate='all', validatecommand=(valFloat, '%P'))
+    qVEntry.grid(row=1, column=4)
+
+    Label(fbFrame, text='Max Acceptable Velocity Error (units/s)').grid(
+        row=2, column=2, columnspan=2)
+    qAEntry = Entry(fbFrame, textvariable=STATE.qa, width=10,
+                    validate='all', validatecommand=(valFloat, '%P'))
+    qAEntry.grid(row=2, column=4)
+
+    Label(fbFrame, text='Max Acceptable Control Effort (V)').grid(
+        row=3, column=2, columnspan=2)
+    effortEntry = Entry(fbFrame, textvariable=STATE.max_effort, width=10,
+                        validate='all', validatecommand=(valFloat, '%P'))
+    effortEntry.grid(row=3, column=4)
+
+    calcGainsButton = Button(fbFrame, text='Calculate Optimal Controller Gains:',
                              command=calcGains, state='disabled')
-    calcGainsButton.grid(row=8, column=3, columnspan=4)
+    calcGainsButton.grid(row=5, column=2, columnspan=3)
 
-    Label(mainGUI, text='kP').grid(row=9, column=3)
-    kPEntry = Entry(mainGUI, textvariable=STATE.kp, width=10,
-                    state='readonly').grid(row=9, column=4)
+    Label(fbFrame, text='kP').grid(row=6, column=2)
+    kPEntry = Entry(fbFrame, textvariable=STATE.kp, width=10,
+                    state='readonly').grid(row=6, column=3)
 
-    Label(mainGUI, text='kD').grid(row=9, column=5)
-    kDEntry = Entry(mainGUI, textvariable=STATE.kd, width=10,
-                    state='readonly').grid(row=9, column=6)
+    Label(fbFrame, text='kD').grid(row=7, column=2)
+    kDEntry = Entry(fbFrame, textvariable=STATE.kd, width=10,
+                    state='readonly').grid(row=7, column=3)
 
 
 #
