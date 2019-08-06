@@ -188,11 +188,11 @@ def configure_gui():
     def calcGains():
 
         kp, kd = _calcGains(
-            STATE.kv.get(), 
-            STATE.ka.get(), 
-            STATE.qv.get(), 
-            STATE.qa.get(), 
-            STATE.max_effort.get(), 
+            STATE.kv.get(),
+            STATE.ka.get(),
+            STATE.qv.get(),
+            STATE.qa.get(),
+            STATE.max_effort.get(),
             STATE.period.get())
 
         # Scale gains to output
@@ -317,22 +317,26 @@ def configure_gui():
     thresholdEntry.grid(row=1, column=4)
 
     Label(mainGUI, text='kS').grid(row=2, column=1)
-    Label(mainGUI, text='kV').grid(row=3, column=1)
-    Label(mainGUI, text='kA').grid(row=4, column=1)
-    Label(mainGUI, text='kCos').grid(row=5, column=1)
-    Label(mainGUI, text='r-squared').grid(row=6, column=1)
     kSEntry = Entry(mainGUI, textvariable=STATE.ks, width=10)
     kSEntry.grid(row=2, column=2)
     kSEntry.configure(state='readonly')
+
+    Label(mainGUI, text='kV').grid(row=3, column=1)
     kVEntry = Entry(mainGUI, textvariable=STATE.kv, width=10)
     kVEntry.grid(row=3, column=2)
     kVEntry.configure(state='readonly')
+
+    Label(mainGUI, text='kA').grid(row=4, column=1)
     kAEntry = Entry(mainGUI, textvariable=STATE.ka, width=10)
     kAEntry.grid(row=4, column=2)
     kAEntry.configure(state='readonly')
+
+    Label(mainGUI, text='kCos').grid(row=5, column=1)
     kCosEntry = Entry(mainGUI, textvariable=STATE.kcos, width=10)
     kCosEntry.grid(row=5, column=2)
     kCosEntry.configure(state='readonly')
+
+    Label(mainGUI, text='r-squared').grid(row=6, column=1)
     rSquareEntry = Entry(mainGUI, textvariable=STATE.r_square, width=10)
     rSquareEntry.grid(row=6, column=2)
     rSquareEntry.configure(state='readonly')
@@ -343,8 +347,8 @@ def configure_gui():
                     validate='all', validatecommand=(valFloat, '%P'))
     qVEntry.grid(row=2, column=5)
 
-    Label(mainGUI, text='Max Acceptable Velocity Error (deg/s)').grid(row=3,
-                                                                      column=3, columnspan=2)
+    Label(mainGUI, text='Max Acceptable Velocity Error (deg/s)').grid(
+        row=3, column=3, columnspan=2)
     qAEntry = Entry(mainGUI, textvariable=STATE.qa, width=10,
                     validate='all', validatecommand=(valFloat, '%P'))
     qAEntry.grid(row=3, column=5)
@@ -372,26 +376,28 @@ def configure_gui():
 
     Label(mainGUI, text='Controller Type').grid(row=5, column=6)
     controllerTypes = {'Onboard', 'Talon', 'Spark'}
-    controllerTypeMenu = OptionMenu(mainGUI, STATE.controller_type, *sorted(controllerTypes))
+    controllerTypeMenu = OptionMenu(
+        mainGUI, STATE.controller_type, *sorted(controllerTypes))
     controllerTypeMenu.grid(row=5, column=7)
     STATE.controller_type.trace_add('write', enableOffboard)
 
     Label(mainGUI, text='Post-Encoder Gearing').grid(row=6, column=6)
-    gearingEntry = Entry(mainGUI, textvariable = STATE.gearing, width=10,
-                            validate='all', validatecommand=(valFloat, '%P'))
+    gearingEntry = Entry(mainGUI, textvariable=STATE.gearing, width=10,
+                         validate='all', validatecommand=(valFloat, '%P'))
     gearingEntry.configure(state='disabled')
     gearingEntry.grid(row=6, column=7)
-    
+
     Label(mainGUI, text='Encoder PPR').grid(row=7, column=6)
     pprEntry = Entry(mainGUI, textvariable=STATE.encoder_ppr, width=10,
-                        validate='all', validatecommand=(valInt, '%P'))
+                     validate='all', validatecommand=(valInt, '%P'))
     pprEntry.configure(state='disabled')
     pprEntry.grid(row=7, column=7)
 
     Label(mainGUI, text='Gain Settings Preset').grid(row=1, column=6)
     presetChoices = {
         'Default', 'WPILib (new)', 'WPILib (old)', 'Talon (new)', 'Talon (old)', 'Spark MAX'}
-    presetMenu = OptionMenu(mainGUI, STATE.gain_units_preset, *sorted(presetChoices))
+    presetMenu = OptionMenu(
+        mainGUI, STATE.gain_units_preset, *sorted(presetChoices))
     presetMenu.grid(row=1, column=7)
     presetMenu.config(width=12)
     STATE.gain_units_preset.trace_add('write', presetGains)
