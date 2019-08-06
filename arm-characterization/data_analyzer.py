@@ -51,6 +51,7 @@ columns = dict(
     encoder_vel=5,
 )
 
+
 class ProgramState:
     window_size = IntVar(mainGUI)
     motion_threshold = IntVar(mainGUI)
@@ -72,6 +73,11 @@ class ProgramState:
     qv = DoubleVar(mainGUI)
     qa = DoubleVar(mainGUI)
     max_effort = DoubleVar(mainGUI)
+    period = DoubleVar(mainGUI)
+    max_controller_output = DoubleVar(mainGUI)
+    controller_time_normalized = BooleanVar(mainGUI)
+
+    gain_units_preset = DoubleVar(mainGUI)
 
     kp = DoubleVar(mainGUI)
     kd = DoubleVar(mainGUI)
@@ -90,6 +96,11 @@ class ProgramState:
         self.qv.set(2)
         self.qa.set(4)
         self.max_effort.set(7)
+        self.period.set(.05)
+        self.max_controller_output.set(12)
+        self.controller_time_normalized.set(True)
+
+        self.gain_units_preset.set('Default')
 
         self.kp.set(0)
         self.kd.set(0)
@@ -115,6 +126,9 @@ def configure_gui():
 
         STATE.stored_data = data
 
+        analyzeButton.configure(state='normal')
+        dirMenu.configure(state='normal')
+
     def runAnalysis():
 
         STATE.quasi_forward, STATE.quasi_backward, STATE.step_forward, STATE.step_backward = prepare_data(
@@ -126,7 +140,7 @@ def configure_gui():
         else:
             ks, kv, ka, kcos, rsquare = calcFit(
                 STATE.quasi_backward, STATE.step_backward)
-        
+
         STATE.ks.set("%.4f" % ks)
         STATE.kv.set("%.4f" % kv)
         STATE.ka.set("%.4f" % ka)
@@ -135,17 +149,25 @@ def configure_gui():
 
         calcGains()
 
+        timePlotsButton.configure(state='normal')
+        voltPlotsButton.configure(state='normal')
+        fancyPlotButton.configure(state='normal')
+        calcGainsButton.configure(state='normal')
+
     def plotTimeDomain():
         if STATE.direction.get() == 'Forward':
             _plotTimeDomain('Forward', STATE.quasi_forward, STATE.step_forward)
         else:
-            _plotTimeDomain('Backward', STATE.quasi_backward, STATE.step_backward)
+            _plotTimeDomain('Backward', STATE.quasi_backward,
+                            STATE.step_backward)
 
     def plotVoltageDomain():
         if STATE.direction.get() == 'Forward':
-            _plotVoltageDomain('Forward', STATE.quasi_forward, STATE.step_forward)
+            _plotVoltageDomain(
+                'Forward', STATE.quasi_forward, STATE.step_forward)
         else:
-            _plotVoltageDomain('Backward', STATE.quasi_backward, STATE.step_backward)
+            _plotVoltageDomain(
+                'Backward', STATE.quasi_backward, STATE.step_backward)
 
     def plot3D():
         if STATE.direction.get() == 'Forward':
@@ -154,7 +176,15 @@ def configure_gui():
             _plot3D('Backward', STATE.quasi_backward, STATE.step_backward)
 
     def calcGains():
-        kp, kd = _calcGains(STATE.kv.get(), STATE.ka.get(), STATE.qv.get(), STATE.qa.get(), STATE.max_effort.get())
+        kp, kd = _calcGains(STATE.kv.get(), STATE.ka.get(), STATE.qv.get(
+        ), STATE.qa.get(), STATE.max_effort.get(), STATE.period.get())
+
+        kp = kp * 12 / STATE.max_controller_output.get()
+        kd = kd * 12 / STATE.max_controller_output.get()
+
+        if STATE.controller_time_normalized.get():
+            kd = kd/STATE.period.get()
+
         STATE.kp.set("%.4f" % kp)
         STATE.kd.set("%.4f" % kd)
 
@@ -173,19 +203,34 @@ def configure_gui():
     valInt = mainGUI.register(validateInt)
     valFloat = mainGUI.register(validateFloat)
 
-    fileEntry = Entry(mainGUI, width=48)
-    fileEntry.grid(row=0, column=1, columnspan=6)
+    fileEntry = Entry(mainGUI, width=60)
+    fileEntry.grid(row=0, column=1, columnspan=4)
     fileEntry.configure(state='readonly')
+
+    Label(mainGUI, text='Direction:').grid(row=0, column=5)
+    directions = {'Forward', 'Backward'}
+    dirMenu = OptionMenu(mainGUI, STATE.direction, *directions)
+    dirMenu.configure(state='disabled')
+    dirMenu.grid(row=0, column=6, sticky='ew')
+
     Button(mainGUI, text="Select Data File",
            command=getFile).grid(row=0, column=0)
 
-    Button(mainGUI, text="Analyze Data",
-           command=runAnalysis).grid(row=1, column=0)
+    analyzeButton = Button(mainGUI, text="Analyze Data",
+           command=runAnalysis, state='disabled')
+    analyzeButton.grid(row=1, column=0)
 
-    Button(mainGUI, text="Time-Domain Diagnostics", command=plotTimeDomain).grid(row=2, column=0)
-    Button(mainGUI, text="Voltage-Domain Diagnostics", command=plotVoltageDomain).grid(row=3, column=0)
-    Button(mainGUI, text="3D Diagonistcs", command=plot3D).grid(row=4, column=0)
+    timePlotsButton = Button(mainGUI, text="Time-Domain Diagnostics",
+           command=plotTimeDomain, state='disabled')
+    timePlotsButton.grid(row=2, column=0)
 
+    voltPlotsButton =Button(mainGUI, text="Voltage-Domain Diagnostics",
+           command=plotVoltageDomain, state='disabled')
+    voltPlotsButton.grid(row=3, column=0)
+
+    fancyPlotButton = Button(mainGUI, text="3D Diagonistcs",
+           command=plot3D, state='disabled')
+    fancyPlotButton.grid(row=4, column=0)
 
     Label(mainGUI, text='Window').grid(row=1, column=1)
     windowEntry = Entry(mainGUI, textvariable=STATE.window_size,
@@ -196,10 +241,6 @@ def configure_gui():
     thresholdEntry = Entry(mainGUI, textvariable=STATE.motion_threshold,
                            width=5, validate='all', validatecommand=(valInt, '%P'))
     thresholdEntry.grid(row=1, column=4)
-
-    directions = {'Forward', 'Backward'}
-    dirMenu = OptionMenu(mainGUI, STATE.direction, *directions)
-    dirMenu.grid(row=1, column=7)
 
     Label(mainGUI, text='kS').grid(row=2, column=1)
     Label(mainGUI, text='kV').grid(row=3, column=1)
@@ -222,28 +263,49 @@ def configure_gui():
     rSquareEntry.grid(row=6, column=2)
     rSquareEntry.configure(state='readonly')
 
-    Label(mainGUI, text='Max Acceptable Velocity (deg/s)').grid(row=2, column=3, columnspan=2)
+    Label(mainGUI, text='Max Acceptable Position Error (deg)').grid(
+        row=2, column=3, columnspan=2)
     qVEntry = Entry(mainGUI, textvariable=STATE.qv, width=10,
-        validate = 'all', validatecommand = (valFloat, '%P'))
+                    validate='all', validatecommand=(valFloat, '%P'))
     qVEntry.grid(row=2, column=5)
 
-    Label(mainGUI, text='Max Acceptable Acceleration (deg/s^2)').grid(row=3, column=3, columnspan=2)
+    Label(mainGUI, text='Max Acceptable Velocity Error (deg/s)').grid(row=3,
+                                                                      column=3, columnspan=2)
     qAEntry = Entry(mainGUI, textvariable=STATE.qa, width=10,
-        validate = 'all', validatecommand = (valFloat, '%P'))
+                    validate='all', validatecommand=(valFloat, '%P'))
     qAEntry.grid(row=3, column=5)
 
-    Label(mainGUI, text='Max Acceptable Correction Effort (V)').grid(row=4, column=3, columnspan=2)
+    Label(mainGUI, text='Max Acceptable Control Effort (V)').grid(
+        row=4, column=3, columnspan=2)
     effortEntry = Entry(mainGUI, textvariable=STATE.max_effort, width=10,
-        validate = 'all', validatecommand = (valFloat, '%P'))
+                        validate='all', validatecommand=(valFloat, '%P'))
     effortEntry.grid(row=4, column=5)
 
-    Button(mainGUI, text='Calculate Optimal Controller Gains:', command = calcGains).grid(row=5, column=3, columnspan=4)
+    calcGainsButton = Button(mainGUI, text='Calculate Optimal Controller Gains:',
+           command=calcGains, state='disabled')
+    calcGainsButton.grid(row=5, column=3, columnspan=4)
 
     Label(mainGUI, text='kP').grid(row=6, column=3)
-    kPEntry = Entry(mainGUI, textvariable=STATE.kp, width=10, state='readonly').grid(row=6, column=4)
+    kPEntry = Entry(mainGUI, textvariable=STATE.kp, width=10,
+                    state='readonly').grid(row=6, column=4)
 
     Label(mainGUI, text='kD').grid(row=6, column=5)
-    kDEntry = Entry(mainGUI, textvariable=STATE.kd, width=10, state='readonly').grid(row=6, column=6)
+    kDEntry = Entry(mainGUI, textvariable=STATE.kd, width=10,
+                    state='readonly').grid(row=6, column=6)
+
+    Label(mainGUI, text='Controller Period (s)').grid(row=2, column=6)
+    periodEntry = Entry(mainGUI, textvariable=STATE.period, width=10,
+                        validate='all', validatecommand=(valFloat, '%P'))
+    periodEntry.grid(row=2, column=7)
+
+    Label(mainGUI, text='Max Controller Output').grid(row=3, column=6)
+    controllerMaxEntry = Entry(mainGUI, textvariable=STATE.max_controller_output, width=10,
+        validate='all', validatecommand=(valFloat, '%P'))
+    controllerMaxEntry.grid(row=3, column=7)
+
+    Label(mainGUI, text='Time-Normalized Controller').grid(row=4, column=6)
+    normalizedButton = Checkbutton(mainGUI, variable=STATE.controller_time_normalized)
+    normalizedButton.grid(row=4, column=7)
 
 
 #
@@ -446,6 +508,7 @@ def _plotTimeDomain(direction, qu, step):
 
     plt.show()
 
+
 def _plotVoltageDomain(direction, qu, step):
 
     # Voltage-domain plots
@@ -507,6 +570,7 @@ def _plotVoltageDomain(direction, qu, step):
     plt.tight_layout(pad=0.5)
 
     plt.show()
+
 
 def _plot3D(direction, qu, step):
 
@@ -600,14 +664,14 @@ def main():
         split_to_csv(args.jsonfile, STATE.stored_data)
 
 
-def _calcGains(kv, ka, qv, qa, effort):
+def _calcGains(kv, ka, qv, qa, effort, period):
 
     A = np.array([[0, 1], [0, -kv / ka]])
     B = np.array([[0], [1 / ka]])
     C = np.array([[1, 0]])
     D = np.array([[0]])
     sys = cnt.ss(A, B, C, D)
-    dsys = sys.sample(.05)
+    dsys = sys.sample(period)
 
     # Assign Q and R matrices according to Bryson's rule [1]. The elements
     # of q and r are tunable by the user.
@@ -620,8 +684,8 @@ def _calcGains(kv, ka, qv, qa, effort):
     R = np.diag(1.0 / np.square(r))
     K = frccnt.lqr(dsys, Q, R)
 
-    kp = K[0,0]
-    kd = K[0,1]
+    kp = K[0, 0]
+    kd = K[0, 1]
 
     return kp, kd
 
