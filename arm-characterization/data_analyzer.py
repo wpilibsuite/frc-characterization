@@ -189,34 +189,34 @@ def configure_gui():
         STATE.kd.set("%.4f" % kd)
 
     def presetGains(*args):
-        
+
         presets = {
-            'Default' : lambda: (
-                            STATE.max_controller_output.set(12),
-                            STATE.period.set(.02),
-                            STATE.controller_time_normalized.set(True)),
-            'WPILib (new)' : lambda: (
-                            STATE.max_controller_output.set(1),
-                            STATE.period.set(.02),
-                            STATE.controller_time_normalized.set(True)),
-            'WPILib (old)' : lambda: (
-                            STATE.max_controller_output.set(1),
-                            STATE.period.set(.05),
-                            STATE.controller_time_normalized.set(False)),
-            'Talon (new)' : lambda: (
-                            STATE.max_controller_output.set(1),
-                            STATE.period.set(.001),
-                            STATE.controller_time_normalized.set(True)),
-            'Talon (old)' : lambda: (
-                            STATE.max_controller_output.set(1023),
-                            STATE.period.set(.001),
-                            STATE.controller_time_normalized.set(False)),
-            'Spark MAX' : lambda: (
-                            STATE.max_controller_output.set(1),
-                            STATE.period.set(.001),
-                            STATE.controller_time_normalized.set(True)),
+            'Default': lambda: (
+                STATE.max_controller_output.set(12),
+                STATE.period.set(.02),
+                STATE.controller_time_normalized.set(True)),
+            'WPILib (new)': lambda: (
+                STATE.max_controller_output.set(1),
+                STATE.period.set(.02),
+                STATE.controller_time_normalized.set(True)),
+            'WPILib (old)': lambda: (
+                STATE.max_controller_output.set(1),
+                STATE.period.set(.05),
+                STATE.controller_time_normalized.set(False)),
+            'Talon (new)': lambda: (
+                STATE.max_controller_output.set(1),
+                STATE.period.set(.001),
+                STATE.controller_time_normalized.set(True)),
+            'Talon (old)': lambda: (
+                STATE.max_controller_output.set(1023),
+                STATE.period.set(.001),
+                STATE.controller_time_normalized.set(False)),
+            'Spark MAX': lambda: (
+                STATE.max_controller_output.set(1),
+                STATE.period.set(.001),
+                STATE.controller_time_normalized.set(True)),
         }
-        
+
         presets.get(STATE.gain_units_preset.get(), "Default")()
 
     def validateInt(P):
@@ -248,19 +248,19 @@ def configure_gui():
            command=getFile).grid(row=0, column=0)
 
     analyzeButton = Button(mainGUI, text="Analyze Data",
-           command=runAnalysis, state='disabled')
+                           command=runAnalysis, state='disabled')
     analyzeButton.grid(row=1, column=0)
 
     timePlotsButton = Button(mainGUI, text="Time-Domain Diagnostics",
-           command=plotTimeDomain, state='disabled')
+                             command=plotTimeDomain, state='disabled')
     timePlotsButton.grid(row=2, column=0)
 
-    voltPlotsButton =Button(mainGUI, text="Voltage-Domain Diagnostics",
-           command=plotVoltageDomain, state='disabled')
+    voltPlotsButton = Button(mainGUI, text="Voltage-Domain Diagnostics",
+                             command=plotVoltageDomain, state='disabled')
     voltPlotsButton.grid(row=3, column=0)
 
     fancyPlotButton = Button(mainGUI, text="3D Diagnostics",
-           command=plot3D, state='disabled')
+                             command=plot3D, state='disabled')
     fancyPlotButton.grid(row=4, column=0)
 
     Label(mainGUI, text='Window').grid(row=1, column=1)
@@ -313,7 +313,7 @@ def configure_gui():
     effortEntry.grid(row=4, column=5)
 
     calcGainsButton = Button(mainGUI, text='Calculate Optimal Controller Gains:',
-           command=calcGains, state='disabled')
+                             command=calcGains, state='disabled')
     calcGainsButton.grid(row=5, column=3, columnspan=4)
 
     Label(mainGUI, text='kP').grid(row=6, column=3)
@@ -331,15 +331,17 @@ def configure_gui():
 
     Label(mainGUI, text='Max Controller Output').grid(row=3, column=6)
     controllerMaxEntry = Entry(mainGUI, textvariable=STATE.max_controller_output, width=10,
-        validate='all', validatecommand=(valFloat, '%P'))
+                               validate='all', validatecommand=(valFloat, '%P'))
     controllerMaxEntry.grid(row=3, column=7)
 
     Label(mainGUI, text='Time-Normalized Controller').grid(row=4, column=6)
-    normalizedButton = Checkbutton(mainGUI, variable=STATE.controller_time_normalized)
+    normalizedButton = Checkbutton(
+        mainGUI, variable=STATE.controller_time_normalized)
     normalizedButton.grid(row=4, column=7)
 
     Label(mainGUI, text='Gain Settings Preset').grid(row=1, column=6)
-    presetChoices = {'Default', 'WPILib (new)', 'WPILib (old)', 'Talon (new)', 'Talon (old)', 'Spark MAX'}
+    presetChoices = {
+        'Default', 'WPILib (new)', 'WPILib (old)', 'Talon (new)', 'Talon (old)', 'Spark MAX'}
     presetMenu = OptionMenu(mainGUI, STATE.gain_units_preset, *presetChoices)
     presetMenu.grid(row=1, column=7)
     presetMenu.config(width=12)
