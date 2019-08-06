@@ -182,8 +182,8 @@ def analyze_data(data, window=WINDOW, threshold = MOTION_THRESHOLD):
         data[k] = np.array(data[k]).transpose()
 
     # trim quasi data before computing acceleration
-    sf_trim = trim_quasi_testdata(data["slow-forward"])
-    sb_trim = trim_quasi_testdata(data["slow-backward"])
+    sf_trim = trim_quasi_testdata(data["slow-forward"], threshold)
+    sb_trim = trim_quasi_testdata(data["slow-backward"], threshold)
     sf_l, sf_r = prepare_data(sf_trim, window)
     sb_l, sb_r = prepare_data(sb_trim, window)
 
