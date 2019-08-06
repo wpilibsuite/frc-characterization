@@ -240,7 +240,7 @@ def configure_gui():
 
     Label(mainGUI, text='Direction:').grid(row=0, column=5)
     directions = {'Forward', 'Backward'}
-    dirMenu = OptionMenu(mainGUI, STATE.direction, *directions)
+    dirMenu = OptionMenu(mainGUI, STATE.direction, *sorted(directions))
     dirMenu.configure(state='disabled')
     dirMenu.grid(row=0, column=6, sticky='ew')
 
@@ -342,7 +342,7 @@ def configure_gui():
     Label(mainGUI, text='Gain Settings Preset').grid(row=1, column=6)
     presetChoices = {
         'Default', 'WPILib (new)', 'WPILib (old)', 'Talon (new)', 'Talon (old)', 'Spark MAX'}
-    presetMenu = OptionMenu(mainGUI, STATE.gain_units_preset, *presetChoices)
+    presetMenu = OptionMenu(mainGUI, STATE.gain_units_preset, *sorted(presetChoices))
     presetMenu.grid(row=1, column=7)
     presetMenu.config(width=12)
     STATE.gain_units_preset.trace_add('write', presetGains)
