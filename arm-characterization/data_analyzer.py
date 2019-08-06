@@ -258,9 +258,12 @@ def configure_gui():
         if STATE.controller_type.get() == 'Onboard':
             gearingEntry.configure(state='disabled')
             pprEntry.configure(state='disabled')
-        else:
+        elif STATE.controller_type.get() == 'Talon':
             gearingEntry.configure(state='normal')
             pprEntry.configure(state='normal')
+        else:
+            gearingEntry.configure(state='normal')
+            pprEntry.configure(state='disabled')
 
     def validateInt(P):
         if str.isdigit(P) or P == "":
