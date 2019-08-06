@@ -179,10 +179,10 @@ def configure_gui():
         kp, kd = _calcGains(STATE.kv.get(), STATE.ka.get(), STATE.qv.get(
         ), STATE.qa.get(), STATE.max_effort.get(), STATE.period.get())
 
-        kp = kp * 12 / STATE.max_controller_output.get()
-        kd = kd * 12 / STATE.max_controller_output.get()
+        kp = kp / 12 * STATE.max_controller_output.get()
+        kd = kd / 12 * STATE.max_controller_output.get()
 
-        if STATE.controller_time_normalized.get():
+        if not STATE.controller_time_normalized.get():
             kd = kd/STATE.period.get()
 
         STATE.kp.set("%.4f" % kp)
@@ -218,6 +218,8 @@ def configure_gui():
         }
 
         presets.get(STATE.gain_units_preset.get(), "Default")()
+
+        calcGains()
 
     def validateInt(P):
         if str.isdigit(P) or P == "":
