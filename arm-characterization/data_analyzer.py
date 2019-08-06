@@ -761,17 +761,11 @@ def main():
 
     global STATE
 
-    parser = argparse.ArgumentParser(description="Analyze your data")
-    parser.add_argument("--to-csv", action="store_true", default=False)
-    args = parser.parse_args()
-
     STATE = ProgramState()
 
     configure_gui()
     mainGUI.mainloop()
 
-    if args.to_csv:
-        split_to_csv(args.jsonfile, STATE.stored_data)
 
 
 def _calcGains(kv, ka, qv, qa, effort, period):
