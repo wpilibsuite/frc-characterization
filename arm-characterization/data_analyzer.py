@@ -315,12 +315,12 @@ def configure_gui():
                              command=plot3D, state='disabled')
     fancyPlotButton.grid(row=4, column=0)
 
-    Label(mainGUI, text='Window').grid(row=1, column=1)
+    Label(mainGUI, text='Accel Window Size').grid(row=1, column=1)
     windowEntry = Entry(mainGUI, textvariable=STATE.window_size,
                         width=5, validate='all', validatecommand=(valInt, '%P'))
     windowEntry.grid(row=1, column=2)
 
-    Label(mainGUI, text='Threshold').grid(row=1, column=3)
+    Label(mainGUI, text='Motion Threshold (deg/s)').grid(row=1, column=3)
     thresholdEntry = Entry(mainGUI, textvariable=STATE.motion_threshold,
                            width=5, validate='all', validatecommand=(valInt, '%P'))
     thresholdEntry.grid(row=1, column=4)
