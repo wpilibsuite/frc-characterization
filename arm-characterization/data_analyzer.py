@@ -651,6 +651,11 @@ def prepare_data(data, window):
         coefficient of acceleration).
     """
 
+    # Ensure voltage points in same direction as velocity
+    for x in JSON_DATA_KEYS:
+        data[x][VOLTS_COL] = np.copysign(
+            data[x][VOLTS_COL], data[x][ENCODER_V_COL])
+
     # trim quasi data before computing acceleration
     sf_trim = trim_quasi_testdata(data["slow-forward"])
     sb_trim = trim_quasi_testdata(data["slow-backward"])
