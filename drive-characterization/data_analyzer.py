@@ -43,6 +43,7 @@ class ProgramState:
     subset = StringVar(mainGUI)
 
     units = StringVar(mainGUI)
+    wheel_diam = DoubleVar(mainGUI)
 
     stored_data = None
 
@@ -62,19 +63,22 @@ class ProgramState:
     kcos = DoubleVar(mainGUI)
     r_square = DoubleVar(mainGUI)
 
+    qp = DoubleVar(mainGUI)
     qv = DoubleVar(mainGUI)
-    qa = DoubleVar(mainGUI)
     max_effort = DoubleVar(mainGUI)
     period = DoubleVar(mainGUI)
     max_controller_output = DoubleVar(mainGUI)
     controller_time_normalized = BooleanVar(mainGUI)
 
     gearing = DoubleVar(mainGUI)
-
     controller_type = StringVar(mainGUI)
     encoder_ppr = IntVar(mainGUI)
+    has_slave = BooleanVar(mainGUI)
+    slave_period = DoubleVar(mainGUI)
 
     gain_units_preset = StringVar(mainGUI)
+
+    loop_type = StringVar(mainGUI)
 
     kp = DoubleVar(mainGUI)
     kd = DoubleVar(mainGUI)
@@ -84,7 +88,8 @@ class ProgramState:
         self.motion_threshold.set(.2)
         self.subset.set('All Combined')
 
-        self.units.set('Degrees')
+        self.units.set('Feet')
+        self.wheel_diam.set('.333')
 
         self.ks.set(0)
         self.kv.set(0)
@@ -92,19 +97,22 @@ class ProgramState:
         self.kcos.set(0)
         self.r_square.set(0)
 
-        self.qv.set(2)
-        self.qa.set(4)
+        self.qp.set(2)
+        self.qv.set(4)
         self.max_effort.set(7)
         self.period.set(.02)
         self.max_controller_output.set(12)
         self.controller_time_normalized.set(True)
 
         self.gearing.set(1)
-
-        self.controller_type.set("Onboard")
+        self.controller_type.set('Onboard')
         self.encoder_ppr.set(4096)
+        self.has_slave.set(False)
+        self.slave_period.set(.01)
 
         self.gain_units_preset.set('Default')
+
+        self.loop_type.set('Position')
 
         self.kp.set(0)
         self.kd.set(0)
@@ -262,13 +270,23 @@ def configure_gui():
 
     def calcGains():
 
-        kp, kd = _calcGains(
-            STATE.kv.get(),
-            STATE.ka.get(),
-            STATE.qv.get(),
-            STATE.qa.get(),
-            STATE.max_effort.get(),
-            STATE.period.get())
+        period = STATE.period.get() if not STATE.has_slave.get() else STATE.slave_period.get()
+
+        if STATE.loop_type.get() == 'Position':
+            kp, kd = _calcGainsPos(
+                STATE.kv.get(),
+                STATE.ka.get(),
+                STATE.qp.get(),
+                STATE.qv.get(),
+                STATE.max_effort.get(),
+                period)
+        else:
+            kp, kd = _calcGainsVel(
+                STATE.kv.get(),
+                STATE.ka.get(),
+                STATE.qv.get(),
+                STATE.max_effort.get(),
+                period)
 
         # Scale gains to output
         kp = kp / 12 * STATE.max_controller_output.get()
@@ -284,12 +302,12 @@ def configure_gui():
             kd = kd / STATE.gearing.get()
 
         # Get correct conversion factor for rotations
-        if STATE.units.get() == 'Degrees':
-            rotation = 360
-        elif STATE.units.get() == 'Radians':
+        if STATE.units.get() == 'Radians':
             rotation = 2*math.pi
         elif STATE.units.get() == 'Rotations':
             rotation = 1
+        else:
+            rotation = STATE.wheel_diam.get() * math.pi
 
         # Convert to controller-native units
         if STATE.controller_type.get() == 'Talon':
@@ -345,12 +363,32 @@ def configure_gui():
         if STATE.controller_type.get() == 'Onboard':
             gearingEntry.configure(state='disabled')
             pprEntry.configure(state='disabled')
+            hasSlave.configure(state='disabled')
+            slavePeriodEntry.configure(state='disabled')
         elif STATE.controller_type.get() == 'Talon':
             gearingEntry.configure(state='normal')
             pprEntry.configure(state='normal')
+            hasSlave.configure(state='normal')
+            slavePeriodEntry.configure(state='normal')
         else:
             gearingEntry.configure(state='normal')
             pprEntry.configure(state='disabled')
+            hasSlave.configure(state='normal')
+            slavePeriodEntry.configure(state='normal')
+
+    def enableWheelDiam(*args):
+        if (STATE.units.get() == 'Feet'
+            or STATE.units.get() == 'Inches'
+            or STATE.units.get() == 'Meters'):
+            diamEntry.configure(state='normal')
+        else:
+            diamEntry.configure(state='disabled')
+
+    def enableErrorBounds(*args):
+        if STATE.loop_type.get() == 'Position':
+            qPEntry.configure(state='normal')
+        else:
+            qPEntry.configure(state='disabled')
 
     def validateInt(P):
         if str.isdigit(P) or P == "":
@@ -369,23 +407,31 @@ def configure_gui():
 
     # TOP OF WINDOW (FILE SELECTION)
 
-    Button(mainGUI, text="Select Data File",
-           command=getFile).grid(row=0, column=0)
+    topFrame = Frame(mainGUI)
+    topFrame.grid(row=0, column=0, columnspan=4)
 
-    fileEntry = Entry(mainGUI, width=75)
-    fileEntry.grid(row=0, column=1, columnspan=3, sticky = 'ew')
+    Button(topFrame, text="Select Data File",
+           command=getFile).grid(row=0, column=0, padx=4)
+
+    fileEntry = Entry(topFrame, width=80)
+    fileEntry.grid(row=0, column=1, columnspan=3)
     fileEntry.configure(state='readonly')
 
-    Label(mainGUI, text='Units:', width=10).grid(row=0, column=4)
-
-    unitChoices = {'Degrees', 'Radians', 'Rotations'}
-    unitsMenu = OptionMenu(mainGUI, STATE.units, *sorted(unitChoices))
+    Label(topFrame, text='Units:', width=10).grid(row=0, column=4)
+    unitChoices = {'Feet', 'Inches', 'Meters', 'Radians', 'Rotations'}
+    unitsMenu = OptionMenu(topFrame, STATE.units, *sorted(unitChoices))
     unitsMenu.configure(width=10)
     unitsMenu.grid(row=0, column=5, sticky='ew')
+    STATE.units.trace_add('write', enableWheelDiam)
 
-    Label(mainGUI, text='Subset:', width=15).grid(row=0, column=6)
+    Label(topFrame, text='Wheel Diameter (units):', anchor='e').grid(row=1, column=3, columnspan=2, sticky = 'ew')
+    diamEntry = Entry(topFrame, textvariable = STATE.wheel_diam,
+                        validate='all', validatecommand=(valFloat, '&P'))
+    diamEntry.grid(row=1, column=5)
+
+    Label(topFrame, text='Subset:', width=15).grid(row=0, column=6)
     subsets = {'All Combined', 'Forward Left', 'Forward Right', 'Forward Combined', 'Backward Left', 'Backward Right', 'Backward Combined'}
-    dirMenu = OptionMenu(mainGUI, STATE.subset, *sorted(subsets))
+    dirMenu = OptionMenu(topFrame, STATE.subset, *sorted(subsets))
     dirMenu.configure(width=20)
     dirMenu.grid(row=0, column=7)
 
@@ -443,7 +489,7 @@ def configure_gui():
     Label(ffFrame, text='r-squared:',
           anchor='e').grid(row=4, column=3, sticky='ew')
     rSquareEntry = Entry(ffFrame, textvariable=STATE.r_square, width=10)
-    rSquareEntry.grid(row=5, column=4)
+    rSquareEntry.grid(row=4, column=4)
     rSquareEntry.configure(state='readonly')
 
     # FEEDBACK ANALYSIS FRAME
@@ -504,17 +550,28 @@ def configure_gui():
     pprEntry.configure(state='disabled')
     pprEntry.grid(row=7, column=1)
 
+    Label(fbFrame, text='Has Slave:', anchor='e').grid(row=8, column=0, sticky='ew')
+    hasSlave = Checkbutton(fbFrame, variable = STATE.has_slave)
+    hasSlave.grid(row=8, column=1)
+    hasSlave.configure(state='disabled')
+
+    Label(fbFrame, text='Slave Update Period:', anchor='e').grid(row=9, column=0, sticky='ew')
+    slavePeriodEntry = Entry(fbFrame, textvariable=STATE.slave_period, width=10,
+                                validate='all', validatecommand=(valFloat, '%P'))
+    slavePeriodEntry.grid(row=9, column=1)
+    slavePeriodEntry.configure(state='disabled')
+
     Label(fbFrame, text='Max Acceptable Position Error (units):', anchor='e').grid(
         row=1, column=2, columnspan=2, sticky='ew')
-    qVEntry = Entry(fbFrame, textvariable=STATE.qv, width=10,
+    qPEntry = Entry(fbFrame, textvariable=STATE.qp, width=10,
                     validate='all', validatecommand=(valFloat, '%P'))
-    qVEntry.grid(row=1, column=4)
+    qPEntry.grid(row=1, column=4)
 
     Label(fbFrame, text='Max Acceptable Velocity Error (units/s):', anchor='e').grid(
         row=2, column=2, columnspan=2, sticky='ew')
-    qAEntry = Entry(fbFrame, textvariable=STATE.qa, width=10,
+    qVEntry = Entry(fbFrame, textvariable=STATE.qv, width=10,
                     validate='all', validatecommand=(valFloat, '%P'))
-    qAEntry.grid(row=2, column=4)
+    qVEntry.grid(row=2, column=4)
 
     Label(fbFrame, text='Max Acceptable Control Effort (V):', anchor='e').grid(
         row=3, column=2, columnspan=2, sticky='ew')
@@ -522,17 +579,24 @@ def configure_gui():
                         validate='all', validatecommand=(valFloat, '%P'))
     effortEntry.grid(row=3, column=4)
 
+    Label(fbFrame, text='Loop Type:', anchor='e').grid(row=4, column=2, columnspan=2, sticky='ew')
+    loopTypes = {'Position', 'Velocity'}
+    loopTypeMenu = OptionMenu(fbFrame, STATE.loop_type, *sorted(loopTypes))
+    loopTypeMenu.configure(width=8)
+    loopTypeMenu.grid(row=4, column=4)
+    STATE.loop_type.trace_add('write', enableErrorBounds)
+
     calcGainsButton = Button(fbFrame, text='Calculate Optimal Controller Gains:',
                              command=calcGains, state='disabled')
-    calcGainsButton.grid(row=5, column=2, columnspan=3)
+    calcGainsButton.grid(row=6, column=2, columnspan=3)
 
-    Label(fbFrame, text='kP:', anchor='e').grid(row=6, column=2, sticky='ew')
+    Label(fbFrame, text='kP:', anchor='e').grid(row=7, column=2, sticky='ew')
     kPEntry = Entry(fbFrame, textvariable=STATE.kp, width=10,
-                    state='readonly').grid(row=6, column=3)
-
-    Label(fbFrame, text='kD:', anchor='e').grid(row=7, column=2, sticky='ew')
-    kDEntry = Entry(fbFrame, textvariable=STATE.kd, width=10,
                     state='readonly').grid(row=7, column=3)
+
+    Label(fbFrame, text='kD:', anchor='e').grid(row=8, column=2, sticky='ew')
+    kDEntry = Entry(fbFrame, textvariable=STATE.kd, width=10,
+                    state='readonly').grid(row=8, column=3)
 
 #
 # These parameters are used to indicate which column of data each parameter
@@ -920,7 +984,7 @@ def main():
     mainGUI.mainloop()
 
 
-def _calcGains(kv, ka, qv, qa, effort, period):
+def _calcGainsPos(kv, ka, qp, qv, effort, period):
 
     A = np.array([[0, 1], [0, -kv / ka]])
     B = np.array([[0], [1 / ka]])
@@ -934,7 +998,7 @@ def _calcGains(kv, ka, qv, qa, effort, period):
     #
     # [1] "Bryson's rule" in
     #     https://file.tavsys.net/control/state-space-guide.pdf
-    q = [qv, qa]  # units and units/s acceptable errors
+    q = [qp, qv]  # units and units/s acceptable errors
     r = [effort]  # V acceptable actuation effort
     Q = np.diag(1.0 / np.square(q))
     R = np.diag(1.0 / np.square(r))
@@ -942,6 +1006,31 @@ def _calcGains(kv, ka, qv, qa, effort, period):
 
     kp = K[0, 0]
     kd = K[0, 1]
+
+    return kp, kd
+
+def _calcGainsVel(kv, ka, qv, effort, period):
+
+    A = np.array([[-kv / ka]])
+    B = np.array([[1 / ka]])
+    C = np.array([[1]])
+    D = np.array([[0]])
+    sys = cnt.ss(A, B, C, D)
+    dsys = sys.sample(period)
+
+    # Assign Q and R matrices according to Bryson's rule [1]. The elements
+    # of q and r are tunable by the user.
+    #
+    # [1] "Bryson's rule" in
+    #     https://file.tavsys.net/control/state-space-guide.pdf
+    q = [qv]  # units/s acceptable error
+    r = [effort]  # V acceptable actuation effort
+    Q = np.diag(1.0 / np.square(q))
+    R = np.diag(1.0 / np.square(r))
+    K = frccnt.lqr(dsys, Q, R)
+
+    kp = K[0, 0]
+    kd = 0
 
     return kp, kd
 
