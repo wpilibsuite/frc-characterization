@@ -349,37 +349,40 @@ def configure_gui():
                              command=plot3D, state='disabled')
     fancyPlotButton.grid(row=4, column=0, sticky='ew')
 
-    Label(ffFrame, text='Accel Window Size').grid(row=1, column=1)
+    Label(ffFrame, text='Accel Window Size:', anchor='e').grid(
+        row=1, column=1, sticky='ew')
     windowEntry = Entry(ffFrame, textvariable=STATE.window_size,
                         width=5, validate='all', validatecommand=(valInt, '%P'))
     windowEntry.grid(row=1, column=2)
 
-    Label(ffFrame, text='Motion Threshold (units/s)').grid(row=2, column=1)
+    Label(ffFrame, text='Motion Threshold (units/s):',
+          anchor='e').grid(row=2, column=1, sticky='ew')
     thresholdEntry = Entry(ffFrame, textvariable=STATE.motion_threshold,
                            width=5, validate='all', validatecommand=(valInt, '%P'))
     thresholdEntry.grid(row=2, column=2)
 
-    Label(ffFrame, text='kS').grid(row=1, column=3)
+    Label(ffFrame, text='kS:', anchor='e').grid(row=1, column=3, sticky='ew')
     kSEntry = Entry(ffFrame, textvariable=STATE.ks, width=10)
     kSEntry.grid(row=1, column=4)
     kSEntry.configure(state='readonly')
 
-    Label(ffFrame, text='kV').grid(row=2, column=3)
+    Label(ffFrame, text='kV:', anchor='e').grid(row=2, column=3, sticky='ew')
     kVEntry = Entry(ffFrame, textvariable=STATE.kv, width=10)
     kVEntry.grid(row=2, column=4)
     kVEntry.configure(state='readonly')
 
-    Label(ffFrame, text='kA').grid(row=3, column=3)
+    Label(ffFrame, text='kA:', anchor='e').grid(row=3, column=3, sticky='ew')
     kAEntry = Entry(ffFrame, textvariable=STATE.ka, width=10)
     kAEntry.grid(row=3, column=4)
     kAEntry.configure(state='readonly')
 
-    Label(ffFrame, text='kCos').grid(row=4, column=3)
+    Label(ffFrame, text='kCos:', anchor='e').grid(row=4, column=3, sticky='ew')
     kCosEntry = Entry(ffFrame, textvariable=STATE.kcos, width=10)
     kCosEntry.grid(row=4, column=4)
     kCosEntry.configure(state='readonly')
 
-    Label(ffFrame, text='r-squared').grid(row=5, column=3)
+    Label(ffFrame, text='r-squared:',
+          anchor='e').grid(row=5, column=3, sticky='ew')
     rSquareEntry = Entry(ffFrame, textvariable=STATE.r_square, width=10)
     rSquareEntry.grid(row=5, column=4)
     rSquareEntry.configure(state='readonly')
@@ -392,7 +395,8 @@ def configure_gui():
     Label(fbFrame, text='Feedback Analysis').grid(
         row=0, column=0, columnspan=5)
 
-    Label(fbFrame, text='Gain Settings Preset').grid(row=1, column=0)
+    Label(fbFrame, text='Gain Settings Preset:',
+          anchor='e').grid(row=1, column=0, sticky='ew')
     presetChoices = {
         'Default', 'WPILib (new)', 'WPILib (old)', 'Talon (new)', 'Talon (old)', 'Spark MAX'}
     presetMenu = OptionMenu(
@@ -401,54 +405,60 @@ def configure_gui():
     presetMenu.config(width=12)
     STATE.gain_units_preset.trace_add('write', presetGains)
 
-    Label(fbFrame, text='Controller Period (s)').grid(row=2, column=0)
+    Label(fbFrame, text='Controller Period (s):',
+          anchor='e').grid(row=2, column=0, sticky='ew')
     periodEntry = Entry(fbFrame, textvariable=STATE.period, width=10,
                         validate='all', validatecommand=(valFloat, '%P'))
     periodEntry.grid(row=2, column=1)
 
-    Label(fbFrame, text='Max Controller Output').grid(row=3, column=0)
+    Label(fbFrame, text='Max Controller Output:',
+          anchor='e').grid(row=3, column=0, sticky='ew')
     controllerMaxEntry = Entry(fbFrame, textvariable=STATE.max_controller_output, width=10,
                                validate='all', validatecommand=(valFloat, '%P'))
     controllerMaxEntry.grid(row=3, column=1)
 
-    Label(fbFrame, text='Time-Normalized Controller').grid(row=4, column=0)
+    Label(fbFrame, text='Time-Normalized Controller:',
+          anchor='e').grid(row=4, column=0, sticky='ew')
     normalizedButton = Checkbutton(
         fbFrame, variable=STATE.controller_time_normalized)
     normalizedButton.grid(row=4, column=1)
 
-    Label(fbFrame, text='Controller Type').grid(row=5, column=0)
+    Label(fbFrame, text='Controller Type:', anchor='e').grid(
+        row=5, column=0, sticky='ew')
     controllerTypes = {'Onboard', 'Talon', 'Spark'}
     controllerTypeMenu = OptionMenu(
         fbFrame, STATE.controller_type, *sorted(controllerTypes))
     controllerTypeMenu.grid(row=5, column=1)
     STATE.controller_type.trace_add('write', enableOffboard)
 
-    Label(fbFrame, text='Post-Encoder Gearing').grid(row=6, column=0)
+    Label(fbFrame, text='Post-Encoder Gearing:',
+          anchor='e').grid(row=6, column=0, sticky='ew')
     gearingEntry = Entry(fbFrame, textvariable=STATE.gearing, width=10,
                          validate='all', validatecommand=(valFloat, '%P'))
     gearingEntry.configure(state='disabled')
     gearingEntry.grid(row=6, column=1)
 
-    Label(fbFrame, text='Encoder PPR').grid(row=7, column=0)
+    Label(fbFrame, text='Encoder PPR:', anchor='e').grid(
+        row=7, column=0, sticky='ew')
     pprEntry = Entry(fbFrame, textvariable=STATE.encoder_ppr, width=10,
                      validate='all', validatecommand=(valInt, '%P'))
     pprEntry.configure(state='disabled')
     pprEntry.grid(row=7, column=1)
 
-    Label(fbFrame, text='Max Acceptable Position Error (units)').grid(
-        row=1, column=2, columnspan=2)
+    Label(fbFrame, text='Max Acceptable Position Error (units):', anchor='e').grid(
+        row=1, column=2, columnspan=2, sticky='ew')
     qVEntry = Entry(fbFrame, textvariable=STATE.qv, width=10,
                     validate='all', validatecommand=(valFloat, '%P'))
     qVEntry.grid(row=1, column=4)
 
-    Label(fbFrame, text='Max Acceptable Velocity Error (units/s)').grid(
-        row=2, column=2, columnspan=2)
+    Label(fbFrame, text='Max Acceptable Velocity Error (units/s):', anchor='e').grid(
+        row=2, column=2, columnspan=2, sticky='ew')
     qAEntry = Entry(fbFrame, textvariable=STATE.qa, width=10,
                     validate='all', validatecommand=(valFloat, '%P'))
     qAEntry.grid(row=2, column=4)
 
-    Label(fbFrame, text='Max Acceptable Control Effort (V)').grid(
-        row=3, column=2, columnspan=2)
+    Label(fbFrame, text='Max Acceptable Control Effort (V):', anchor='e').grid(
+        row=3, column=2, columnspan=2, sticky='ew')
     effortEntry = Entry(fbFrame, textvariable=STATE.max_effort, width=10,
                         validate='all', validatecommand=(valFloat, '%P'))
     effortEntry.grid(row=3, column=4)
@@ -457,11 +467,11 @@ def configure_gui():
                              command=calcGains, state='disabled')
     calcGainsButton.grid(row=5, column=2, columnspan=3)
 
-    Label(fbFrame, text='kP').grid(row=6, column=2)
+    Label(fbFrame, text='kP:', anchor='e').grid(row=6, column=2, sticky='ew')
     kPEntry = Entry(fbFrame, textvariable=STATE.kp, width=10,
                     state='readonly').grid(row=6, column=3)
 
-    Label(fbFrame, text='kD').grid(row=7, column=2)
+    Label(fbFrame, text='kD:', anchor='e').grid(row=7, column=2, sticky='ew')
     kDEntry = Entry(fbFrame, textvariable=STATE.kd, width=10,
                     state='readonly').grid(row=7, column=3)
 
