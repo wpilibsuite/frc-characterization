@@ -733,7 +733,7 @@ def _plotVoltageDomain(direction, qu, step):
     ax.set_ylabel("Velocity")
     ax.set_title("Quasistatic velocity vs velocity-portion voltage")
     plt.scatter(
-        qu[PREPARED_V_COL] - ks - ka *
+        qu[PREPARED_V_COL] - ks * np.sign(qu[PREPARED_VEL_COL]) - ka *
         qu[PREPARED_ACC_COL] - kcos * qu[PREPARED_COS_COL],
         qu[PREPARED_VEL_COL],
         marker=".",
@@ -750,7 +750,7 @@ def _plotVoltageDomain(direction, qu, step):
     ax.set_ylabel("Acceleration")
     ax.set_title("Dynamic acceleration vs acceleration-portion voltage")
     plt.scatter(
-        step[PREPARED_V_COL] - ks - kv *
+        step[PREPARED_V_COL] - ks * np.sign(step[PREPARED_VEL_COL]) - kv *
         step[PREPARED_VEL_COL] - kcos * step[PREPARED_COS_COL],
         step[PREPARED_ACC_COL],
         marker=".",
@@ -773,7 +773,7 @@ def _plotVoltageDomain(direction, qu, step):
     ax.set_ylabel("Angle")
     ax.set_title("Quasistatic angle vs gravity-portion voltage")
     plt.scatter(
-        qu[PREPARED_V_COL] - ks - kv *
+        qu[PREPARED_V_COL] - ks * np.sign(qu[PREPARED_VEL_COL]) - kv *
         qu[PREPARED_VEL_COL] - ka * qu[PREPARED_ACC_COL],
         qu[PREPARED_POS_COL],
         marker=".",
@@ -822,7 +822,7 @@ def _plot3D(direction, qu, step):
         np.linspace(np.min(vel), np.max(vel)),
         np.linspace(np.min(accel), np.max(accel)),
     )
-    ax.plot_surface(vv, aa, ks + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1])
+    ax.plot_surface(vv, aa, ks * np.sign(vv) + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1])
 
     plt.show()
 
