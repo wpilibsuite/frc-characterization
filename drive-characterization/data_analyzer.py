@@ -81,7 +81,7 @@ class ProgramState:
 
     def __init__(self):
         self.window_size.set(8)
-        self.motion_threshold.set(20)
+        self.motion_threshold.set(.2)
         self.subset.set('All Combined')
 
         self.units.set('Degrees')
@@ -859,7 +859,7 @@ def _plot3D(subset, qu, step):
     ax.set_xlabel("Velocity")
     ax.set_ylabel("Acceleration")
     ax.set_zlabel("Voltage")
-    ax.set_title("Cosine-adjusted Voltage vs velocity and acceleration")
+    ax.set_title("Voltage vs velocity and acceleration")
     ax.scatter(vel, accel, volts)
 
     # Show best fit plane
