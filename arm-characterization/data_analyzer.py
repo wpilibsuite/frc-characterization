@@ -54,7 +54,7 @@ columns = dict(
 
 class ProgramState:
     window_size = IntVar(mainGUI)
-    motion_threshold = IntVar(mainGUI)
+    motion_threshold = DoubleVar(mainGUI)
     direction = StringVar(mainGUI)
 
     units = StringVar(mainGUI)
@@ -92,7 +92,7 @@ class ProgramState:
     def __init__(self):
         self.window_size.set(8)
         self.motion_threshold.set(20)
-        self.direction.set('Forward')
+        self.direction.set('Combined')
 
         self.units.set('Degrees')
 
@@ -157,9 +157,13 @@ def configure_gui():
         if STATE.direction.get() == 'Forward':
             ks, kv, ka, kcos, rsquare = calcFit(
                 STATE.quasi_forward, STATE.step_forward)
-        else:
+        elif STATE.direction.get() == 'Backward':
             ks, kv, ka, kcos, rsquare = calcFit(
                 STATE.quasi_backward, STATE.step_backward)
+        else:
+            ks, kv, ka, kcos, rsquare = calcFit(
+                np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                np.concatenate((STATE.step_forward, STATE.step_backward), axis=1))
 
         STATE.ks.set('%s' % float('%.3g' % ks))
         STATE.kv.set('%s' % float('%.3g' % kv))
@@ -177,23 +181,32 @@ def configure_gui():
     def plotTimeDomain():
         if STATE.direction.get() == 'Forward':
             _plotTimeDomain('Forward', STATE.quasi_forward, STATE.step_forward)
+        elif STATE.direction.get() == 'Backward':
+            _plotTimeDomain('Backward', STATE.quasi_backward, STATE.step_backward)
         else:
-            _plotTimeDomain('Backward', STATE.quasi_backward,
-                            STATE.step_backward)
+            _plotTimeDomain('Combined', 
+                    np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                    np.concatenate((STATE.step_forward, STATE.step_backward), axis=1))
 
     def plotVoltageDomain():
         if STATE.direction.get() == 'Forward':
-            _plotVoltageDomain(
-                'Forward', STATE.quasi_forward, STATE.step_forward)
+            _plotVoltageDomain('Forward', STATE.quasi_forward, STATE.step_forward)
+        elif STATE.direction.get() == 'Backward':
+            _plotVoltageDomain('Backward', STATE.quasi_backward, STATE.step_backward)
         else:
-            _plotVoltageDomain(
-                'Backward', STATE.quasi_backward, STATE.step_backward)
+            _plotVoltageDomain('Combined', 
+                    np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                    np.concatenate((STATE.step_forward, STATE.step_backward), axis=1))
 
     def plot3D():
         if STATE.direction.get() == 'Forward':
             _plot3D('Forward', STATE.quasi_forward, STATE.step_forward)
-        else:
+        elif STATE.direction.get() == 'Backward':
             _plot3D('Backward', STATE.quasi_backward, STATE.step_backward)
+        else:
+            _plot3D('Combined', 
+                    np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                    np.concatenate((STATE.step_forward, STATE.step_backward), axis=1))
 
     def calcGains():
 
@@ -319,7 +332,7 @@ def configure_gui():
     unitsMenu.grid(row=0, column=5, sticky='ew')
 
     Label(mainGUI, text='Direction:', width=10).grid(row=0, column=6)
-    directions = {'Forward', 'Backward'}
+    directions = {'Combined', 'Forward', 'Backward'}
 
     dirMenu = OptionMenu(mainGUI, STATE.direction, *sorted(directions))
     dirMenu.configure(width=10)
@@ -358,7 +371,7 @@ def configure_gui():
     Label(ffFrame, text='Motion Threshold (units/s):',
           anchor='e').grid(row=2, column=1, sticky='ew')
     thresholdEntry = Entry(ffFrame, textvariable=STATE.motion_threshold,
-                           width=5, validate='all', validatecommand=(valInt, '%P'))
+                           width=5, validate='all', validatecommand=(valFloat, '%P'))
     thresholdEntry.grid(row=2, column=2)
 
     Label(ffFrame, text='kS:', anchor='e').grid(row=1, column=3, sticky='ew')
@@ -463,7 +476,7 @@ def configure_gui():
                         validate='all', validatecommand=(valFloat, '%P'))
     effortEntry.grid(row=3, column=4)
 
-    calcGainsButton = Button(fbFrame, text='Calculate Optimal Controller Gains:',
+    calcGainsButton = Button(fbFrame, text='Calculate Optimal Controller Gains',
                              command=calcGains, state='disabled')
     calcGainsButton.grid(row=5, column=2, columnspan=3)
 
@@ -636,8 +649,7 @@ def prepare_data(data, window):
 
 def ols(x1, x2, x3, y):
     """multivariate linear regression using ordinary least squares"""
-    x = np.array((x1, x2, x3)).T
-    x = sm.add_constant(x)
+    x = np.array((np.sign(x1), x1, x2, x3)).T
     model = sm.OLS(y, x)
     return model.fit()
 
