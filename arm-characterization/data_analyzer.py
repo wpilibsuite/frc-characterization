@@ -300,8 +300,6 @@ def configure_gui():
 
         presets.get(STATE.gain_units_preset.get(), "Default")()
 
-        calcGains()
-
     def enableOffboard(*args):
         if STATE.controller_type.get() == 'Onboard':
             gearingEntry.configure(state='disabled')
@@ -312,12 +310,18 @@ def configure_gui():
             gearingEntry.configure(state='normal')
             pprEntry.configure(state='normal')
             hasSlave.configure(state='normal')
-            slavePeriodEntry.configure(state='normal')
+            if STATE.has_slave.get():
+                slavePeriodEntry.configure(state='normal')
+            else:
+                slavePeriodEntry.configure(state='disabled')
         else:
             gearingEntry.configure(state='normal')
             pprEntry.configure(state='disabled')
             hasSlave.configure(state='normal')
-            slavePeriodEntry.configure(state='normal')
+            if STATE.has_slave.get():
+                slavePeriodEntry.configure(state='normal')
+            else:
+                slavePeriodEntry.configure(state='disabled')
 
     def validateInt(P):
         if str.isdigit(P) or P == "":
@@ -482,6 +486,7 @@ def configure_gui():
     hasSlave = Checkbutton(fbFrame, variable=STATE.has_slave)
     hasSlave.grid(row=8, column=1)
     hasSlave.configure(state='disabled')
+    STATE.has_slave.trace_add('write', enableOffboard)
 
     Label(fbFrame, text='Slave Update Period (s):',
           anchor='e').grid(row=9, column=0, sticky='ew')
