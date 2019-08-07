@@ -333,6 +333,8 @@ def configure_gui():
         if STATE.controller_type.get() == 'Talon':
             kp = kp * rotation / STATE.encoder_ppr.get()
             kd = kd * rotation / STATE.encoder_ppr.get()
+            if STATE.loop_type.get() == 'Velocity':
+                kp = kp * 10
         elif STATE.controller_type.get() == 'Spark':
             kp = kp * rotation
             kd = kd * rotation
@@ -1017,7 +1019,7 @@ def main():
     global STATE
     STATE = ProgramState()
 
-    mainGUI.title("RobotPy Arm Characterization Tool")
+    mainGUI.title("RobotPy Drive Characterization Tool")
 
     configure_gui()
     mainGUI.mainloop()
