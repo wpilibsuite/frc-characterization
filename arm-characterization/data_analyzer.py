@@ -601,7 +601,7 @@ def compute_accel(data, window):
     # deal with incomplete data
     if len(data[TIME_COL]) < window * 2:
         tkinter.messagebox.showinfo("Error!", "Not enough data points to compute acceleration. "
-                                    + "Try running with a smaller window setting or a larger threshold.")
+                                    + "Try running with a smaller window setting or a smaller threshold.")
         return None
 
     # Compute left/right acceleration
@@ -884,41 +884,6 @@ def calcFit(qu, step):
     return ks, kv, ka, kcos, rsquare
 
 
-def split_to_csv(fname, stored_data):
-
-    outdir = dirname(fname)
-    fname = join(outdir, splitext(basename(fname))[0])
-
-    header = [""] * (max(columns.values()) + 1)
-    for k, v in columns.items():
-        header[v] = k
-
-    for d in JSON_DATA_KEYS:
-        fn = "%s-%s.csv" % (fname, d)
-        if exists(fn):
-            print("Error:", fn, "already exists")
-            return
-
-    for d in JSON_DATA_KEYS:
-        fn = "%s-%s.csv" % (fname, d)
-        with open(fn, "w") as fp:
-            c = csv.writer(fp)
-            c.writerow(header)
-            for r in stored_data[d].transpose():
-                c.writerow(r)
-
-
-def main():
-
-    global STATE
-    STATE = ProgramState()
-
-    mainGUI.title("RobotPy Arm Characterization Tool")
-
-    configure_gui()
-    mainGUI.mainloop()
-
-
 def _calcGains(kv, ka, qp, qv, effort, period):
 
     A = np.array([[0, 1], [0, -kv / ka]])
@@ -943,6 +908,17 @@ def _calcGains(kv, ka, qp, qv, effort, period):
     kd = K[0, 1]
 
     return kp, kd
+
+
+def main():
+
+    global STATE
+    STATE = ProgramState()
+
+    mainGUI.title("RobotPy Arm Characterization Tool")
+
+    configure_gui()
+    mainGUI.mainloop()
 
 
 if __name__ == "__main__":
