@@ -20,6 +20,8 @@ Sample robot code is available in several different variations.
 * [Java TalonSRX](robot-java-talonsrx)
 * [Python](robot-python)
 * [Python TalonSRX](robot-python-talonsrx)
+* [C++](robot-cpp)
+* [C++ TalonSRX](robot-cpp-talonsrx)
 
 Python robot code also has RobotPy physics support, so you can run the tests in
 simulation if you want to see what the autonomous mode does! Unfortunately, it
@@ -52,7 +54,7 @@ your robot.
 
 * http://robotpy.readthedocs.io/en/stable/install/index.html
 
-If using a Java robot program, see the WPILIb screensteps documentation for
+If using a Java or C++ robot program, see the WPILIb screensteps documentation for
 installing the necessary software on your computer.
 
 * https://wpilib.screenstepslive.com/s/4485
