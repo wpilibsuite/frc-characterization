@@ -98,8 +98,8 @@ class ProgramState:
         self.kcos.set(0)
         self.r_square.set(0)
 
-        self.qp.set(2)
-        self.qv.set(4)
+        self.qp.set(.1)
+        self.qv.set(.2)
         self.max_effort.set(7)
         self.period.set(.02)
         self.max_controller_output.set(12)
