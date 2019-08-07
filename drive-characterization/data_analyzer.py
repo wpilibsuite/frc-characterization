@@ -37,6 +37,7 @@ mainGUI = tkinter.Tk()
 
 STATE = None
 
+
 class ProgramState:
     window_size = IntVar(mainGUI)
     motion_threshold = DoubleVar(mainGUI)
@@ -144,7 +145,7 @@ def configure_gui():
     def runAnalysis():
 
         (STATE.quasi_forward_l, STATE.quasi_backward_l, STATE.step_forward_l, STATE.step_backward_l,
-        STATE.quasi_forward_r, STATE.quasi_backward_r, STATE.step_forward_r, STATE.step_backward_r) = prepare_data(
+         STATE.quasi_forward_r, STATE.quasi_backward_r, STATE.step_forward_r, STATE.step_backward_r) = prepare_data(
             STATE.stored_data, window=STATE.window_size.get())
 
         if (STATE.quasi_forward_l is None
@@ -154,7 +155,7 @@ def configure_gui():
             or STATE.quasi_forward_r is None
             or STATE.quasi_backward_r is None
             or STATE.step_forward_r is None
-            or STATE.step_backward_r is None):
+                or STATE.step_backward_r is None):
             return
 
         if STATE.subset.get() == 'Forward Left':
@@ -171,16 +172,18 @@ def configure_gui():
                 STATE.quasi_backward_r, STATE.step_backward_r)
         elif STATE.subset.get() == 'Forward Combined':
             ks, kv, ka, rsquare = calcFit(
-                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1), 
+                np.concatenate(
+                    (STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
                 np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1))
         elif STATE.subset.get() == 'Backward Combined':
             ks, kv, ka, rsquare = calcFit(
-                np.concatenate((STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1), 
+                np.concatenate(
+                    (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
                 np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1))
         else:
             ks, kv, ka, rsquare = calcFit(
                 np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r,
-                                STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1), 
+                                STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
                 np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
                                 STATE.step_backward_l, STATE.step_backward_r), axis=1))
 
@@ -198,75 +201,92 @@ def configure_gui():
 
     def plotTimeDomain():
         if STATE.subset.get() == 'Forward Left':
-            _plotTimeDomain('Forward Left', STATE.quasi_forward_l, STATE.step_forward_l)
+            _plotTimeDomain(
+                'Forward Left', STATE.quasi_forward_l, STATE.step_forward_l)
         elif STATE.subset.get() == 'Forward Right':
-             _plotTimeDomain('Forward Right', STATE.quasi_forward_r, STATE.step_forward_r)
+            _plotTimeDomain('Forward Right',
+                            STATE.quasi_forward_r, STATE.step_forward_r)
         elif STATE.subset.get() == 'Backward Left':
-            _plotTimeDomain('Backward Left', STATE.quasi_backward_l, STATE.step_backward_l)
+            _plotTimeDomain('Backward Left',
+                            STATE.quasi_backward_l, STATE.step_backward_l)
         elif STATE.subset.get() == 'Backward Right':
-            _plotTimeDomain('Backward Right', STATE.quasi_backward_r, STATE.step_backward_r)
+            _plotTimeDomain('Backward Right',
+                            STATE.quasi_backward_r, STATE.step_backward_r)
         elif STATE.subset.get() == 'Forward Combined':
             _plotTimeDomain("Forward Combined",
-                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1), 
-                np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1))
+                            np.concatenate(
+                                (STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
+                            np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1))
         elif STATE.subset.get() == 'Backward Combined':
             _plotTimeDomain("Backward Combined",
-                np.concatenate((STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1), 
-                np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1))
+                            np.concatenate(
+                                (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
+                            np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1))
         else:
             _plotTimeDomain("All Combined",
-                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r,
-                                STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1), 
-                np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
-                                STATE.step_backward_l, STATE.step_backward_r), axis=1))
+                            np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r,
+                                            STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
+                            np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
+                                            STATE.step_backward_l, STATE.step_backward_r), axis=1))
 
     def plotVoltageDomain():
         if STATE.subset.get() == 'Forward Left':
-            _plotVoltageDomain('Forward Left', STATE.quasi_forward_l, STATE.step_forward_l)
+            _plotVoltageDomain(
+                'Forward Left', STATE.quasi_forward_l, STATE.step_forward_l)
         elif STATE.subset.get() == 'Forward Right':
-             _plotVoltageDomain('Forward Right', STATE.quasi_forward_r, STATE.step_forward_r)
+            _plotVoltageDomain(
+                'Forward Right', STATE.quasi_forward_r, STATE.step_forward_r)
         elif STATE.subset.get() == 'Backward Left':
-            _plotVoltageDomain('Backward Left', STATE.quasi_backward_l, STATE.step_backward_l)
+            _plotVoltageDomain(
+                'Backward Left', STATE.quasi_backward_l, STATE.step_backward_l)
         elif STATE.subset.get() == 'Backward Right':
-            _plotVoltageDomain('Backward Right', STATE.quasi_backward_r, STATE.step_backward_r)
+            _plotVoltageDomain(
+                'Backward Right', STATE.quasi_backward_r, STATE.step_backward_r)
         elif STATE.subset.get() == 'Forward Combined':
             _plotVoltageDomain("Forward Combined",
-                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1), 
-                np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1))
+                               np.concatenate(
+                                   (STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
+                               np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1))
         elif STATE.subset.get() == 'Backward Combined':
             _plotVoltageDomain("Backward Combined",
-                np.concatenate((STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1), 
-                np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1))
+                               np.concatenate(
+                                   (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
+                               np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1))
         else:
             _plotVoltageDomain("All Combined",
-                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r,
-                                STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1), 
-                np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
-                                STATE.step_backward_l, STATE.step_backward_r), axis=1))
+                               np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r,
+                                               STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
+                               np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
+                                               STATE.step_backward_l, STATE.step_backward_r), axis=1))
 
     def plot3D():
         if STATE.subset.get() == 'Forward Left':
             _plot3D('Forward Left', STATE.quasi_forward_l, STATE.step_forward_l)
         elif STATE.subset.get() == 'Forward Right':
-             _plot3D('Forward Right', STATE.quasi_forward_r, STATE.step_forward_r)
+            _plot3D('Forward Right', STATE.quasi_forward_r,
+                    STATE.step_forward_r)
         elif STATE.subset.get() == 'Backward Left':
-            _plot3D('Backward Left', STATE.quasi_backward_l, STATE.step_backward_l)
+            _plot3D('Backward Left', STATE.quasi_backward_l,
+                    STATE.step_backward_l)
         elif STATE.subset.get() == 'Backward Right':
-            _plot3D('Backward Right', STATE.quasi_backward_r, STATE.step_backward_r)
+            _plot3D('Backward Right', STATE.quasi_backward_r,
+                    STATE.step_backward_r)
         elif STATE.subset.get() == 'Forward Combined':
             _plot3D("Forward Combined",
-                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1), 
-                np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1))
+                    np.concatenate(
+                        (STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
+                    np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1))
         elif STATE.subset.get() == 'Backward Combined':
             _plot3D("Backward Combined",
-                np.concatenate((STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1), 
-                np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1))
+                    np.concatenate(
+                        (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
+                    np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1))
         else:
             _plot3D("All Combined",
-                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r,
-                                STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1), 
-                np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
-                                STATE.step_backward_l, STATE.step_backward_r), axis=1))
+                    np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r,
+                                    STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
+                    np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
+                                    STATE.step_backward_l, STATE.step_backward_r), axis=1))
 
     def calcGains():
 
@@ -379,7 +399,7 @@ def configure_gui():
     def enableWheelDiam(*args):
         if (STATE.units.get() == 'Feet'
             or STATE.units.get() == 'Inches'
-            or STATE.units.get() == 'Meters'):
+                or STATE.units.get() == 'Meters'):
             diamEntry.configure(state='normal')
         else:
             diamEntry.configure(state='disabled')
@@ -424,13 +444,15 @@ def configure_gui():
     unitsMenu.grid(row=0, column=5, sticky='ew')
     STATE.units.trace_add('write', enableWheelDiam)
 
-    Label(topFrame, text='Wheel Diameter (units):', anchor='e').grid(row=1, column=3, columnspan=2, sticky = 'ew')
-    diamEntry = Entry(topFrame, textvariable = STATE.wheel_diam,
-                        validate='all', validatecommand=(valFloat, '&P'))
+    Label(topFrame, text='Wheel Diameter (units):', anchor='e').grid(
+        row=1, column=3, columnspan=2, sticky='ew')
+    diamEntry = Entry(topFrame, textvariable=STATE.wheel_diam,
+                      validate='all', validatecommand=(valFloat, '&P'))
     diamEntry.grid(row=1, column=5)
 
     Label(topFrame, text='Subset:', width=15).grid(row=0, column=6)
-    subsets = {'All Combined', 'Forward Left', 'Forward Right', 'Forward Combined', 'Backward Left', 'Backward Right', 'Backward Combined'}
+    subsets = {'All Combined', 'Forward Left', 'Forward Right',
+               'Forward Combined', 'Backward Left', 'Backward Right', 'Backward Combined'}
     dirMenu = OptionMenu(topFrame, STATE.subset, *sorted(subsets))
     dirMenu.configure(width=20)
     dirMenu.grid(row=0, column=7)
@@ -550,14 +572,16 @@ def configure_gui():
     pprEntry.configure(state='disabled')
     pprEntry.grid(row=7, column=1)
 
-    Label(fbFrame, text='Has Slave:', anchor='e').grid(row=8, column=0, sticky='ew')
-    hasSlave = Checkbutton(fbFrame, variable = STATE.has_slave)
+    Label(fbFrame, text='Has Slave:', anchor='e').grid(
+        row=8, column=0, sticky='ew')
+    hasSlave = Checkbutton(fbFrame, variable=STATE.has_slave)
     hasSlave.grid(row=8, column=1)
     hasSlave.configure(state='disabled')
 
-    Label(fbFrame, text='Slave Update Period:', anchor='e').grid(row=9, column=0, sticky='ew')
+    Label(fbFrame, text='Slave Update Period (s):',
+          anchor='e').grid(row=9, column=0, sticky='ew')
     slavePeriodEntry = Entry(fbFrame, textvariable=STATE.slave_period, width=10,
-                                validate='all', validatecommand=(valFloat, '%P'))
+                             validate='all', validatecommand=(valFloat, '%P'))
     slavePeriodEntry.grid(row=9, column=1)
     slavePeriodEntry.configure(state='disabled')
 
@@ -579,14 +603,15 @@ def configure_gui():
                         validate='all', validatecommand=(valFloat, '%P'))
     effortEntry.grid(row=3, column=4)
 
-    Label(fbFrame, text='Loop Type:', anchor='e').grid(row=4, column=2, columnspan=2, sticky='ew')
+    Label(fbFrame, text='Loop Type:', anchor='e').grid(
+        row=4, column=2, columnspan=2, sticky='ew')
     loopTypes = {'Position', 'Velocity'}
     loopTypeMenu = OptionMenu(fbFrame, STATE.loop_type, *sorted(loopTypes))
     loopTypeMenu.configure(width=8)
     loopTypeMenu.grid(row=4, column=4)
     STATE.loop_type.trace_add('write', enableErrorBounds)
 
-    calcGainsButton = Button(fbFrame, text='Calculate Optimal Controller Gains:',
+    calcGainsButton = Button(fbFrame, text='Calculate Optimal Controller Gains',
                              command=calcGains, state='disabled')
     calcGainsButton.grid(row=6, column=2, columnspan=3)
 
@@ -602,6 +627,7 @@ def configure_gui():
 # These parameters are used to indicate which column of data each parameter
 # can be found at
 #
+
 
 columns = dict(
     time=0,
@@ -640,6 +666,7 @@ JSON_DATA_KEYS = ["slow-forward", "slow-backward",
 
 # From 449's R script (note: R is 1-indexed)
 
+
 def smoothDerivative(tm, value, n):
     """
         :param tm: time column
@@ -675,6 +702,7 @@ def trim_quasi_testdata(data):
         return None
     else:
         return temp
+
 
 def trim_step_testdata(data):
     # removes anything before the max acceleration
@@ -754,8 +782,10 @@ def prepare_data(data, window):
     # ensure voltage sign matches velocity sign
 
     for x in JSON_DATA_KEYS:
-        data[x][L_VOLTS_COL] = np.copysign(data[x][L_VOLTS_COL], data[x][L_ENCODER_V_COL])
-        data[x][R_VOLTS_COL] = np.copysign(data[x][R_VOLTS_COL], data[x][R_ENCODER_V_COL])
+        data[x][L_VOLTS_COL] = np.copysign(
+            data[x][L_VOLTS_COL], data[x][L_ENCODER_V_COL])
+        data[x][R_VOLTS_COL] = np.copysign(
+            data[x][R_VOLTS_COL], data[x][R_ENCODER_V_COL])
 
     # trim quasi data before computing acceleration
     sf_trim = trim_quasi_testdata(data["slow-forward"])
@@ -783,6 +813,7 @@ def prepare_data(data, window):
     fb_r = trim_step_testdata(fb_r)
 
     return sf_l, sb_l, ff_l, fb_l, sf_r, sb_r, ff_r, fb_r
+
 
 def ols(x1, x2, y):
     """multivariate linear regression using ordinary least squares"""
@@ -867,7 +898,8 @@ def _plotVoltageDomain(subset, qu, step):
     ax.set_ylabel("Velocity")
     ax.set_title("Quasistatic velocity vs velocity-portion voltage")
     plt.scatter(
-        qu[PREPARED_V_COL] - ks * np.sign(qu[PREPARED_VEL_COL]) - ka * qu[PREPARED_ACC_COL],
+        qu[PREPARED_V_COL] - ks *
+        np.sign(qu[PREPARED_VEL_COL]) - ka * qu[PREPARED_ACC_COL],
         qu[PREPARED_VEL_COL],
         marker=".",
         c="#000000",
@@ -883,7 +915,8 @@ def _plotVoltageDomain(subset, qu, step):
     ax.set_ylabel("Acceleration")
     ax.set_title("Dynamic acceleration vs acceleration-portion voltage")
     plt.scatter(
-        step[PREPARED_V_COL] - ks * np.sign(step[PREPARED_VEL_COL]) - kv * step[PREPARED_VEL_COL],
+        step[PREPARED_V_COL] - ks *
+        np.sign(step[PREPARED_VEL_COL]) - kv * step[PREPARED_VEL_COL],
         step[PREPARED_ACC_COL],
         marker=".",
         c="#000000",
@@ -931,7 +964,8 @@ def _plot3D(subset, qu, step):
         np.linspace(np.min(vel), np.max(vel)),
         np.linspace(np.min(accel), np.max(accel)),
     )
-    ax.plot_surface(vv, aa, ks * np.sign(vv) + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1])
+    ax.plot_surface(vv, aa, ks * np.sign(vv) + kv * vv +
+                    ka * aa, alpha=0.2, color=[0, 1, 1])
 
     plt.show()
 
@@ -1008,6 +1042,7 @@ def _calcGainsPos(kv, ka, qp, qv, effort, period):
     kd = K[0, 1]
 
     return kp, kd
+
 
 def _calcGainsVel(kv, ka, qv, effort, period):
 

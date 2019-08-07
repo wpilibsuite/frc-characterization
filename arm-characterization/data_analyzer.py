@@ -72,8 +72,8 @@ class ProgramState:
     kcos = DoubleVar(mainGUI)
     r_square = DoubleVar(mainGUI)
 
+    qp = DoubleVar(mainGUI)
     qv = DoubleVar(mainGUI)
-    qa = DoubleVar(mainGUI)
     max_effort = DoubleVar(mainGUI)
     period = DoubleVar(mainGUI)
     max_controller_output = DoubleVar(mainGUI)
@@ -83,6 +83,8 @@ class ProgramState:
 
     controller_type = StringVar(mainGUI)
     encoder_ppr = IntVar(mainGUI)
+    has_slave = BooleanVar(mainGUI)
+    slave_period = DoubleVar(mainGUI)
 
     gain_units_preset = StringVar(mainGUI)
 
@@ -102,8 +104,8 @@ class ProgramState:
         self.kcos.set(0)
         self.r_square.set(0)
 
-        self.qv.set(2)
-        self.qa.set(4)
+        self.qp.set(2)
+        self.qv.set(4)
         self.max_effort.set(7)
         self.period.set(.02)
         self.max_controller_output.set(12)
@@ -113,6 +115,8 @@ class ProgramState:
 
         self.controller_type.set("Onboard")
         self.encoder_ppr.set(4096)
+        self.has_slave.set(False)
+        self.slave_period.set(.01)
 
         self.gain_units_preset.set('Default')
 
@@ -162,7 +166,8 @@ def configure_gui():
                 STATE.quasi_backward, STATE.step_backward)
         else:
             ks, kv, ka, kcos, rsquare = calcFit(
-                np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                np.concatenate(
+                    (STATE.quasi_forward, STATE.quasi_backward), axis=1),
                 np.concatenate((STATE.step_forward, STATE.step_backward), axis=1))
 
         STATE.ks.set('%s' % float('%.3g' % ks))
@@ -182,21 +187,26 @@ def configure_gui():
         if STATE.direction.get() == 'Forward':
             _plotTimeDomain('Forward', STATE.quasi_forward, STATE.step_forward)
         elif STATE.direction.get() == 'Backward':
-            _plotTimeDomain('Backward', STATE.quasi_backward, STATE.step_backward)
+            _plotTimeDomain('Backward', STATE.quasi_backward,
+                            STATE.step_backward)
         else:
-            _plotTimeDomain('Combined', 
-                    np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
-                    np.concatenate((STATE.step_forward, STATE.step_backward), axis=1))
+            _plotTimeDomain('Combined',
+                            np.concatenate(
+                                (STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                            np.concatenate((STATE.step_forward, STATE.step_backward), axis=1))
 
     def plotVoltageDomain():
         if STATE.direction.get() == 'Forward':
-            _plotVoltageDomain('Forward', STATE.quasi_forward, STATE.step_forward)
+            _plotVoltageDomain(
+                'Forward', STATE.quasi_forward, STATE.step_forward)
         elif STATE.direction.get() == 'Backward':
-            _plotVoltageDomain('Backward', STATE.quasi_backward, STATE.step_backward)
+            _plotVoltageDomain(
+                'Backward', STATE.quasi_backward, STATE.step_backward)
         else:
-            _plotVoltageDomain('Combined', 
-                    np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
-                    np.concatenate((STATE.step_forward, STATE.step_backward), axis=1))
+            _plotVoltageDomain('Combined',
+                               np.concatenate(
+                                   (STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                               np.concatenate((STATE.step_forward, STATE.step_backward), axis=1))
 
     def plot3D():
         if STATE.direction.get() == 'Forward':
@@ -204,19 +214,22 @@ def configure_gui():
         elif STATE.direction.get() == 'Backward':
             _plot3D('Backward', STATE.quasi_backward, STATE.step_backward)
         else:
-            _plot3D('Combined', 
-                    np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+            _plot3D('Combined',
+                    np.concatenate(
+                        (STATE.quasi_forward, STATE.quasi_backward), axis=1),
                     np.concatenate((STATE.step_forward, STATE.step_backward), axis=1))
 
     def calcGains():
 
+        period = STATE.period.get() if not STATE.has_slave.get() else STATE.slave_period.get()
+
         kp, kd = _calcGains(
             STATE.kv.get(),
             STATE.ka.get(),
+            STATE.qp.get(),
             STATE.qv.get(),
-            STATE.qa.get(),
             STATE.max_effort.get(),
-            STATE.period.get())
+            period)
 
         # Scale gains to output
         kp = kp / 12 * STATE.max_controller_output.get()
@@ -293,12 +306,18 @@ def configure_gui():
         if STATE.controller_type.get() == 'Onboard':
             gearingEntry.configure(state='disabled')
             pprEntry.configure(state='disabled')
+            hasSlave.configure(state='disabled')
+            slavePeriodEntry.configure(state='disabled')
         elif STATE.controller_type.get() == 'Talon':
             gearingEntry.configure(state='normal')
             pprEntry.configure(state='normal')
+            hasSlave.configure(state='normal')
+            slavePeriodEntry.configure(state='normal')
         else:
             gearingEntry.configure(state='normal')
             pprEntry.configure(state='disabled')
+            hasSlave.configure(state='normal')
+            slavePeriodEntry.configure(state='normal')
 
     def validateInt(P):
         if str.isdigit(P) or P == "":
@@ -458,17 +477,30 @@ def configure_gui():
     pprEntry.configure(state='disabled')
     pprEntry.grid(row=7, column=1)
 
+    Label(fbFrame, text='Has Slave:', anchor='e').grid(
+        row=8, column=0, sticky='ew')
+    hasSlave = Checkbutton(fbFrame, variable=STATE.has_slave)
+    hasSlave.grid(row=8, column=1)
+    hasSlave.configure(state='disabled')
+
+    Label(fbFrame, text='Slave Update Period (s):',
+          anchor='e').grid(row=9, column=0, sticky='ew')
+    slavePeriodEntry = Entry(fbFrame, textvariable=STATE.slave_period, width=10,
+                             validate='all', validatecommand=(valFloat, '%P'))
+    slavePeriodEntry.grid(row=9, column=1)
+    slavePeriodEntry.configure(state='disabled')
+
     Label(fbFrame, text='Max Acceptable Position Error (units):', anchor='e').grid(
         row=1, column=2, columnspan=2, sticky='ew')
-    qVEntry = Entry(fbFrame, textvariable=STATE.qv, width=10,
+    qPEntry = Entry(fbFrame, textvariable=STATE.qp, width=10,
                     validate='all', validatecommand=(valFloat, '%P'))
-    qVEntry.grid(row=1, column=4)
+    qPEntry.grid(row=1, column=4)
 
     Label(fbFrame, text='Max Acceptable Velocity Error (units/s):', anchor='e').grid(
         row=2, column=2, columnspan=2, sticky='ew')
-    qAEntry = Entry(fbFrame, textvariable=STATE.qa, width=10,
+    qVEntry = Entry(fbFrame, textvariable=STATE.qv, width=10,
                     validate='all', validatecommand=(valFloat, '%P'))
-    qAEntry.grid(row=2, column=4)
+    qVEntry.grid(row=2, column=4)
 
     Label(fbFrame, text='Max Acceptable Control Effort (V):', anchor='e').grid(
         row=3, column=2, columnspan=2, sticky='ew')
@@ -822,7 +854,8 @@ def _plot3D(direction, qu, step):
         np.linspace(np.min(vel), np.max(vel)),
         np.linspace(np.min(accel), np.max(accel)),
     )
-    ax.plot_surface(vv, aa, ks * np.sign(vv) + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1])
+    ax.plot_surface(vv, aa, ks * np.sign(vv) + kv * vv +
+                    ka * aa, alpha=0.2, color=[0, 1, 1])
 
     plt.show()
 
@@ -876,7 +909,7 @@ def main():
     mainGUI.mainloop()
 
 
-def _calcGains(kv, ka, qv, qa, effort, period):
+def _calcGains(kv, ka, qp, qv, effort, period):
 
     A = np.array([[0, 1], [0, -kv / ka]])
     B = np.array([[0], [1 / ka]])
@@ -890,7 +923,7 @@ def _calcGains(kv, ka, qv, qa, effort, period):
     #
     # [1] "Bryson's rule" in
     #     https://file.tavsys.net/control/state-space-guide.pdf
-    q = [qv, qa]  # units and units/s acceptable errors
+    q = [qp, qv]  # units and units/s acceptable errors
     r = [effort]  # V acceptable actuation effort
     Q = np.diag(1.0 / np.square(q))
     R = np.diag(1.0 / np.square(r))
