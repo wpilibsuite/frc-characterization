@@ -239,11 +239,6 @@ def configure_gui():
         if not STATE.controller_time_normalized.get():
             kd = kd/STATE.period.get()
 
-        # Scale by gearing if controller is offboard
-        if not STATE.controller_type.get() == 'Onboard':
-            kp = kp / STATE.gearing.get()
-            kd = kd / STATE.gearing.get()
-
         # Get correct conversion factor for rotations
         if STATE.units.get() == 'Degrees':
             rotation = 360
@@ -252,13 +247,10 @@ def configure_gui():
         elif STATE.units.get() == 'Rotations':
             rotation = 1
 
-        # Convert to controller-native units
+        # Scale by gearing if using Talon
         if STATE.controller_type.get() == 'Talon':
-            kp = kp * rotation / STATE.encoder_ppr.get()
-            kd = kd * rotation / STATE.encoder_ppr.get()
-        elif STATE.controller_type.get() == 'Spark':
-            kp = kp * rotation
-            kd = kd * rotation
+            kp = kp * rotation / (STATE.encoder_ppr.get() * STATE.gearing.get())
+            kd = kd * rotation / (STATE.encoder_ppr.get() * STATE.gearing.get())
 
         STATE.kp.set('%s' % float('%.3g' % kp))
         STATE.kd.set('%s' % float('%.3g' % kd))
@@ -315,7 +307,7 @@ def configure_gui():
             else:
                 slavePeriodEntry.configure(state='disabled')
         else:
-            gearingEntry.configure(state='normal')
+            gearingEntry.configure(state='disabled')
             pprEntry.configure(state='disabled')
             hasSlave.configure(state='normal')
             if STATE.has_slave.get():
