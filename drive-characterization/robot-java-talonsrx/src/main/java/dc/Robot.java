@@ -43,6 +43,8 @@ public class Robot extends TimedRobot {
 	Supplier<Double> rightEncoderPosition;
 	Supplier<Double> rightEncoderRate;
 
+	Supplier<Double> gyroAngleRadians;
+
 	NetworkTableEntry autoSpeedEntry = NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
 	NetworkTableEntry telemetryEntry = NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
 
@@ -77,6 +79,31 @@ public class Robot extends TimedRobot {
 		rightRearMotor.setSensorPhase(true);
 		rightRearMotor.follow(rightRearMotor);
 		rightRearMotor.setNeutralMode(NeutralMode.Brake);
+
+
+		//
+		// Configure gyro
+		//
+
+		// You only need to uncomment the below lines if you want to characterize wheelbase radius
+		// Otherwise you can leave this area as-is
+		gyroAngleRadians = () -> 0.0;
+
+		// Uncomment for the KOP gyro
+		// Gyro gyro = new ADXRS450_Gyro();
+		// gyroAngleRadians = () -> Math.toRadians(gyro.getAngle());
+
+		// Uncomment for NavX
+		// AHRS navx = new AHRS();
+		// gyroAngleRadians = () -> Math.toRadians(navx.getAngle());
+
+		// Uncomment for Pidgeon
+		// PigeonIMU pigeon = new PigeonIMU(0);
+		// gyroAngleRadians = () -> {
+		// 	double[] xyz = new double[3]; // We don't actually need to allocate a new array every loop, but this is shorter
+		// 	pigeon.getAccumGyro(xyz);
+		// 	return Math.toRadians(xyz[2]);
+		// };
 
 
 		//
@@ -131,6 +158,7 @@ public class Robot extends TimedRobot {
 		SmartDashboard.putNumber("l_encoder_rate", leftEncoderRate.get());
 		SmartDashboard.putNumber("r_encoder_pos", rightEncoderPosition.get());
 		SmartDashboard.putNumber("r_encoder_rate", rightEncoderRate.get());
+		SmartDashboard.putNumber("gyro_angle", gyroAngleRadians.get());
 	}
 
 	@Override
@@ -173,6 +201,8 @@ public class Robot extends TimedRobot {
 		double leftMotorVolts = leftFrontMotor.getMotorOutputVoltage();
 		double rightMotorVolts = rightFrontMotor.getMotorOutputVoltage();
 
+		double gyroAngle = gyroAngleRadians.get();
+
 		// Retrieve the commanded speed from NetworkTables
 		double autospeed = autoSpeedEntry.getDouble(0);
 		priorAutospeed = autospeed;
@@ -190,6 +220,7 @@ public class Robot extends TimedRobot {
 		numberArray[6] = rightPosition;
 		numberArray[7] = leftRate;
 		numberArray[8] = rightRate;
+		numberArray[9] = gyroAngle;
 
 		telemetryEntry.setNumberArray(numberArray);
 	}

@@ -33,6 +33,7 @@ columns = dict(
     r_encoder_pos=6,
     l_encoder_vel=7,
     r_encoder_vel=8,
+    gyro_angle=9,
 )
 
 WINDOW = 8
@@ -52,6 +53,7 @@ L_ENCODER_P_COL = columns["l_encoder_pos"]
 R_ENCODER_P_COL = columns["r_encoder_pos"]
 L_ENCODER_V_COL = columns["l_encoder_vel"]
 R_ENCODER_V_COL = columns["r_encoder_vel"]
+GYRO_ANGLE = columns["gyro_angle"]
 
 # The are the indices of data returned from prepare_data function
 PREPARED_TM_COL = 0
@@ -331,6 +333,17 @@ def analyze_data(data, window=WINDOW, threshold = MOTION_THRESHOLD):
 
     _print(3, "Right forward ", sf_r, ff_r)
     _print(4, "Right backward", sb_r, fb_r)
+
+    if "wheelbase-diameter" in data:
+        table = data["wheelbase-diameter"]
+
+        # Note that this assumes the gyro angle is not modded (i.e. not on [0, 360]),
+        # and that a positive angle travels in the clockwise direction
+
+        # The below comes from solving ω=(vr−vl)/2r for 2r
+        diameter = (table[R_ENCODER_P_COL][-1] - table[L_ENCODER_P_COL][-1]) / (table[GYRO_ANGLE][-1] - table[GYRO_ANGLE][0])
+
+        print("wheelbase-diameter: " + diameter)
 
     plt.show()
 

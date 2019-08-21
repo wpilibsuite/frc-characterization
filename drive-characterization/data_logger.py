@@ -215,6 +215,11 @@ class DataLogger:
         else:
             NetworkTables.startClientTeam(int(team))
 
+        # Make the user pick linear or angular mode
+        angular_mode = input("Choose 'linear' or 'angular' mode: ") == "angular"
+        if angular_mode:
+            print("You have chosen angular mode; you must invert one of your robot's motors for this to work correctly!")
+
         # Use listeners to receive the data
         NetworkTables.addConnectionListener(
             self.connectionListener, immediateNotify=True
@@ -237,6 +242,8 @@ class DataLogger:
             ("fast-forward", abs(ROBOT_FAST_SPEED), 0),
             ("fast-backward", -abs(ROBOT_FAST_SPEED), 0),
         ]
+        if angular_mode:
+            autonomous.append(("wheelbase-diameter", ROBOT_FAST_SPEED, 0))
 
         stored_data = {}
 
@@ -259,7 +266,7 @@ class DataLogger:
                 "WARNING: It will not automatically stop moving, so disable the robot"
             )
             print("before it hits something!")
-            print("")
+            print()
 
             # Wait for robot to signal that it entered autonomous mode
             with self.lock:
@@ -307,7 +314,6 @@ class DataLogger:
         # In case the user decides to re-enable autonomous again..
         self.autospeed = 0
 
-        #
         # We have data! Do something with it now
         #
         # Write it to disk first, in case the processing fails for some reason

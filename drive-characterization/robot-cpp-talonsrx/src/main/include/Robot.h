@@ -73,5 +73,32 @@ private:
                kEncoderConstant * 10;
     };
 
+    // You only need to uncomment the below lines if you want to characterize
+    // wheelbase radius. Otherwise you can leave this area as-is.
+    std::function<double(void)> m_gyroAngleRadians = []() {
+        return 0.0;
+    };
+
+    // Uncomment for KOP gyro
+    // ADXRS450_Gyro m_kopGyro = ADXRS450_Gyro{};
+    // std::function<double(void)> m_gyroAngleRadians = [this]() {
+    //     return m_kopGyro.GetAngle() * (180 / M_PI);
+    // };
+
+    // Uncomment for Pigeon
+    // PigeonIMU m_pigeon{0};
+    // std::array<double, 3> m_gyroXYZ{};
+    // std::function<double(void)> m_gyroAngleRadians = [this]() {
+    //     m_pigeon.GetAccumGyro(m_gyroXYZ.begin());
+    //     return m_gyroXYZ[2] * (180 / M_PI);
+    // };
+
+    // Uncomment for NavX
+    // AHRS m_navx{SPI::Port::kMXP};
+    // std::function<double<void> m_gyroAngleRadians = [this]() {
+    //     return m_navx.GetAngle() * (180 / M_PI);
+    // };
+
+
     double priorAutoSpeed{0.0};
 };

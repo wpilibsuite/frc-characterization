@@ -34,6 +34,7 @@ void Robot::RobotPeriodic() {
     frc::SmartDashboard::PutNumber("l_encoder_rate", m_leftEncoderRate());
     frc::SmartDashboard::PutNumber("r_encoder_pos", m_rightEncoderPosition());
     frc::SmartDashboard::PutNumber("r_encoder_rate", m_rightEncoderRate());
+    frc::SmartDashboard::PutNumber("gyro_angle", m_gyroAngleRadians());
 }
 
 void Robot::DisabledInit() {
@@ -58,7 +59,8 @@ void Robot::AutonomousPeriodic() {
                          m_leftEncoderPosition(),
                          m_rightEncoderPosition(),
                          m_leftEncoderRate(),
-                         m_rightEncoderRate()};
+                         m_rightEncoderRate(),
+                         m_gyroAngleRadians()};
 
     m_drive.TankDrive(autoSpeed, autoSpeed, false);
 
