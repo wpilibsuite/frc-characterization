@@ -49,7 +49,7 @@ public class Robot extends TimedRobot {
 	NetworkTableEntry telemetryEntry = NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
 
 	double priorAutospeed = 0;
-	Number[] numberArray = new Number[9];
+	Number[] numberArray = new Number[10];
 
 	@Override
 	public void robotInit() {
@@ -97,7 +97,7 @@ public class Robot extends TimedRobot {
 		// AHRS navx = new AHRS();
 		// gyroAngleRadians = () -> Math.toRadians(navx.getAngle());
 
-		// Uncomment for Pidgeon
+		// Uncomment for Pigeon
 		// PigeonIMU pigeon = new PigeonIMU(0);
 		// gyroAngleRadians = () -> {
 		// 	double[] xyz = new double[3]; // We don't actually need to allocate a new array every loop, but this is shorter

@@ -20,7 +20,9 @@
 # Change the following constant if your robot wheels are slipping during the
 # the fast test, or if the robot is not moving
 ROBOT_FAST_SPEED = 0.5
-
+# Change this other constant if the wheels slip during the wheelbase diameter
+# characterization or if they don't move. (This test should be slow.)
+WHEELBASE_DIAMETER_SPEED = 0.3
 
 from networktables import NetworkTables, __version__ as ntversion
 from networktables.util import ntproperty
@@ -210,15 +212,15 @@ class DataLogger:
         while team == "":
             team = input("Enter team number or 'sim': ")
 
-        if team == "sim":
-            NetworkTables.initialize(server="localhost")
-        else:
-            NetworkTables.startClientTeam(int(team))
-
         # Make the user pick linear or angular mode
         angular_mode = input("Choose 'linear' or 'angular' mode: ") == "angular"
         if angular_mode:
             print("You have chosen angular mode; you must invert one of your robot's motors for this to work correctly!")
+
+        if team == "sim":
+            NetworkTables.initialize(server="localhost")
+        else:
+            NetworkTables.startClientTeam(int(team))
 
         # Use listeners to receive the data
         NetworkTables.addConnectionListener(
@@ -243,7 +245,7 @@ class DataLogger:
             ("fast-backward", -abs(ROBOT_FAST_SPEED), 0),
         ]
         if angular_mode:
-            autonomous.append(("wheelbase-diameter", ROBOT_FAST_SPEED, 0))
+            autonomous.append(("wheelbase-diameter", WHEELBASE_DIAMETER_SPEED, 0))
 
         stored_data = {}
 
@@ -320,7 +322,7 @@ class DataLogger:
         # -> Using JSON for simplicity, maybe add csv at a later date
 
         now = time.strftime("%Y%m%d-%H%M-%S")
-        fname = "%s-data.json" % now
+        fname = "%s-%s-data.json" % (now, "angular" if angular_mode else "linear")
 
         print()
         print("Data collection complete! saving to %s..." % fname)

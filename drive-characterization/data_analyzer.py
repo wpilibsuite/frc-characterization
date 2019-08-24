@@ -53,7 +53,7 @@ L_ENCODER_P_COL = columns["l_encoder_pos"]
 R_ENCODER_P_COL = columns["r_encoder_pos"]
 L_ENCODER_V_COL = columns["l_encoder_vel"]
 R_ENCODER_V_COL = columns["r_encoder_vel"]
-GYRO_ANGLE = columns["gyro_angle"]
+GYRO_ANGLE_COL = columns["gyro_angle"]
 
 # The are the indices of data returned from prepare_data function
 PREPARED_TM_COL = 0
@@ -64,6 +64,7 @@ PREPARED_ACC_COL = 4
 
 PREPARED_MAX_COL = PREPARED_ACC_COL
 
+# This intentionally doesn't include wheelbase-diameter
 JSON_DATA_KEYS = ["slow-forward", "slow-backward", "fast-forward", "fast-backward"]
 
 # From 449's R script (note: R is 1-indexed)
@@ -340,10 +341,25 @@ def analyze_data(data, window=WINDOW, threshold = MOTION_THRESHOLD):
         # Note that this assumes the gyro angle is not modded (i.e. not on [0, 360]),
         # and that a positive angle travels in the clockwise direction
 
-        # The below comes from solving ω=(vr−vl)/2r for 2r
-        diameter = (table[R_ENCODER_P_COL][-1] - table[L_ENCODER_P_COL][-1]) / (table[GYRO_ANGLE][-1] - table[GYRO_ANGLE][0])
+        d_left = table[0][R_ENCODER_P_COL] - table[-1][R_ENCODER_P_COL]
+        d_right = table[0][L_ENCODER_P_COL] - table[-1][L_ENCODER_P_COL]
+        d_angle = table[-1][GYRO_ANGLE_COL] - table[0][GYRO_ANGLE_COL]
 
-        print("wheelbase-diameter: " + diameter)
+        if abs(d_angle) < 0.0001:
+            print("Change in gyro angle was ~0... Is your gyro set up correctly?")
+            return
+
+        # The below comes from solving ω=(vr−vl)/2r for 2r
+        diameter = (d_left - d_right) / d_angle
+
+        print("wheelbase-diameter: % .4f" % diameter)
+
+        # If you get this you can flip left and right in the above equation to fix things
+        if diameter < 0:
+            print("WARNING:")
+            print("Your wheelbase diameter was negative.")
+            print("This means that your gyro is returning counterclockwise angles.")
+            print("Use clockwise angles instead.")
 
     plt.show()
 
