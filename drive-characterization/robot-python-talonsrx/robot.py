@@ -113,6 +113,20 @@ class MyRobot(wpilib.TimedRobot):
             * 10
         )
 
+        #
+        # Configure gyro
+        #
+
+        # You only need to uncomment the below lines if you want to characterize wheelbase radius
+		# Otherwise you can leave this area as-is
+        self.gyro_getangle = lambda: 0
+
+        # Uncomment for the KOP gyro
+        # Note that the angle from all implementors of the Gyro class must be negated because
+		# getAngle returns a clockwise angle, and we require a counter-clockwise one
+        # gyro = ADXRS450_Gyro()
+        # self.gyro_getangle = lambda: -1 * gyro.getAngle()
+
         # Set the update rate instead of using flush because of a NetworkTables bug
         # that affects ntcore and pynetworktables
         # -> probably don't want to do this on a robot in competition
@@ -132,6 +146,7 @@ class MyRobot(wpilib.TimedRobot):
         sd.putNumber("l_encoder_rate", self.l_encoder_getrate())
         sd.putNumber("r_encoder_pos", self.r_encoder_getpos())
         sd.putNumber("r_encoder_rate", self.r_encoder_getrate())
+        sd.putNumber("gyro_angle", self.gyro_getangle())
 
     def teleopInit(self):
         self.logger.info("Robot in operator control mode")
@@ -170,6 +185,8 @@ class MyRobot(wpilib.TimedRobot):
         l_motor_volts = self.left_front_motor.getMotorOutputVoltage()
         r_motor_volts = self.right_front_motor.getMotorOutputVoltage()
 
+        gyro_angle = self.gyro_getangle()
+
         # Retrieve the commanded speed from NetworkTables
         autospeed = self.autospeed
         self.prior_autospeed = autospeed
@@ -188,6 +205,7 @@ class MyRobot(wpilib.TimedRobot):
             r_encoder_position,
             l_encoder_rate,
             r_encoder_rate,
+            gyro_angle,
         )
 
 
