@@ -339,7 +339,7 @@ def analyze_data(data, window=WINDOW, threshold = MOTION_THRESHOLD):
         table = data["wheelbase-diameter"]
 
         # Note that this assumes the gyro angle is not modded (i.e. not on [0, 360]),
-        # and that a positive angle travels in the clockwise direction
+        # and that a positive angle travels in the counter-clockwise direction
 
         d_left = table[0][R_ENCODER_P_COL] - table[-1][R_ENCODER_P_COL]
         d_right = table[0][L_ENCODER_P_COL] - table[-1][L_ENCODER_P_COL]

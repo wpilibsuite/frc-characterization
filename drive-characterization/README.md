@@ -74,7 +74,7 @@ Preparation: make sure the code won't make your robot go crazy
    l_encoder and r_encoder values are incrementing positively the correct
    distance in **feet** when you push the robot forward
 6. If you're planning to use angular mode (see below), spin your robot
-   clockwise and ensure that the gyro_angle is increasing positively.
+   counter-clockwise and ensure that the gyro_angle is increasing positively.
    Spin your robot > 360 degrees and ensure that the gyro_angle does not
    wrap back around to 0. Also ensure that the gyro_angle is in radians.
 

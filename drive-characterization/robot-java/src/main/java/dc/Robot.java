@@ -70,8 +70,10 @@ public class Robot extends TimedRobot {
 		gyroAngleRadians = () -> 0.0;
 
 		// Uncomment for the KOP gyro
+		// Note that the angle from all implementors of the Gyro class must be negated
+		// because getAngle returns a clockwise angle
 		// Gyro gyro = new ADXRS450_Gyro();
-		// gyroAngleRadians = () -> Math.toRadians(gyro.getAngle());
+		// gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
 
 		// Uncomment for NavX
 		// AHRS navx = new AHRS();

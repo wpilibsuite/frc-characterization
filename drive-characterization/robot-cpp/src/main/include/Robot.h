@@ -78,9 +78,11 @@ private:
     };
 
     // Uncomment for KOP gyro
-    // ADXRS450 m_kopGyro = ADXRS450_Gyro{};
+    // Note that the angle from all subclasses of the Gyro class must be
+    // negated because getAngle returns a clockwise angle
+    // ADXRS450_Gyro m_kopGyro = ADXRS450_Gyro{};
     // std::function<double(void)> m_gyroAngleRadians = [this]() {
-    //     return m_kopGyro.GetAngle() * (180 / M_PI);
+    //     return -1 * m_kopGyro.GetAngle() * (180 / M_PI);
     // };
 
     // Uncomment for Pigeon
