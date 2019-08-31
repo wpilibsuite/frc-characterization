@@ -30,12 +30,12 @@ of the characterization tools included in this repository:
 
 * Install Python 3.6 on your data gathering computer that will be connected to
   the robot's network
-* Once finished, install pynetworktables, matplotlib, scipy, and statsmodels
+* Once finished, install pynetworktables, matplotlib, scipy, frccontrol, and statsmodels
 
-On Windows the command to install pynetworktables, matplotlib, scipy, and statsmodels 
+On Windows the command to install pynetworktables, matplotlib, scipy, frccontrol and statsmodels 
 is as follows:
 
-    py -3 -m pip install pynetworktables matplotlib scipy statsmodels
+    py -3 -m pip install pynetworktables matplotlib scipy frccontrol statsmodels
 
 Prerequisites (Robot)
 ---------------------
