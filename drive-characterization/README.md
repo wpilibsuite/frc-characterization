@@ -35,12 +35,12 @@ Required to use the data_logger.py/data_analyzer.py scripts.
 
 * Install Python 3.6 on your data gathering computer that will be connected to
   the robot's network
-* Once finished, install pynetworktables, matplotlib, scipy, and statsmodels
+* Once finished, install pynetworktables, matplotlib, scipy, frccontrol, and statsmodels
 
-On Windows the command to install pynetworktables, matplotlib, scipy, and statsmodels 
+On Windows the command to install pynetworktables, matplotlib, scipy, frccontrol, and statsmodels 
 is as follows:
 
-    py -3 -m pip install pynetworktables matplotlib scipy statsmodels
+    py -3 -m pip install pynetworktables matplotlib scipy frccontrol statsmodels
 
 Prerequisites (Robot)
 ---------------------
@@ -61,6 +61,9 @@ installing the necessary software on your computer.
 
 Usage
 -----
+
+Recording
+=========
 
 Preparation: make sure the code won't make your robot go crazy
 
@@ -90,8 +93,27 @@ what it will prompt you to do:
 * Fast driving backward: Enable robot in autonomous mode, disable before the robot
   hits something
 
-Once you have ran the 4 autonomous modes, the data files will be written to
-this directory and a window should pop up that plots the data for you.
+Once you have ran the 4 autonomous modes, the data will be recorded in a json file
+in this directory.
+
+Analysis
+========
+
+Once you have recorded your data, launch the analysis GUI by running data_analyzer.py  
+This will open a GUI that will analyze your data.  The left half of this GUI, labeled 
+"Feedforward Analysis," will perform the linear regression and generate the aforementioned 
+coefficients.
+
+To calculate the characterization coefficients, first select the data file, and then click 
+the "Analyze Data" button.  Various diagnostic plots will then become available, and the 
+characterization coefficients and the r-squared for the fit will be displayed.  If problems 
+are encountered, try modifying the minimum motion threshold or the window size for the 
+acceleration calculation.
+
+The right half of the GUI, labeled "Feedback Analysis," will generate optimal feedback 
+gains for a simple PD controller via a Linear-Quadratic Regulator (LQR).  While the calculation 
+is straightforward, the units of the gains depend critically on the controller setup - more 
+detailed documentation on ensuring the correctness of units will be provided at a later date.
 
 Next steps
 ----------
