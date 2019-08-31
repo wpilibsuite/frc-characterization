@@ -355,7 +355,7 @@ def configure_gui():
             'Talon (new)': lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(.001),
-                STATE.controller_time_normalized.set(False),
+                STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set('Talon')),
             'Talon (old)': lambda: (
                 STATE.max_controller_output.set(1023),
@@ -365,7 +365,7 @@ def configure_gui():
             'Spark MAX': lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(.001),
-                STATE.controller_time_normalized.set(True),
+                STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set('Spark')),
         }
 
@@ -610,17 +610,26 @@ def configure_gui():
     loopTypeMenu.grid(row=4, column=4)
     STATE.loop_type.trace_add('write', enableErrorBounds)
 
+    Label(fbFrame, text='kV:', anchor='e').grid(row=5, column=2, sticky='ew')
+    kVFBEntry = Entry(fbFrame, textvariable=STATE.kv, width=10,
+                      validate='all', validatecommand=(valFloat, '%P'))
+    kVFBEntry.grid(row=5, column=3)
+    Label(fbFrame, text='kA:', anchor='e').grid(row=6, column=2, sticky='ew')
+    kAFBEntry = Entry(fbFrame, textvariable=STATE.ka, width=10,
+                      validate='all', validatecommand=(valFloat, '%P'))
+    kAFBEntry.grid(row=6, column=3)
+
     calcGainsButton = Button(fbFrame, text='Calculate Optimal Controller Gains',
                              command=calcGains, state='disabled')
-    calcGainsButton.grid(row=6, column=2, columnspan=3)
+    calcGainsButton.grid(row=7, column=2, columnspan=3)
 
-    Label(fbFrame, text='kP:', anchor='e').grid(row=7, column=2, sticky='ew')
+    Label(fbFrame, text='kP:', anchor='e').grid(row=8, column=2, sticky='ew')
     kPEntry = Entry(fbFrame, textvariable=STATE.kp, width=10,
-                    state='readonly').grid(row=7, column=3)
-
-    Label(fbFrame, text='kD:', anchor='e').grid(row=8, column=2, sticky='ew')
-    kDEntry = Entry(fbFrame, textvariable=STATE.kd, width=10,
                     state='readonly').grid(row=8, column=3)
+
+    Label(fbFrame, text='kD:', anchor='e').grid(row=9, column=2, sticky='ew')
+    kDEntry = Entry(fbFrame, textvariable=STATE.kd, width=10,
+                    state='readonly').grid(row=9, column=3)
 
 #
 # These parameters are used to indicate which column of data each parameter
