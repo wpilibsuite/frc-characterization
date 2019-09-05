@@ -329,8 +329,6 @@ class DataLogger:
         with open(fname, "w") as fp:
             json.dump(stored_data, fp, indent=4, separators=(",", ": "))
 
-        analyze_data(stored_data)
-
 
 if __name__ == "__main__":
 
