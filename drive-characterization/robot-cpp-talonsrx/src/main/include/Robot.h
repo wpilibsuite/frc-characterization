@@ -14,6 +14,7 @@
 #include <networktables/NetworkTableInstance.h>
 #include <frc/drive/DifferentialDrive.h>
 #include <frc/SpeedControllerGroup.h>
+#include <math.h>
 
 class Robot : public frc::TimedRobot {
 public:
@@ -80,8 +81,8 @@ private:
     };
 
     // Uncomment for KOP gyro
-    // Note that the angle from all subclasses of the Gyro class must be
-    // negated because getAngle returns a clockwise angle
+    // Note that the angle from the NavX and all subclasses of Gyro
+    // must be negated because getAngle returns a clockwise angle
     // ADXRS450_Gyro m_kopGyro = ADXRS450_Gyro{};
     // std::function<double(void)> m_gyroAngleRadians = [this]() {
     //     return -1 * m_kopGyro.GetAngle() * (180 / M_PI);
@@ -98,7 +99,7 @@ private:
     // Uncomment for NavX
     // AHRS m_navx{SPI::Port::kMXP};
     // std::function<double<void> m_gyroAngleRadians = [this]() {
-    //     return m_navx.GetAngle() * (180 / M_PI);
+    //     return -1 * m_navx.GetAngle() * (180 / M_PI);
     // };
 
 

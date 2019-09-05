@@ -90,19 +90,20 @@ public class Robot extends TimedRobot {
 		gyroAngleRadians = () -> 0.0;
 
 		// Uncomment for the KOP gyro
-		// Note that the angle from all implementors of the Gyro class must be negated
-		// because getAngle returns a clockwise angle
+		// Note that the angle from the NavX and all implementors of Gyro must be
+		// negated because getAngle returns a clockwise angle
 		// Gyro gyro = new ADXRS450_Gyro();
 		// gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
 
 		// Uncomment for NavX
 		// AHRS navx = new AHRS();
-		// gyroAngleRadians = () -> Math.toRadians(navx.getAngle());
+		// gyroAngleRadians = () -> -1 * Math.toRadians(navx.getAngle());
 
 		// Uncomment for Pigeon
 		// PigeonIMU pigeon = new PigeonIMU(0);
 		// gyroAngleRadians = () -> {
-		// 	double[] xyz = new double[3]; // We don't actually need to allocate a new array every loop, but this is shorter
+		// double[] xyz = new double[3]; // We don't actually need to allocate a new
+		// 	array every loop, but this is shorter
 		// 	pigeon.getAccumGyro(xyz);
 		// 	return Math.toRadians(xyz[2]);
 		// };
