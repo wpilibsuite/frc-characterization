@@ -521,9 +521,9 @@ def configure_gui():
     rSquareEntry.configure(state='readonly')
 
     Label(ffFrame, text='Wheelbase Diameter (units):',
-          anchor='e').grid(row=4, column=3, sticky='ew')
+          anchor='e').grid(row=5, column=3, sticky='ew')
     wheelbaseDiameterEntry = Entry(ffFrame, textvariable=STATE.wheelbase_diameter, width=10)
-    wheelbaseDiameterEntry.grid(row=4, column=4)
+    wheelbaseDiameterEntry.grid(row=5, column=4)
     wheelbaseDiameterEntry.configure(state='readonly')
 
     # FEEDBACK ANALYSIS FRAME
