@@ -88,3 +88,22 @@ what it will prompt you to do:
 Once you have run the 4 autonomous modes, the data files will be written to
 this directory and a window should pop up that plots the data for you and reports
 your characterization values.
+
+Analysis
+========
+
+Once you have recorded your data, launch the analysis GUI by running data_analyzer.py  
+This will open a GUI that will analyze your data.  The left half of this GUI, labeled 
+"Feedforward Analysis," will perform the linear regression and generate the aforementioned 
+coefficients.
+
+To calculate the characterization coefficients, first select the data file, and then click 
+the "Analyze Data" button.  Various diagnostic plots will then become available, and the 
+characterization coefficients and the r-squared for the fit will be displayed.  If problems 
+are encountered, try modifying the minimum motion threshold or the window size for the 
+acceleration calculation.
+
+The right half of the GUI, labeled "Feedback Analysis," will generate optimal feedback 
+gains for a simple PD controller via a Linear-Quadratic Regulator (LQR).  While the calculation 
+is straightforward, the units of the gains depend critically on the controller setup - more 
+detailed documentation on ensuring the correctness of units will be provided at a later date.
