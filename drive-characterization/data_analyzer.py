@@ -1005,7 +1005,7 @@ def calcWheelbaseDiameter(table):
 
     if d_angle == 0:
         print("Change in gyro angle was 0... Is your gyro set up correctly?")
-        return
+        return 0.0
 
     # The below comes from solving ω=(vr−vl)/2r for 2r
     diameter = (d_left - d_right) / d_angle
