@@ -1,5 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
+
+import sys
+if sys.version_info < (3, 0):
+    print("You need to have Python 3 installed to run this script")
+    exit(1)
 
 import argparse, argcomplete
 
@@ -14,7 +19,8 @@ tool_dict = {
     "analyzer": {"arm": armDataAnalyzer, "drive": driveDataAnalyzer},
 }
 
-if __name__ == "__main__":
+def main():
+
     parser = argparse.ArgumentParser(description="RobotPy characterization tools CLI")
     parser.add_argument("tool_type", choices=list(tool_dict.keys()),
         help="Tool type to use")
@@ -25,3 +31,6 @@ if __name__ == "__main__":
 
     tool_dict[args.tool_type][args.mech_type]()
 
+if __name__ == "__main__":
+
+    main()
