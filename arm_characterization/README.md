@@ -30,12 +30,7 @@ Required to use the data_logger.py/data_analyzer.py scripts.
 
 * Install Python 3.6 on your data gathering computer that will be connected to
   the robot's network
-* Once finished, install pynetworktables, matplotlib, scipy, frccontrol, and statsmodels
-
-On Windows the command to install pynetworktables, matplotlib, scipy, frccontrol, and statsmodels 
-is as follows:
-
-    py -3 -m pip install pynetworktables matplotlib scipy frccontrol statsmodels
+* Install `characterization-tool` from PyPI. If you're on Windows, run `py -3 -m pip install characterization-tool`
 
 Prerequisites (Robot)
 ---------------------
@@ -77,7 +72,7 @@ calculations correctly
    the robot arm from horizontal, in degrees.  This step is *very important*.
 
 Now you're ready to characterize your robot! On your data gathering computer,
-launch data_logger.py (you can double-click it on Windows). Enter in your
+run `characterization-tool logger arm`. Enter in your
 team number or robot IP address when prompted.
 
 Once the data logger has indicated that it has connected, do as prompted. Here's
@@ -98,7 +93,7 @@ in this directory.
 Analysis
 ========
 
-Once you have recorded your data, launch the analysis GUI by running data_analyzer.py  
+Once you have recorded your data, launch the analysis GUI by running `characterization-tool analyzer arm`.
 This will open a GUI that will analyze your data.  The left half of this GUI, labeled 
 "Feedforward Analysis," will perform the linear regression and generate the aforementioned 
 coefficients.
