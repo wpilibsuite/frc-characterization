@@ -33,7 +33,7 @@ def isfloat(value):
         return False
 
 
-mainGUI = tkinter.Tk()
+mainGUI = None
 
 STATE = None
 
