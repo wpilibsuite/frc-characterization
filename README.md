@@ -25,17 +25,11 @@ The procedures are highly-similar for all of the tools.
 Prerequisites (PC)
 ------------------
 
-The following is required to use the data_logger.py/data_analyzer.py scripts for all
-of the characterization tools included in this repository:
+The following is required to use the data logging/analysis facilities included in this repository:
 
 * Install Python 3.6 on your data gathering computer that will be connected to
   the robot's network
-* Once finished, install pynetworktables, matplotlib, scipy, frccontrol, and statsmodels
-
-On Windows the command to install pynetworktables, matplotlib, scipy, frccontrol and statsmodels 
-is as follows:
-
-    py -3 -m pip install pynetworktables matplotlib scipy frccontrol statsmodels
+* Install `characterization-tool` from PyPI. If you're on Windows, run `py -3 -m pip install characterization-tool`
 
 Prerequisites (Robot)
 ---------------------
@@ -49,7 +43,7 @@ your robot.
 If using a Java or C++ robot program, see the WPILIb screensteps documentation for
 installing the necessary software on your computer.
 
-* https://wpilib.screenstepslive.com/s/4485
+* https://docs.wpilib.org/en/latest/docs/software/getting-started/
 
 Contributing new changes
 ------------------------
@@ -75,3 +69,4 @@ Authors
 Dustin Spicuzza (dustin@virtualroadside.com)
 
 Eli Barnett (emichaelbarnett@gmail.com)
+

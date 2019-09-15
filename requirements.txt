@@ -2,3 +2,5 @@ frccontrol
 matplotlib
 pynetworktables
 statsmodels
+argcomplete
+
