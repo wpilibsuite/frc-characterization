@@ -58,6 +58,7 @@ class ProgramState:
     direction = StringVar(mainGUI)
 
     units = StringVar(mainGUI)
+    pulley_diam = DoubleVar(mainGUI)
 
     stored_data = None
 
@@ -97,6 +98,7 @@ class ProgramState:
         self.direction.set('Combined')
 
         self.units.set('Degrees')
+        self.pulley_diam.set(0.333)
 
         self.kg.set(0)
         self.kfr.set(0)
@@ -246,8 +248,10 @@ def configure_gui():
             rotation = 2*math.pi
         elif STATE.units.get() == 'Rotations':
             rotation = 1
+        else:
+            rotation = STATE.pulley_diam.get() * math.pi
 
-        # Scale by gearing if using Talon
+        # Convert to motor-controller native units
         if STATE.controller_type.get() == 'Talon':
             kp = kp * rotation / (STATE.encoder_ppr.get() * STATE.gearing.get())
             kd = kd * rotation / (STATE.encoder_ppr.get() * STATE.gearing.get())
@@ -292,6 +296,14 @@ def configure_gui():
 
         presets.get(STATE.gain_units_preset.get(), "Default")()
 
+    def enablePulleyDiam(*args):
+        if (STATE.units.get() == 'Feet'
+            or STATE.units.get() == 'Inches'
+                or STATE.units.get() == 'Meters'):
+            diamEntry.configure(state='normal')
+        else:
+            diamEntry.configure(state='disabled')
+
     def enableOffboard(*args):
         if STATE.controller_type.get() == 'Onboard':
             gearingEntry.configure(state='disabled')
@@ -332,24 +344,35 @@ def configure_gui():
 
     # TOP OF WINDOW (FILE SELECTION)
 
-    Button(mainGUI, text="Select Data File",
+    topFrame = Frame(mainGUI)
+    topFrame.grid(row=0, column=0, columnspan=4)
+
+    Button(topFrame, text="Select Data File",
            command=getFile).grid(row=0, column=0)
 
-    fileEntry = Entry(mainGUI, width=90)
+    fileEntry = Entry(topFrame, width=80)
     fileEntry.grid(row=0, column=1, columnspan=3)
     fileEntry.configure(state='readonly')
 
-    Label(mainGUI, text='Units:', width=10).grid(row=0, column=4)
+    Label(topFrame, text='Units:', width=10).grid(row=0, column=4)
 
-    unitChoices = {'Degrees', 'Radians', 'Rotations'}
-    unitsMenu = OptionMenu(mainGUI, STATE.units, *sorted(unitChoices))
+    unitChoices = {'Feet', 'Inches', 'Meters', 'Degrees', 'Radians', 'Rotations'}
+    unitsMenu = OptionMenu(topFrame, STATE.units, *sorted(unitChoices))
     unitsMenu.configure(width=10)
     unitsMenu.grid(row=0, column=5, sticky='ew')
+    STATE.units.trace_add('write', enablePulleyDiam)
 
-    Label(mainGUI, text='Direction:', width=10).grid(row=0, column=6)
+    Label(topFrame, text='Pulley Diameter (units):', anchor='e').grid(
+        row=1, column=3, columnspan=2, sticky='ew')
+    diamEntry = Entry(topFrame, textvariable=STATE.pulley_diam,
+                      validate='all', validatecommand=(valFloat, '&P'))
+    diamEntry.configure(state='disabled')
+    diamEntry.grid(row=1, column=5)
+
+    Label(topFrame, text='Direction:', width=10).grid(row=0, column=6)
     directions = {'Combined', 'Forward', 'Backward'}
 
-    dirMenu = OptionMenu(mainGUI, STATE.direction, *sorted(directions))
+    dirMenu = OptionMenu(topFrame, STATE.direction, *sorted(directions))
     dirMenu.configure(width=10)
     dirMenu.grid(row=0, column=7)
 
@@ -525,6 +548,9 @@ def configure_gui():
     Label(fbFrame, text='kD:', anchor='e').grid(row=9, column=2, sticky='ew')
     kDEntry = Entry(fbFrame, textvariable=STATE.kd, width=10,
                     state='readonly').grid(row=9, column=3)
+
+    enableOffboard()
+    enablePulleyDiam()
 
 
 #
