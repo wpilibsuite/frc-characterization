@@ -18,5 +18,12 @@ setuptools.setup(
         "License :: OSI Approved :: Apache License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.4',
+    install_requires=[
+        "frccontrol",
+        "matplotlib",
+        "pynetworktables>=2018.1.2",
+        "statsmodels",
+        "argcomplete"
+    ],
+    python_requires=">=3.4",
 )
