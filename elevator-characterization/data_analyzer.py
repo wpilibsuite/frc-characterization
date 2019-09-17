@@ -842,7 +842,7 @@ def _plotVoltageDomain(direction, qu, step):
     )
 
     # show fit line from multiple regression
-    y = np.linspace(np.min(qu[PREPARED_POS_COL]), np.max(qu[PREPARED_POS_COL]))
+    y = np.linspace(np.min(qu[PREPARED_VEL_COL]), np.max(qu[PREPARED_VEL_COL]))
     plt.plot(kfr * np.sign(y), y)
 
     # Fix overlapping axis labels
