@@ -34,10 +34,115 @@ import json
 import queue
 import time
 import threading
+import os
 
-from data_analyzer import analyze_data, AUTOSPEED_COL, L_ENCODER_P_COL, R_ENCODER_P_COL
+from data_analyzer import AUTOSPEED_COL, L_ENCODER_P_COL, R_ENCODER_P_COL
+
+import tkinter
+from tkinter import *
 
 import logging
+
+# GUI SETUP
+
+mainGUI = tkinter.Tk()
+
+STATE = None
+
+def configure_gui():
+
+    def getFile():
+        file_path = tkinter.filedialog.asksaveasfilename(
+            parent=mainGUI, mode='rb', title='Choose the data file (.JSON)')
+        fileEntry.configure(state='normal')
+        fileEntry.delete(0, END)
+        fileEntry.insert(0, file_path)
+        fileEntry.configure(state='readonly')
+
+    def save():
+        if STATE.timestamp_enabled.get():
+            filename = STATE.file_path.get() + "-%s" % time.strftime("%Y%m%d-%H%M-%S")
+        filename = filename + ".json"
+        with open(filename, "w") as fp:
+            json.dump(STATE.stored_data, fp, indent=4, separators=(",", ": "))
+
+    def connect():
+        if STATE.team_number.get():
+            NetworkTables.startClientTeam(STATE.team_number.get())
+        else:
+            NetworkTables.initialize(server="localhost")
+
+        NetworkTables.addConnectionListener(
+            STATE.connectionListener, immediateNotify=True
+        )
+        NetworkTables.addEntryListener(STATE.valueChanged)
+
+        waitForConnection()
+
+    def waitForConnection():
+        if STATE.queue.get() == "connected":
+            STATE.connected.set(True)
+        else:
+            mainGUI.after(50, waitForConnection)
+
+    def quasiForward():
+        STATE.runTest("slow-forward", 0, .001)
+        quasiForwardButton.configure(state='disabled')
+
+    def quasiBackward():
+        STATE.runTest("slow-backward", 0, -.001)
+        quasiBackwardButton.configure(state='disabled')
+
+    def dynamicForward():
+        STATE.runTest("fast-forward", abs(ROBOT_FAST_SPEED), 0)
+        dynamicForwardButton.configure(state='disabled')
+
+    def dynamicBackward():
+        STATE.runTest("fast-backward", -abs(ROBOT_FAST_SPEED), 0)
+        dynamicBackwardButton.configure(state='disabled')
+
+
+    # TOP OF WINDOW (FILE SELECTION)
+
+    topFrame = Frame(mainGUI)
+    topFrame.grid(row=0, column=0, columnspan=1)
+
+    Button(topFrame, text="Select Save Location/Name",
+           command=getFile).grid(row=0, column=0, padx=4)
+
+    fileEntry = Entry(topFrame, textvariable=STATE.file_name, width=80)
+    fileEntry.grid(row=0, column=1, columnspan=3)
+    fileEntry.configure(state='readonly')
+
+    Label(topFrame, text = "Add Timestamp:").grid(row=0, column=4)
+    timestampEnabled = Checkbutton(topFrame, variable=STATE.timestamp_enabled)
+    timestampEnabled.grid(row=0, column=5)
+
+    saveButton = Button(topFrame, text="Save Data", command=save, state="disabled")
+    saveButton.grid(row=0, column=6)
+
+    Label(topFrame, text="Team Number:").grid(row=0, column=7)
+    teamNumEntry = Entry(topFrame, textvariable=STATE.team_number, width=6)
+    teamNumEntry.grid(row=0, column=8)
+
+    # WINDOW BODY (TEST RUNNING CONTROLS)
+
+    bodyFrame = Frame(mainGUI)
+    bodyFrame.grid(row=1, column=0, columnspan=1)
+
+    connectButton = Button(bodyFrame, text = "Connect to Robot", command = connect)
+
+    quasiForwardButton = Button(bodyFrame, text = "Quasistatic Forward", command = quasiForward, state='disabled')
+    quasiForwardButton.grid(row=1, column=0)
+
+    quasiBackwardButton = Button(bodyFrame, text = "Quasistatic Backward", command = quasiBackward, state='disabled')
+    quasiBackwardButton.grid(row=2, column=0)
+
+    dynamicForwardButton = Button(bodyFrame, text = "Dynamic Backward", command = dynamicForward, state='disabled')
+    dynamicForwardButton.grid(row=3, column=0)
+
+    dynamicBackwardButton = Button(bodyFrame, text = "Dynamic Backward", command = dynamicBackward, state='disabled')
+    dynamicBackwardButton.grid(row=4, column=0)
 
 logger = logging.getLogger("logger")
 
@@ -48,7 +153,6 @@ TEST_FIELD = 1 << 2
 EMERGENCY_STOP_FIELD = 1 << 3
 FMS_ATTACHED_FIELD = 1 << 4
 DS_ATTACHED_FIELD = 1 << 5
-
 
 def translate_control_word(value):
     value = int(value)
@@ -64,6 +168,16 @@ def translate_control_word(value):
 
 class DataLogger:
 
+    # GUI bindings
+
+    file_path = StringVar(mainGUI)
+    timestamp_enabled = BooleanVar(mainGUI)
+    team_number = IntVar(mainGUI)
+    connected = BooleanVar(mainGUI)
+
+    # Test data
+    stored_data = None
+
     # Change this key to whatever NT key you want to log
     log_key = "/robot/telemetry"
 
@@ -73,6 +187,14 @@ class DataLogger:
     autospeed = ntproperty("/robot/autospeed", 0, writeDefault=True)
 
     def __init__(self):
+        # GUI bindings
+        self.file_path.set(os.path.join(os.getcwd(), "characterization-data"))
+        self.timestamp_enabled.set(True)
+        self.team_number.set(0)
+        self.connected.set(False)
+
+        self.stored_data = {}
+        
         self.queue = queue.Queue()
         self.mode = "disabled"
         self.data = []
@@ -205,30 +327,30 @@ class DataLogger:
 
     def run(self):
 
-        # Initialize networktables
-        team = ""
-        while team == "":
-            team = input("Enter team number or 'sim': ")
+        # # Initialize networktables
+        # team = ""
+        # while team == "":
+        #     team = input("Enter team number or 'sim': ")
 
-        if team == "sim":
-            NetworkTables.initialize(server="localhost")
-        else:
-            NetworkTables.startClientTeam(int(team))
+        # if team == "sim":
+        #     NetworkTables.initialize(server="localhost")
+        # else:
+        #     NetworkTables.startClientTeam(int(team))
 
-        # Use listeners to receive the data
-        NetworkTables.addConnectionListener(
-            self.connectionListener, immediateNotify=True
-        )
-        NetworkTables.addEntryListener(self.valueChanged)
+        # # Use listeners to receive the data
+        # NetworkTables.addConnectionListener(
+        #     self.connectionListener, immediateNotify=True
+        # )
+        # NetworkTables.addEntryListener(self.valueChanged)
 
-        # Wait for a connection notification, then continue on the path
-        print("Waiting for NT connection..")
-        while True:
-            if self.queue.get() == "connected":
-                break
+        # # Wait for a connection notification, then continue on the path
+        # print("Waiting for NT connection..")
+        # while True:
+        #     if self.queue.get() == "connected":
+        #         break
 
-        print("Connected!")
-        print()
+        # print("Connected!")
+        # print()
 
         autonomous = [
             # name, initial speed, ramp
@@ -320,6 +442,65 @@ class DataLogger:
         print("Data collection complete! saving to %s..." % fname)
         with open(fname, "w") as fp:
             json.dump(stored_data, fp, indent=4, separators=(",", ": "))
+
+    def runTest(self, name, initial_speed, ramp):
+        # Initialize the robot commanded speed to 0
+        self.autospeed = 0
+        self.discard_data = True
+
+        print()
+        print(name)
+        print()
+        print("Please enable the robot in autonomous mode.")
+        print()
+        print(
+            "WARNING: It will not automatically stop moving, so disable the robot"
+        )
+        print("before it hits something!")
+        print("")
+
+        # Wait for robot to signal that it entered autonomous mode
+        with self.lock:
+            self.lock.wait_for(lambda: self.mode == "auto")
+
+        data = self.wait_for_stationary()
+        if data is not None:
+            if data in ("connected", "disconnected"):
+                print(
+                    "ERROR: NT disconnected, results won't be reliable. Giving up."
+                )
+                return
+            else:
+                print("Robot exited autonomous mode before data could be sent?")
+                return
+
+        # Ramp the voltage at the specified rate
+        data = self.ramp_voltage_in_auto(initial_speed, ramp)
+        if data in ("connected", "disconnected"):
+            print("ERROR: NT disconnected, results won't be reliable. Giving up.")
+            return
+
+        # output sanity check
+        if len(data) < 3:
+            print(
+                "WARNING: There wasn't a lot of data received during that last run"
+            )
+        else:
+            left_distance = data[-1][L_ENCODER_P_COL] - data[0][L_ENCODER_P_COL]
+            right_distance = data[-1][R_ENCODER_P_COL] - data[0][R_ENCODER_P_COL]
+
+            print()
+            print("The robot reported traveling the following distance:")
+            print()
+            print("Left:  %.3f ft" % left_distance)
+            print("Right: %.3f ft" % right_distance)
+            print()
+            print(
+                "If that doesn't seem quite right... you should change the encoder calibration"
+            )
+            print("in the robot program or fix your encoders!")
+
+        self.stored_data[name] = data
 
 
 if __name__ == "__main__":

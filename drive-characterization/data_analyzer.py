@@ -37,7 +37,6 @@ mainGUI = tkinter.Tk()
 
 STATE = None
 
-
 class ProgramState:
     window_size = IntVar(mainGUI)
     motion_threshold = DoubleVar(mainGUI)
@@ -187,10 +186,10 @@ def configure_gui():
                 np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
                                 STATE.step_backward_l, STATE.step_backward_r), axis=1))
 
-        STATE.ks.set('%s' % float('%.3g' % ks))
-        STATE.kv.set('%s' % float('%.3g' % kv))
-        STATE.ka.set('%s' % float('%.3g' % ka))
-        STATE.r_square.set('%s' % float('%.3g' % rsquare))
+        STATE.ks.set(float('%.3g' % ks))
+        STATE.kv.set(float('%.3g' % kv))
+        STATE.ka.set(float('%.3g' % ka))
+        STATE.r_square.set(float('%.3g' % rsquare))
 
         calcGains()
 
@@ -331,8 +330,8 @@ def configure_gui():
             if STATE.loop_type.get() == 'Velocity':
                 kp = kp * 10
 
-        STATE.kp.set('%s' % float('%.3g' % kp))
-        STATE.kd.set('%s' % float('%.3g' % kd))
+        STATE.kp.set(float('%.3g' % kp))
+        STATE.kd.set(float('%.3g' % kd))
 
     def presetGains(*args):
 
