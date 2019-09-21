@@ -30,7 +30,7 @@ The following is required to use the data logging/analysis facilities included i
 
 * Install Python 3.6 on your data gathering computer that will be connected to
   the robot's network
-* Install `characterization-tool` from PyPI. If you're on Windows, run `py -3 -m pip install characterization-tool`
+* Install `robot-characterization` from PyPI. If you're on Windows, run `py -3 -m pip install robot-characterization`
 
 Prerequisites (Robot)
 ---------------------
