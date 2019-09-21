@@ -4,7 +4,7 @@ from os.path import dirname, exists, join
 
 setup_dir = dirname(__file__)
 git_dir = join(setup_dir, ".git")
-version_file = join(setup_dir, "ntcore", "version.py")
+version_file = join(setup_dir, "version.py")
 
 # Automatically generate a version.py based on the git version
 if exists(git_dir):
@@ -36,11 +36,11 @@ with open(join(setup_dir, "README.md"), "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="characterization-tool",
+    name="robot-characterization",
     version="1.0.0",
     author="Eli Barnett, Dustin Spicuzza",
     author_email="dustin@virtualroadside.com",
-    packages=["drive_characterization", "arm_characterization", "characterization_tool"],
+    packages=["drive_characterization", "arm_characterization", "elevator_characterization", "characterization_tool"],
     entry_points={
         "console_scripts": [
             "characterization-tool = characterization_tool.cli:main"
