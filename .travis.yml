@@ -33,13 +33,6 @@ jobs:
       on:
         tags: true
 
-# command to install dependencies
-install:
-  - "pip install -r testing-requirements.txt"
-# command to run tests
-script:
-  - tests/run_tests.sh
-
 notifications:
   webhooks:
     urls:
