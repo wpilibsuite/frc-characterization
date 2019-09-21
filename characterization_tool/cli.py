@@ -8,15 +8,34 @@ if sys.version_info < (3, 0):
 
 import argparse, argcomplete
 
-from arm_characterization.data_logger import main as armDataLogger
-from arm_characterization.data_analyzer import main as armDataAnalyzer
+# Setting these functions up individually and importing conditionally is faster than importing everything at once
+def armDataLogger():
+    from arm_characterization.data_logger import main
+    main()
 
-from drive_characterization.data_logger import main as driveDataLogger
-from drive_characterization.data_analyzer import main as driveDataAnalyzer
+def armDataAnalyzer():
+    from arm_characterization.data_analyzer import main
+    main()
+
+def driveDataLogger():
+    from drive_characterization.data_logger import main
+    main()
+
+def driveDataAnalyzer():
+    from drive_characterization.data_analyzer import main
+    main()
+
+def elevatorDataLogger():
+    from elevator_characterization.data_logger import main
+    main()
+
+def elevatorDataAnalyzer():
+    from elevator_characterization.data_analyzer import main
+    main()
 
 tool_dict = {
-    "logger": {"arm": armDataLogger, "drive": driveDataLogger},
-    "analyzer": {"arm": armDataAnalyzer, "drive": driveDataAnalyzer},
+    "logger": {"arm": armDataLogger, "drive": driveDataLogger, "elevator": elevatorDataLogger},
+    "analyzer": {"arm": armDataAnalyzer, "drive": driveDataAnalyzer, "elevator": elevatorDataAnalyzer},
 }
 
 def main():
