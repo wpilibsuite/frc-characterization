@@ -8,8 +8,12 @@ setuptools.setup(
     version="1.0.0",
     author="Eli Barnett, Dustin Spicuzza",
     author_email="dustin@virtualroadside.com",
-    packages=["drive_characterization", "arm_characterization"],
-    scripts=["cli/characterization-tool"],
+    packages=["drive_characterization", "arm_characterization", "characterization_tool"],
+    entry_points={
+        "console_scripts": [
+            "characterization-tool = characterization_tool.cli:main"
+        ],    
+    },
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/robotpy/robot-characterization",
