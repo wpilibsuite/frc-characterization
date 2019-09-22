@@ -53,7 +53,7 @@ def configure_gui():
 
     def getFile():
         file_path = tkinter.filedialog.asksaveasfilename(
-            parent=mainGUI, mode='rb', title='Choose the data file (.JSON)')
+            parent=mainGUI, title='Choose the data file (.JSON)', initialdir=os.getcwd(), defaultextension=".json", filetypes = (("JSON","*.json"),))
         fileEntry.configure(state='normal')
         fileEntry.delete(0, END)
         fileEntry.insert(0, file_path)
@@ -61,7 +61,8 @@ def configure_gui():
 
     def save():
         if STATE.timestamp_enabled.get():
-            filename = STATE.file_path.get() + "-%s" % time.strftime("%Y%m%d-%H%M-%S")
+            name, ext = os.path.splitext(STATE.file_path.get())
+            STATE.file_path.set(name + time.strftime("%Y%m%d-%H%M-%S") + ext)
         filename = filename + ".json"
         with open(filename, "w") as fp:
             json.dump(STATE.stored_data, fp, indent=4, separators=(",", ": "))
@@ -77,11 +78,13 @@ def configure_gui():
         )
         NetworkTables.addEntryListener(STATE.valueChanged)
 
+        STATE.connected.set("Connecting...")
+
         waitForConnection()
 
     def waitForConnection():
-        if STATE.queue.get() == "connected":
-            STATE.connected.set(True)
+        if STATE.get_nowait() == "connected":
+            STATE.connected.set("Connected")
         else:
             mainGUI.after(50, waitForConnection)
 
@@ -110,7 +113,7 @@ def configure_gui():
     Button(topFrame, text="Select Save Location/Name",
            command=getFile).grid(row=0, column=0, padx=4)
 
-    fileEntry = Entry(topFrame, textvariable=STATE.file_name, width=80)
+    fileEntry = Entry(topFrame, textvariable=STATE.file_path, width=80)
     fileEntry.grid(row=0, column=1, columnspan=3)
     fileEntry.configure(state='readonly')
 
@@ -131,6 +134,13 @@ def configure_gui():
     bodyFrame.grid(row=1, column=0, columnspan=1)
 
     connectButton = Button(bodyFrame, text = "Connect to Robot", command = connect)
+    connectButton.grid(row=0, column=0)
+
+    Label(bodyFrame, text="Connected:").grid(row=0, column=1)
+
+    connected = Entry(bodyFrame, textvariable=STATE.connected)
+    connected.configure(state="readonly")
+    connected.grid(row=0, column=2)
 
     quasiForwardButton = Button(bodyFrame, text = "Quasistatic Forward", command = quasiForward, state='disabled')
     quasiForwardButton.grid(row=1, column=0)
@@ -173,7 +183,7 @@ class DataLogger:
     file_path = StringVar(mainGUI)
     timestamp_enabled = BooleanVar(mainGUI)
     team_number = IntVar(mainGUI)
-    connected = BooleanVar(mainGUI)
+    connected = StringVar(mainGUI)
 
     # Test data
     stored_data = None
@@ -191,7 +201,7 @@ class DataLogger:
         self.file_path.set(os.path.join(os.getcwd(), "characterization-data"))
         self.timestamp_enabled.set(True)
         self.team_number.set(0)
-        self.connected.set(False)
+        self.connected.set("Not connected")
 
         self.stored_data = {}
         
@@ -236,7 +246,7 @@ class DataLogger:
             if last == "auto":
                 logger.info("%d items received", len(data))
 
-                # Don't block the NT thread -- trite the data to the queue so
+                # Don't block the NT thread -- write the data to the queue so
                 # it can be processed elsewhere
                 self.queue.put(data)
 
@@ -502,13 +512,26 @@ class DataLogger:
 
         self.stored_data[name] = data
 
+def main():
+
+    global STATE
+    STATE = DataLogger()
+
+    mainGUI.title("RobotPy Drive Characterization Data Logger")
+
+    configure_gui()
+
+    mainGUI.mainloop()
+
 
 if __name__ == "__main__":
 
-    log_datefmt = "%H:%M:%S"
-    log_format = "%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s"
+    main()
 
-    logging.basicConfig(level=logging.INFO, datefmt=log_datefmt, format=log_format)
+    # log_datefmt = "%H:%M:%S"
+    # log_format = "%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s"
 
-    dl = DataLogger()
-    dl.run()
+    # logging.basicConfig(level=logging.INFO, datefmt=log_datefmt, format=log_format)
+
+    # dl = DataLogger()
+    # dl.run()
