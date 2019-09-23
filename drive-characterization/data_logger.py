@@ -102,7 +102,11 @@ def configure_gui():
             quasiBackwardButton.configure(state='normal')
             dynamicForwardButton.configure(state='normal')
             dynamicBackwardButton.configure(state='normal')
-            saveButton.configure(state='normal')
+            if (STATE.sf_completed.get() == "Completed" and
+                STATE.sb_completed.get() == "Completed" and
+                STATE.ff_completed.get() == "Completed" and
+                STATE.fb_completed.get() == "Completed"):
+                saveButton.configure(state='normal')
 
     def finishTest(textEntry):
         enableTestButtons()
@@ -133,65 +137,67 @@ def configure_gui():
     # TOP OF WINDOW (FILE SELECTION)
 
     topFrame = Frame(mainGUI)
-    topFrame.grid(row=0, column=0, columnspan=1)
+    topFrame.grid(row=0, column=0)
 
     Button(topFrame, text="Select Save Location/Name",
-           command=getFile).grid(row=0, column=0, padx=4)
+           command=getFile).grid(row=0, column=0, sticky='ew')
 
     fileEntry = Entry(topFrame, textvariable=STATE.file_path, width=80)
-    fileEntry.grid(row=0, column=1, columnspan=3)
+    fileEntry.grid(row=0, column=1, columnspan=10)
     fileEntry.configure(state='readonly')
 
-    Label(topFrame, text = "Add Timestamp:").grid(row=0, column=4)
-    timestampEnabled = Checkbutton(topFrame, variable=STATE.timestamp_enabled)
-    timestampEnabled.grid(row=0, column=5)
-
     saveButton = Button(topFrame, text="Save Data", command=save, state="disabled")
-    saveButton.grid(row=0, column=6)
+    saveButton.grid(row=1, column=0, sticky='ew')
 
-    Label(topFrame, text="Team Number:").grid(row=0, column=7)
+    Label(topFrame, text = "Add Timestamp:", anchor='e').grid(row=1, column=1, sticky='ew')
+    timestampEnabled = Checkbutton(topFrame, variable=STATE.timestamp_enabled)
+    timestampEnabled.grid(row=1, column=2)
+
+    Label(topFrame, text="Team Number:", anchor='e').grid(row=1, column=3, sticky='ew')
     teamNumEntry = Entry(topFrame, textvariable=STATE.team_number, width=6)
-    teamNumEntry.grid(row=0, column=8)
+    teamNumEntry.grid(row=1, column=4)
 
     # WINDOW BODY (TEST RUNNING CONTROLS)
 
-    bodyFrame = Frame(mainGUI)
-    bodyFrame.grid(row=1, column=0, columnspan=1)
+    bodyFrame = Frame(mainGUI, bd=2, relief='groove')
+    bodyFrame.grid(row=1, column=0, sticky='ew')
 
     connectButton = Button(bodyFrame, text = "Connect to Robot", command = connect)
     connectButton.grid(row=0, column=0, sticky='ew')
 
-    Label(bodyFrame, text="Connected:").grid(row=0, column=1)
-
     connected = Entry(bodyFrame, textvariable=STATE.connected)
     connected.configure(state="readonly")
-    connected.grid(row=0, column=2)
+    connected.grid(row=0, column=1, sticky='ew')
+
+    Label(bodyFrame, text="Quasistatic ramp rate (V/s):", anchor='e').grid(row=0, column=2, sticky='ew')
+    rampEntry = Entry(bodyFrame, textvariable=STATE.quasi_ramp_rate)
+    rampEntry.grid(row=0, column=3, sticky='ew')
 
     quasiForwardButton = Button(bodyFrame, text = "Quasistatic Forward", command = quasiForward, state='disabled')
     quasiForwardButton.grid(row=1, column=0, sticky='ew')
 
-    quasiForwardCompleted = Entry(bodyFrame, textvariable=STATE.sf_completed, width=10)
+    quasiForwardCompleted = Entry(bodyFrame, textvariable=STATE.sf_completed)
     quasiForwardCompleted.configure(state="readonly")
     quasiForwardCompleted.grid(row=1, column=1)
 
     quasiBackwardButton = Button(bodyFrame, text = "Quasistatic Backward", command = quasiBackward, state='disabled')
     quasiBackwardButton.grid(row=2, column=0, sticky='ew')
 
-    quasiBackwardCompleted = Entry(bodyFrame, textvariable=STATE.sb_completed, width=10)
+    quasiBackwardCompleted = Entry(bodyFrame, textvariable=STATE.sb_completed)
     quasiBackwardCompleted.configure(state="readonly")
     quasiBackwardCompleted.grid(row=2, column=1)
 
     dynamicForwardButton = Button(bodyFrame, text = "Dynamic Backward", command = dynamicForward, state='disabled')
     dynamicForwardButton.grid(row=3, column=0, sticky='ew')
 
-    dynamicForwardCompleted = Entry(bodyFrame, textvariable=STATE.ff_completed, width=10)
+    dynamicForwardCompleted = Entry(bodyFrame, textvariable=STATE.ff_completed)
     dynamicForwardCompleted.configure(state="readonly")
     dynamicForwardCompleted.grid(row=3, column=1)
 
     dynamicBackwardButton = Button(bodyFrame, text = "Dynamic Backward", command = dynamicBackward, state='disabled')
     dynamicBackwardButton.grid(row=4, column=0, sticky='ew')
 
-    dynamicBackwardCompleted = Entry(bodyFrame, textvariable=STATE.fb_completed, width=10)
+    dynamicBackwardCompleted = Entry(bodyFrame, textvariable=STATE.fb_completed)
     dynamicBackwardCompleted.configure(state="readonly")
     dynamicBackwardCompleted.grid(row=4, column=1)
 
@@ -231,6 +237,9 @@ class GuiState:
     sb_completed = StringVar(mainGUI)
     ff_completed = StringVar(mainGUI)
     fb_completed = StringVar(mainGUI)
+
+    quasi_ramp_rate = DoubleVar(mainGUI)
+    dynamic_step_voltage = DoubleVar(mainGUI)
 
     def __init__(self):
         # GUI bindings
