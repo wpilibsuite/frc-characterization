@@ -41,10 +41,10 @@ your robot.
 
 * http://robotpy.readthedocs.io/en/stable/install/index.html
 
-If using a Java or C++ robot program, see the WPILIb screensteps documentation for
+If using a Java or C++ robot program, see the WPILib documentation for
 installing the necessary software on your computer.
 
-* https://docs.wpilib.org/en/latest/docs/software/getting-started/
+* https://docs.wpilib.org/en/latest/
 
 Contributing new changes
 ------------------------
@@ -70,4 +70,7 @@ Authors
 Dustin Spicuzza (dustin@virtualroadside.com)
 
 Eli Barnett (emichaelbarnett@gmail.com)
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6499de2e5353e675304cb29b91ae825f5e4fbe40
