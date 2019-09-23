@@ -102,29 +102,26 @@ def configure_gui():
             dynamicForwardButton.configure(state='normal')
             dynamicBackwardButton.configure(state='normal')
 
-    def waitForTask():
-        if not STATE.runTask():
-            mainGUI.after(10, waitForTask)
+    def runPostedTasks():
+        while STATE.runTask():
+            pass
+        mainGUI.after(10, runPostedTasks)
 
     def quasiForward():
         disableTestButtons()
         threading.Thread(target=RUNNER.runTest, args = ("slow-forward", 0, .001, enableTestButtons)).start()
-        waitForTask()
 
     def quasiBackward():
         disableTestButtons()
         threading.Thread(target=RUNNER.runTest, args = ("slow-backward", 0, .001, enableTestButtons)).start()
-        waitForTask()
 
     def dynamicForward():
         disableTestButtons()
         threading.Thread(target=RUNNER.runTest, args = ("fast-forward", 0, .001, enableTestButtons)).start()
-        waitForTask()
 
     def dynamicBackward():
         disableTestButtons()
         threading.Thread(target=RUNNER.runTest, args = ("fast-backward", 0, .001, enableTestButtons)).start()
-        waitForTask()
 
 
     # TOP OF WINDOW (FILE SELECTION)
@@ -176,6 +173,8 @@ def configure_gui():
     dynamicBackwardButton = Button(bodyFrame, text = "Dynamic Backward", command = dynamicBackward, state='disabled')
     dynamicBackwardButton.grid(row=4, column=0)
 
+    runPostedTasks()
+
 logger = logging.getLogger("logger")
 
 # FMSControlData bitfields
@@ -214,19 +213,16 @@ class GuiState:
         self.connected.set("Not connected")
 
         self.task_queue = queue.Queue()
-        self.lock = threading.Condition()
 
     def postTask(self, task):
-        with self.lock:
-            self.task_queue.put(task)
+        self.task_queue.put(task)
 
     def runTask(self):
-        with self.lock:
-            try:
-                self.task_queue.get_nowait()()
-                return True
-            except queue.Empty:
-                return False
+        try:
+            self.task_queue.get_nowait()()
+            return True
+        except queue.Empty:
+            return False
 
 class TestRunner:
 
@@ -397,16 +393,22 @@ class TestRunner:
             self.autospeed = 0
             self.discard_data = True
 
-            print()
-            print(name)
-            print()
-            print("Please enable the robot in autonomous mode.")
-            print()
-            print(
-                "WARNING: It will not automatically stop moving, so disable the robot"
-            )
-            print("before it hits something!")
-            print("")
+            # print()
+            # print(name)
+            # print()
+            # print("Please enable the robot in autonomous mode.")
+            # print()
+            # print(
+            #     "WARNING: It will not automatically stop moving, so disable the robot"
+            # )
+            # print("before it hits something!")
+            # print("")
+
+            STATE.postTask(lambda: tkinter.messagebox.showinfo("Running " + name,
+                                        "Please enable the robot in autonomous mode, and then "
+                                        + "disable it before it runs out of space.\n"
+                                        + "Note: The robot will continue to move until you disable it - "
+                                        + "It is your responsibility to ensure it does not hit anything!"))
 
             # Wait for robot to signal that it entered autonomous mode
             with self.lock:
@@ -415,39 +417,31 @@ class TestRunner:
             data = self.wait_for_stationary()
             if data is not None:
                 if data in ("connected", "disconnected"):
-                    print(
-                        "ERROR: NT disconnected, results won't be reliable. Giving up."
-                    )
+                    STATE.postTask(lambda: tkinter.messagebox.showerror("Error!", "NT disconnected, results won't be reliable. Giving up."))
                     return
                 else:
-                    print("Robot exited autonomous mode before data could be sent?")
+                    STATE.postTask(lambda: tkinter.messagebox.showerror("Error!", "Robot exited autonomous mode before data could be sent?"))
                     return
 
             # Ramp the voltage at the specified rate
             data = self.ramp_voltage_in_auto(initial_speed, ramp)
             if data in ("connected", "disconnected"):
-                print("ERROR: NT disconnected, results won't be reliable. Giving up.")
+                STATE.postTask(lambda: tkinter.messagebox.showerror("Error!", "NT disconnected, results won't be reliable. Giving up."))
                 return
 
             # output sanity check
             if len(data) < 3:
-                print(
-                    "WARNING: There wasn't a lot of data received during that last run"
-                )
+               STATE.postTask(lambda: tkinter.messagebox.showwarning("Warning!", "There wasn't a lot of data received during that last run"))
             else:
                 left_distance = data[-1][L_ENCODER_P_COL] - data[0][L_ENCODER_P_COL]
                 right_distance = data[-1][R_ENCODER_P_COL] - data[0][R_ENCODER_P_COL]
 
-                print()
-                print("The robot reported traveling the following distance:")
-                print()
-                print("Left:  %.3f ft" % left_distance)
-                print("Right: %.3f ft" % right_distance)
-                print()
-                print(
-                    "If that doesn't seem quite right... you should change the encoder calibration"
-                )
-                print("in the robot program or fix your encoders!")
+                STATE.postTask(lambda: tkinter.messagebox.showmessage(name + " Complete",
+                                               "The robot reported traveling the following distance:\n"
+                                               + "Left:  %.3f ft" % left_distance + "\n"
+                                               + "Right: %.3f ft" % right_distance + "\n"
+                                               + "If that doesn't seem quite right... you should change the encoder calibration"
+                                               + "in the robot program or fix your encoders!"))
 
             self.stored_data[name] = data
         
