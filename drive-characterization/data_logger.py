@@ -95,12 +95,18 @@ def configure_gui():
             quasiBackwardButton.configure(state='disabled')
             dynamicForwardButton.configure(state='disabled')
             dynamicBackwardButton.configure(state='disabled')
+            saveButton.configure(state='disabled')
 
     def enableTestButtons():
             quasiForwardButton.configure(state='normal')
             quasiBackwardButton.configure(state='normal')
             dynamicForwardButton.configure(state='normal')
             dynamicBackwardButton.configure(state='normal')
+            saveButton.configure(state='normal')
+
+    def finishTest(textEntry):
+        enableTestButtons()
+        textEntry.set("Completed")
 
     def runPostedTasks():
         while STATE.runTask():
@@ -109,19 +115,19 @@ def configure_gui():
 
     def quasiForward():
         disableTestButtons()
-        threading.Thread(target=RUNNER.runTest, args = ("slow-forward", 0, .001, enableTestButtons)).start()
+        threading.Thread(target=RUNNER.runTest, args = ("slow-forward", 0, .001, lambda: finishTest(STATE.sf_completed))).start()
 
     def quasiBackward():
         disableTestButtons()
-        threading.Thread(target=RUNNER.runTest, args = ("slow-backward", 0, .001, enableTestButtons)).start()
+        threading.Thread(target=RUNNER.runTest, args = ("slow-backward", 0, .001, lambda: finishTest(STATE.sb_completed))).start()
 
     def dynamicForward():
         disableTestButtons()
-        threading.Thread(target=RUNNER.runTest, args = ("fast-forward", 0, .001, enableTestButtons)).start()
+        threading.Thread(target=RUNNER.runTest, args = ("fast-forward", 0, .001, lambda: finishTest(STATE.ff_completed))).start()
 
     def dynamicBackward():
         disableTestButtons()
-        threading.Thread(target=RUNNER.runTest, args = ("fast-backward", 0, .001, enableTestButtons)).start()
+        threading.Thread(target=RUNNER.runTest, args = ("fast-backward", 0, .001, lambda: finishTest(STATE.fb_completed))).start()
 
 
     # TOP OF WINDOW (FILE SELECTION)
@@ -153,7 +159,7 @@ def configure_gui():
     bodyFrame.grid(row=1, column=0, columnspan=1)
 
     connectButton = Button(bodyFrame, text = "Connect to Robot", command = connect)
-    connectButton.grid(row=0, column=0)
+    connectButton.grid(row=0, column=0, sticky='ew')
 
     Label(bodyFrame, text="Connected:").grid(row=0, column=1)
 
@@ -162,16 +168,32 @@ def configure_gui():
     connected.grid(row=0, column=2)
 
     quasiForwardButton = Button(bodyFrame, text = "Quasistatic Forward", command = quasiForward, state='disabled')
-    quasiForwardButton.grid(row=1, column=0)
+    quasiForwardButton.grid(row=1, column=0, sticky='ew')
+
+    quasiForwardCompleted = Entry(bodyFrame, textvariable=STATE.sf_completed, width=10)
+    quasiForwardCompleted.configure(state="readonly")
+    quasiForwardCompleted.grid(row=1, column=1)
 
     quasiBackwardButton = Button(bodyFrame, text = "Quasistatic Backward", command = quasiBackward, state='disabled')
-    quasiBackwardButton.grid(row=2, column=0)
+    quasiBackwardButton.grid(row=2, column=0, sticky='ew')
+
+    quasiBackwardCompleted = Entry(bodyFrame, textvariable=STATE.sb_completed, width=10)
+    quasiBackwardCompleted.configure(state="readonly")
+    quasiBackwardCompleted.grid(row=2, column=1)
 
     dynamicForwardButton = Button(bodyFrame, text = "Dynamic Backward", command = dynamicForward, state='disabled')
-    dynamicForwardButton.grid(row=3, column=0)
+    dynamicForwardButton.grid(row=3, column=0, sticky='ew')
+
+    dynamicForwardCompleted = Entry(bodyFrame, textvariable=STATE.ff_completed, width=10)
+    dynamicForwardCompleted.configure(state="readonly")
+    dynamicForwardCompleted.grid(row=3, column=1)
 
     dynamicBackwardButton = Button(bodyFrame, text = "Dynamic Backward", command = dynamicBackward, state='disabled')
-    dynamicBackwardButton.grid(row=4, column=0)
+    dynamicBackwardButton.grid(row=4, column=0, sticky='ew')
+
+    dynamicBackwardCompleted = Entry(bodyFrame, textvariable=STATE.fb_completed, width=10)
+    dynamicBackwardCompleted.configure(state="readonly")
+    dynamicBackwardCompleted.grid(row=4, column=1)
 
     runPostedTasks()
 
@@ -205,12 +227,22 @@ class GuiState:
     team_number = IntVar(mainGUI)
     connected = StringVar(mainGUI)
 
+    sf_completed = StringVar(mainGUI)
+    sb_completed = StringVar(mainGUI)
+    ff_completed = StringVar(mainGUI)
+    fb_completed = StringVar(mainGUI)
+
     def __init__(self):
         # GUI bindings
         self.file_path.set(os.path.join(os.getcwd(), "characterization-data"))
         self.timestamp_enabled.set(True)
         self.team_number.set(0)
         self.connected.set("Not connected")
+
+        self.sf_completed.set("Not Run")
+        self.sb_completed.set("Not Run")
+        self.ff_completed.set("Not Run")
+        self.fb_completed.set("Not Run")
 
         self.task_queue = queue.Queue()
 
