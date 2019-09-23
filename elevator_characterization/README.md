@@ -70,7 +70,7 @@ calculations correctly
    **feet** when you push the arm forward
 
 Now you're ready to characterize your robot! On your data gathering computer,
-run `characterization-tool logger elevator` (you can double-click it on Windows). Enter in your
+run `robot-characterization logger elevator` (you can double-click it on Windows). Enter in your
 team number or robot IP address when prompted.
 
 Once the data logger has indicated that it has connected, do as prompted. Here's
@@ -92,7 +92,7 @@ your characterization values.
 Analysis
 ========
 
-Once you have recorded your data, launch the analysis GUI by running `characterization-tool analyzer elevator`  
+Once you have recorded your data, launch the analysis GUI by running `robot-characterization analyzer elevator`  
 This will open a GUI that will analyze your data.  The left half of this GUI, labeled 
 "Feedforward Analysis," will perform the linear regression and generate the aforementioned 
 coefficients.

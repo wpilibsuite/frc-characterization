@@ -73,7 +73,7 @@ Preparation: make sure the code won't make your robot go crazy
    distance in **feet** when you push the robot forward
 
 Now you're ready to characterize your robot! On your data gathering computer,
-run `characterization-tool logger drive`. Enter in your
+run `robot-characterization logger drive`. Enter in your
 team number or robot IP address when prompted.
 
 Once the data logger has indicated that it has connected, do as prompted. Here's
@@ -94,7 +94,7 @@ in this directory.
 Analysis
 ========
 
-Once you have recorded your data, launch the analysis GUI by running `characterization-tool analyzer drive`.
+Once you have recorded your data, launch the analysis GUI by running `robot-characterization analyzer drive`.
 This will open a GUI that will analyze your data.  The left half of this GUI, labeled 
 "Feedforward Analysis," will perform the linear regression and generate the aforementioned 
 coefficients.
