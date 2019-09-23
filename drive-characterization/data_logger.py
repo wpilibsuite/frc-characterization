@@ -45,8 +45,6 @@ import logging
 
 # GUI SETUP
 
-mainGUI = tkinter.Tk()
-
 STATE = None
 RUNNER = None
 
@@ -54,7 +52,7 @@ def configure_gui():
 
     def getFile():
         file_path = tkinter.filedialog.asksaveasfilename(
-            parent=mainGUI, title='Choose the data file (.JSON)', initialdir=os.getcwd(), defaultextension=".json", filetypes = (("JSON","*.json"),))
+            parent=STATE.mainGUI, title='Choose the data file (.JSON)', initialdir=os.getcwd(), defaultextension=".json", filetypes = (("JSON","*.json"),))
         fileEntry.configure(state='normal')
         fileEntry.delete(0, END)
         fileEntry.insert(0, file_path)
@@ -88,7 +86,7 @@ def configure_gui():
             STATE.connected.set("Connected")
             enableTestButtons()
         else:
-            mainGUI.after(10, waitForConnection)
+            STATE.mainGUI.after(10, waitForConnection)
 
     def disableTestButtons():
             quasiForwardButton.configure(state='disabled')
@@ -115,7 +113,7 @@ def configure_gui():
     def runPostedTasks():
         while STATE.runTask():
             pass
-        mainGUI.after(10, runPostedTasks)
+        STATE.mainGUI.after(10, runPostedTasks)
 
     def quasiForward():
         disableTestButtons()
@@ -135,7 +133,7 @@ def configure_gui():
 
     # TOP OF WINDOW (FILE SELECTION)
 
-    topFrame = Frame(mainGUI)
+    topFrame = Frame(STATE.mainGUI)
     topFrame.grid(row=0, column=0)
 
     Button(topFrame, text="Select Save Location/Name",
@@ -158,7 +156,7 @@ def configure_gui():
 
     # WINDOW BODY (TEST RUNNING CONTROLS)
 
-    bodyFrame = Frame(mainGUI, bd=2, relief='groove')
+    bodyFrame = Frame(STATE.mainGUI, bd=2, relief='groove')
     bodyFrame.grid(row=1, column=0, sticky='ew')
 
     connectButton = Button(bodyFrame, text = "Connect to Robot", command = connect)
@@ -229,34 +227,37 @@ def translate_control_word(value):
 
 class GuiState:
 
-    # GUI bindings
-
-    file_path = StringVar()
-    timestamp_enabled = BooleanVar()
-    team_number = IntVar()
-    connected = StringVar()
-
-    sf_completed = StringVar()
-    sb_completed = StringVar()
-    ff_completed = StringVar()
-    fb_completed = StringVar()
-
-    quasi_ramp_rate = DoubleVar()
-    dynamic_step_voltage = DoubleVar()
-
     def __init__(self):
-        # GUI bindings
+        self.mainGUI = tkinter.Tk()
+
+        self.file_path = StringVar()
         self.file_path.set(os.path.join(os.getcwd(), "characterization-data.json"))
+
+        self.timestamp_enabled = BooleanVar()
         self.timestamp_enabled.set(True)
+
+        self.team_number = IntVar()
         self.team_number.set(0)
+
+        self.connected = StringVar()
         self.connected.set("Not connected")
 
+        self.sf_completed = StringVar()
         self.sf_completed.set("Not Run")
+
+        self.sb_completed = StringVar()
         self.sb_completed.set("Not Run")
+
+        self.ff_completed = StringVar()
         self.ff_completed.set("Not Run")
+
+        self.fb_completed = StringVar()
         self.fb_completed.set("Not Run")
 
+        self.quasi_ramp_rate = DoubleVar()
         self.quasi_ramp_rate.set(.25)
+
+        self.dynamic_step_voltage = DoubleVar()
         self.dynamic_step_voltage.set(6)
 
         self.task_queue = queue.Queue()
@@ -506,10 +507,10 @@ def main():
     STATE = GuiState()
     RUNNER = TestRunner()
 
-    mainGUI.title("RobotPy Drive Characterization Data Logger")
+    STATE.mainGUI.title("RobotPy Drive Characterization Data Logger")
 
     configure_gui()
-    mainGUI.mainloop()
+    STATE.mainGUI.mainloop()
 
 
 if __name__ == "__main__":
