@@ -48,6 +48,7 @@ import logging
 mainGUI = tkinter.Tk()
 
 STATE = None
+RUNNER = None
 
 def configure_gui():
 
@@ -74,35 +75,56 @@ def configure_gui():
             NetworkTables.initialize(server="localhost")
 
         NetworkTables.addConnectionListener(
-            STATE.connectionListener, immediateNotify=True
+            RUNNER.connectionListener, immediateNotify=True
         )
-        NetworkTables.addEntryListener(STATE.valueChanged)
+        NetworkTables.addEntryListener(RUNNER.valueChanged)
 
         STATE.connected.set("Connecting...")
 
         waitForConnection()
 
     def waitForConnection():
-        if STATE.get_nowait() == "connected":
+        if RUNNER.get_nowait() == "connected":
             STATE.connected.set("Connected")
+            enableTestButtons()
         else:
-            mainGUI.after(50, waitForConnection)
+            mainGUI.after(10, waitForConnection)
+
+    def disableTestButtons():
+            quasiForwardButton.configure(state='disabled')
+            quasiBackwardButton.configure(state='disabled')
+            dynamicForwardButton.configure(state='disabled')
+            dynamicBackwardButton.configure(state='disabled')
+
+    def enableTestButtons():
+            quasiForwardButton.configure(state='normal')
+            quasiBackwardButton.configure(state='normal')
+            dynamicForwardButton.configure(state='normal')
+            dynamicBackwardButton.configure(state='normal')
+
+    def waitForTask():
+        if not STATE.runTask():
+            mainGUI.after(10, waitForTask)
 
     def quasiForward():
-        STATE.runTest("slow-forward", 0, .001)
-        quasiForwardButton.configure(state='disabled')
+        disableTestButtons()
+        threading.Thread(target=RUNNER.runTest, args = ("slow-forward", 0, .001, enableTestButtons)).start()
+        waitForTask()
 
     def quasiBackward():
-        STATE.runTest("slow-backward", 0, -.001)
-        quasiBackwardButton.configure(state='disabled')
+        disableTestButtons()
+        threading.Thread(target=RUNNER.runTest, args = ("slow-backward", 0, .001, enableTestButtons)).start()
+        waitForTask()
 
     def dynamicForward():
-        STATE.runTest("fast-forward", abs(ROBOT_FAST_SPEED), 0)
-        dynamicForwardButton.configure(state='disabled')
+        disableTestButtons()
+        threading.Thread(target=RUNNER.runTest, args = ("fast-forward", 0, .001, enableTestButtons)).start()
+        waitForTask()
 
     def dynamicBackward():
-        STATE.runTest("fast-backward", -abs(ROBOT_FAST_SPEED), 0)
-        dynamicBackwardButton.configure(state='disabled')
+        disableTestButtons()
+        threading.Thread(target=RUNNER.runTest, args = ("fast-backward", 0, .001, enableTestButtons)).start()
+        waitForTask()
 
 
     # TOP OF WINDOW (FILE SELECTION)
@@ -175,8 +197,7 @@ def translate_control_word(value):
     else:
         return "teleop"
 
-
-class DataLogger:
+class GuiState:
 
     # GUI bindings
 
@@ -184,6 +205,30 @@ class DataLogger:
     timestamp_enabled = BooleanVar(mainGUI)
     team_number = IntVar(mainGUI)
     connected = StringVar(mainGUI)
+
+    def __init__(self):
+        # GUI bindings
+        self.file_path.set(os.path.join(os.getcwd(), "characterization-data"))
+        self.timestamp_enabled.set(True)
+        self.team_number.set(0)
+        self.connected.set("Not connected")
+
+        self.task_queue = queue.Queue()
+        self.lock = threading.Condition()
+
+    def postTask(self, task):
+        with self.lock:
+            self.task_queue.put(task)
+
+    def runTask(self):
+        with self.lock:
+            try:
+                self.task_queue.get_nowait()()
+                return True
+            except queue.Empty:
+                return False
+
+class TestRunner:
 
     # Test data
     stored_data = None
@@ -197,11 +242,6 @@ class DataLogger:
     autospeed = ntproperty("/robot/autospeed", 0, writeDefault=True)
 
     def __init__(self):
-        # GUI bindings
-        self.file_path.set(os.path.join(os.getcwd(), "characterization-data"))
-        self.timestamp_enabled.set(True)
-        self.team_number.set(0)
-        self.connected.set("Not connected")
 
         self.stored_data = {}
         
@@ -337,53 +377,28 @@ class DataLogger:
 
     def run(self):
 
-        # # Initialize networktables
-        # team = ""
-        # while team == "":
-        #     team = input("Enter team number or 'sim': ")
-
-        # if team == "sim":
-        #     NetworkTables.initialize(server="localhost")
-        # else:
-        #     NetworkTables.startClientTeam(int(team))
-
-        # # Use listeners to receive the data
-        # NetworkTables.addConnectionListener(
-        #     self.connectionListener, immediateNotify=True
-        # )
-        # NetworkTables.addEntryListener(self.valueChanged)
-
-        # # Wait for a connection notification, then continue on the path
-        # print("Waiting for NT connection..")
-        # while True:
-        #     if self.queue.get() == "connected":
-        #         break
-
-        # print("Connected!")
-        # print()
-
-        autonomous = [
-            # name, initial speed, ramp
-            ("slow-forward", 0, 0.001),
-            ("slow-backward", 0, -0.001),
-            ("fast-forward", abs(ROBOT_FAST_SPEED), 0),
-            ("fast-backward", -abs(ROBOT_FAST_SPEED), 0),
-        ]
-
-        stored_data = {}
-
         #
-        # Wait for the user to cycle through the 4 autonomus modes
+        # We have data! Do something with it now
         #
+        # Write it to disk first, in case the processing fails for some reason
+        # -> Using JSON for simplicity, maybe add csv at a later date
 
-        for i, (name, initial_speed, ramp) in enumerate(autonomous):
+        now = time.strftime("%Y%m%d-%H%M-%S")
+        fname = "%s-data.json" % now
 
+        print()
+        print("Data collection complete! saving to %s..." % fname)
+        with open(fname, "w") as fp:
+            json.dump(stored_data, fp, indent=4, separators=(",", ": "))
+
+    def runTest(self, name, initial_speed, ramp, finished):
+        try:
             # Initialize the robot commanded speed to 0
             self.autospeed = 0
             self.discard_data = True
 
             print()
-            print("Autonomous %d/%d: %s" % (i + 1, len(autonomous), name))
+            print(name)
             print()
             print("Please enable the robot in autonomous mode.")
             print()
@@ -406,7 +421,7 @@ class DataLogger:
                     return
                 else:
                     print("Robot exited autonomous mode before data could be sent?")
-                    break
+                    return
 
             # Ramp the voltage at the specified rate
             data = self.ramp_voltage_in_auto(initial_speed, ramp)
@@ -434,88 +449,21 @@ class DataLogger:
                 )
                 print("in the robot program or fix your encoders!")
 
-            stored_data[name] = data
+            self.stored_data[name] = data
+        
+        finally:
 
-        # In case the user decides to re-enable autonomous again..
-        self.autospeed = 0
+            self.autospeed = 0
 
-        #
-        # We have data! Do something with it now
-        #
-        # Write it to disk first, in case the processing fails for some reason
-        # -> Using JSON for simplicity, maybe add csv at a later date
+            STATE.postTask(finished)
 
-        now = time.strftime("%Y%m%d-%H%M-%S")
-        fname = "%s-data.json" % now
-
-        print()
-        print("Data collection complete! saving to %s..." % fname)
-        with open(fname, "w") as fp:
-            json.dump(stored_data, fp, indent=4, separators=(",", ": "))
-
-    def runTest(self, name, initial_speed, ramp):
-        # Initialize the robot commanded speed to 0
-        self.autospeed = 0
-        self.discard_data = True
-
-        print()
-        print(name)
-        print()
-        print("Please enable the robot in autonomous mode.")
-        print()
-        print(
-            "WARNING: It will not automatically stop moving, so disable the robot"
-        )
-        print("before it hits something!")
-        print("")
-
-        # Wait for robot to signal that it entered autonomous mode
-        with self.lock:
-            self.lock.wait_for(lambda: self.mode == "auto")
-
-        data = self.wait_for_stationary()
-        if data is not None:
-            if data in ("connected", "disconnected"):
-                print(
-                    "ERROR: NT disconnected, results won't be reliable. Giving up."
-                )
-                return
-            else:
-                print("Robot exited autonomous mode before data could be sent?")
-                return
-
-        # Ramp the voltage at the specified rate
-        data = self.ramp_voltage_in_auto(initial_speed, ramp)
-        if data in ("connected", "disconnected"):
-            print("ERROR: NT disconnected, results won't be reliable. Giving up.")
-            return
-
-        # output sanity check
-        if len(data) < 3:
-            print(
-                "WARNING: There wasn't a lot of data received during that last run"
-            )
-        else:
-            left_distance = data[-1][L_ENCODER_P_COL] - data[0][L_ENCODER_P_COL]
-            right_distance = data[-1][R_ENCODER_P_COL] - data[0][R_ENCODER_P_COL]
-
-            print()
-            print("The robot reported traveling the following distance:")
-            print()
-            print("Left:  %.3f ft" % left_distance)
-            print("Right: %.3f ft" % right_distance)
-            print()
-            print(
-                "If that doesn't seem quite right... you should change the encoder calibration"
-            )
-            print("in the robot program or fix your encoders!")
-
-        self.stored_data[name] = data
 
 def main():
 
     global STATE
-    STATE = DataLogger()
+    global RUNNER
+    STATE = GuiState()
+    RUNNER = TestRunner()
 
     mainGUI.title("RobotPy Drive Characterization Data Logger")
 
