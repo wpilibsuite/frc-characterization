@@ -24,98 +24,117 @@ import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from mpl_toolkits.mplot3d import Axes3D
 
-
-def isfloat(value):
-    try:
-        float(value)
+def validateInt(P):
+    if str.isdigit(P) or P == "":
         return True
-    except ValueError:
+    else:
         return False
 
+def validateFloat(P):
+    def isfloat(value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
 
-mainGUI = tkinter.Tk()
+    if isfloat(P) or P == "":
+        return True
+    else:
+        return False
+
+class IntEntry(Entry):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs, validate="all")
+        self["validatecommand"] = (self.register(validateInt), '%P')
+
+class FloatEntry(Entry):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs, validate="all")
+        self["validatecommand"] = (self.register(validateFloat), '%P')
 
 STATE = None
 
 class ProgramState:
-    window_size = IntVar(mainGUI)
-    motion_threshold = DoubleVar(mainGUI)
-    subset = StringVar(mainGUI)
-
-    units = StringVar(mainGUI)
-    wheel_diam = DoubleVar(mainGUI)
-
-    stored_data = None
-
-    quasi_forward_l = None
-    quasi_backward_l = None
-    step_forward_l = None
-    step_backward_l = None
-
-    quasi_forward_r = None
-    quasi_backward_r = None
-    step_forward_r = None
-    step_backward_r = None
-
-    ks = DoubleVar(mainGUI)
-    kv = DoubleVar(mainGUI)
-    ka = DoubleVar(mainGUI)
-    kcos = DoubleVar(mainGUI)
-    r_square = DoubleVar(mainGUI)
-
-    qp = DoubleVar(mainGUI)
-    qv = DoubleVar(mainGUI)
-    max_effort = DoubleVar(mainGUI)
-    period = DoubleVar(mainGUI)
-    max_controller_output = DoubleVar(mainGUI)
-    controller_time_normalized = BooleanVar(mainGUI)
-
-    gearing = DoubleVar(mainGUI)
-    controller_type = StringVar(mainGUI)
-    encoder_ppr = IntVar(mainGUI)
-    has_slave = BooleanVar(mainGUI)
-    slave_period = DoubleVar(mainGUI)
-
-    gain_units_preset = StringVar(mainGUI)
-
-    loop_type = StringVar(mainGUI)
-
-    kp = DoubleVar(mainGUI)
-    kd = DoubleVar(mainGUI)
 
     def __init__(self):
+        self.mainGUI = tkinter.Tk()
+
+        self.window_size = IntVar()
         self.window_size.set(8)
+
+        self.motion_threshold = DoubleVar()
         self.motion_threshold.set(.2)
+
+        self.subset = StringVar()
         self.subset.set('All Combined')
 
+        self.units = StringVar()
         self.units.set('Feet')
+
+        self.wheel_diam = DoubleVar()
         self.wheel_diam.set('.333')
 
-        self.ks.set(0)
-        self.kv.set(0)
-        self.ka.set(0)
-        self.kcos.set(0)
-        self.r_square.set(0)
+        self.stored_data = None
 
+        self.quasi_forward_l = None
+        self.quasi_backward_l = None
+        self.step_forward_l = None
+        self.step_backward_l = None
+
+        self.quasi_forward_r = None
+        self.quasi_backward_r = None
+        self.step_forward_r = None
+        self.step_backward_r = None
+
+        self.ks = DoubleVar()
+        self.kv = DoubleVar()
+        self.ka = DoubleVar()
+        self.kcos = DoubleVar()
+        self.r_square = DoubleVar()
+
+        self.qp = DoubleVar()
         self.qp.set(.1)
+
+        self.qv = DoubleVar()
         self.qv.set(.2)
+
+        self.max_effort = DoubleVar()
         self.max_effort.set(7)
+
+        self.period = DoubleVar()
         self.period.set(.02)
+
+        self.max_controller_output = DoubleVar()
         self.max_controller_output.set(12)
+
+        self.controller_time_normalized = BooleanVar()
         self.controller_time_normalized.set(True)
 
+
+        self.gearing = DoubleVar()
         self.gearing.set(1)
+
+        self.controller_type = StringVar()
         self.controller_type.set('Onboard')
+
+        self.encoder_ppr = IntVar()
         self.encoder_ppr.set(4096)
+
+        self.has_slave = BooleanVar()
         self.has_slave.set(False)
+
+        self.slave_period = DoubleVar()
         self.slave_period.set(.01)
 
+        self.gain_units_preset = StringVar()
         self.gain_units_preset.set('Default')
 
+        self.loop_type = StringVar()
         self.loop_type.set('Position')
 
-        self.kp.set(0)
-        self.kd.set(0)
+        self.kp = DoubleVar()
+        self.kd = DoubleVar()
 
 
 # Set up main window
@@ -124,7 +143,7 @@ def configure_gui():
 
     def getFile():
         dataFile = tkinter.filedialog.askopenfile(
-            parent=mainGUI, mode='rb', title='Choose the data file (.JSON)')
+            parent=STATE.mainGUI, mode='rb', title='Choose the data file (.JSON)')
         fileEntry.configure(state='normal')
         fileEntry.delete(0, END)
         fileEntry.insert(0, dataFile.name)
@@ -407,24 +426,9 @@ def configure_gui():
         else:
             qPEntry.configure(state='disabled')
 
-    def validateInt(P):
-        if str.isdigit(P) or P == "":
-            return True
-        else:
-            return False
-
-    def validateFloat(P):
-        if isfloat(P) or P == "":
-            return True
-        else:
-            return False
-
-    valInt = mainGUI.register(validateInt)
-    valFloat = mainGUI.register(validateFloat)
-
     # TOP OF WINDOW (FILE SELECTION)
 
-    topFrame = Frame(mainGUI)
+    topFrame = Frame(STATE.mainGUI)
     topFrame.grid(row=0, column=0, columnspan=4)
 
     Button(topFrame, text="Select Data File",
@@ -443,8 +447,7 @@ def configure_gui():
 
     Label(topFrame, text='Wheel Diameter (units):', anchor='e').grid(
         row=1, column=3, columnspan=2, sticky='ew')
-    diamEntry = Entry(topFrame, textvariable=STATE.wheel_diam,
-                      validate='all', validatecommand=(valFloat, '&P'))
+    diamEntry = FloatEntry(topFrame, textvariable=STATE.wheel_diam)
     diamEntry.grid(row=1, column=5)
 
     Label(topFrame, text='Subset:', width=15).grid(row=0, column=6)
@@ -456,7 +459,7 @@ def configure_gui():
 
     # FEEDFORWARD ANALYSIS FRAME
 
-    ffFrame = Frame(mainGUI, bd=2, relief='groove')
+    ffFrame = Frame(STATE.mainGUI, bd=2, relief='groove')
     ffFrame.grid(row=1, column=0, columnspan=3, sticky='ns')
 
     Label(ffFrame, text="Feedforward Analysis").grid(
@@ -480,40 +483,40 @@ def configure_gui():
 
     Label(ffFrame, text='Accel Window Size:', anchor='e').grid(
         row=1, column=1, sticky='ew')
-    windowEntry = Entry(ffFrame, textvariable=STATE.window_size,
-                        width=5, validate='all', validatecommand=(valInt, '%P'))
+    windowEntry = IntEntry(ffFrame, textvariable=STATE.window_size,
+                        width=5)
     windowEntry.grid(row=1, column=2)
 
     Label(ffFrame, text='Motion Threshold (units/s):',
           anchor='e').grid(row=2, column=1, sticky='ew')
-    thresholdEntry = Entry(ffFrame, textvariable=STATE.motion_threshold,
-                           width=5, validate='all', validatecommand=(valFloat, '%P'))
+    thresholdEntry = FloatEntry(ffFrame, textvariable=STATE.motion_threshold,
+                           width=5)
     thresholdEntry.grid(row=2, column=2)
 
     Label(ffFrame, text='kS:', anchor='e').grid(row=1, column=3, sticky='ew')
-    kSEntry = Entry(ffFrame, textvariable=STATE.ks, width=10)
+    kSEntry = FloatEntry(ffFrame, textvariable=STATE.ks, width=10)
     kSEntry.grid(row=1, column=4)
     kSEntry.configure(state='readonly')
 
     Label(ffFrame, text='kV:', anchor='e').grid(row=2, column=3, sticky='ew')
-    kVEntry = Entry(ffFrame, textvariable=STATE.kv, width=10)
+    kVEntry = FloatEntry(ffFrame, textvariable=STATE.kv, width=10)
     kVEntry.grid(row=2, column=4)
     kVEntry.configure(state='readonly')
 
     Label(ffFrame, text='kA:', anchor='e').grid(row=3, column=3, sticky='ew')
-    kAEntry = Entry(ffFrame, textvariable=STATE.ka, width=10)
+    kAEntry = FloatEntry(ffFrame, textvariable=STATE.ka, width=10)
     kAEntry.grid(row=3, column=4)
     kAEntry.configure(state='readonly')
 
     Label(ffFrame, text='r-squared:',
           anchor='e').grid(row=4, column=3, sticky='ew')
-    rSquareEntry = Entry(ffFrame, textvariable=STATE.r_square, width=10)
+    rSquareEntry = FloatEntry(ffFrame, textvariable=STATE.r_square, width=10)
     rSquareEntry.grid(row=4, column=4)
     rSquareEntry.configure(state='readonly')
 
     # FEEDBACK ANALYSIS FRAME
 
-    fbFrame = Frame(mainGUI, bd=2, relief='groove')
+    fbFrame = Frame(STATE.mainGUI, bd=2, relief='groove')
     fbFrame.grid(row=1, column=3, columnspan=5)
 
     Label(fbFrame, text='Feedback Analysis').grid(
@@ -531,14 +534,12 @@ def configure_gui():
 
     Label(fbFrame, text='Controller Period (s):',
           anchor='e').grid(row=2, column=0, sticky='ew')
-    periodEntry = Entry(fbFrame, textvariable=STATE.period, width=10,
-                        validate='all', validatecommand=(valFloat, '%P'))
+    periodEntry = FloatEntry(fbFrame, textvariable=STATE.period, width=10)
     periodEntry.grid(row=2, column=1)
 
     Label(fbFrame, text='Max Controller Output:',
           anchor='e').grid(row=3, column=0, sticky='ew')
-    controllerMaxEntry = Entry(fbFrame, textvariable=STATE.max_controller_output, width=10,
-                               validate='all', validatecommand=(valFloat, '%P'))
+    controllerMaxEntry = FloatEntry(fbFrame, textvariable=STATE.max_controller_output, width=10)
     controllerMaxEntry.grid(row=3, column=1)
 
     Label(fbFrame, text='Time-Normalized Controller:',
@@ -557,15 +558,13 @@ def configure_gui():
 
     Label(fbFrame, text='Post-Encoder Gearing:',
           anchor='e').grid(row=6, column=0, sticky='ew')
-    gearingEntry = Entry(fbFrame, textvariable=STATE.gearing, width=10,
-                         validate='all', validatecommand=(valFloat, '%P'))
+    gearingEntry = FloatEntry(fbFrame, textvariable=STATE.gearing, width=10)
     gearingEntry.configure(state='disabled')
     gearingEntry.grid(row=6, column=1)
 
     Label(fbFrame, text='Encoder PPR:', anchor='e').grid(
         row=7, column=0, sticky='ew')
-    pprEntry = Entry(fbFrame, textvariable=STATE.encoder_ppr, width=10,
-                     validate='all', validatecommand=(valInt, '%P'))
+    pprEntry = FloatEntry(fbFrame, textvariable=STATE.encoder_ppr, width=10)
     pprEntry.configure(state='disabled')
     pprEntry.grid(row=7, column=1)
 
@@ -578,27 +577,23 @@ def configure_gui():
 
     Label(fbFrame, text='Slave Update Period (s):',
           anchor='e').grid(row=9, column=0, sticky='ew')
-    slavePeriodEntry = Entry(fbFrame, textvariable=STATE.slave_period, width=10,
-                             validate='all', validatecommand=(valFloat, '%P'))
+    slavePeriodEntry = FloatEntry(fbFrame, textvariable=STATE.slave_period, width=10)
     slavePeriodEntry.grid(row=9, column=1)
     slavePeriodEntry.configure(state='disabled')
 
     Label(fbFrame, text='Max Acceptable Position Error (units):', anchor='e').grid(
         row=1, column=2, columnspan=2, sticky='ew')
-    qPEntry = Entry(fbFrame, textvariable=STATE.qp, width=10,
-                    validate='all', validatecommand=(valFloat, '%P'))
+    qPEntry = FloatEntry(fbFrame, textvariable=STATE.qp, width=10)
     qPEntry.grid(row=1, column=4)
 
     Label(fbFrame, text='Max Acceptable Velocity Error (units/s):', anchor='e').grid(
         row=2, column=2, columnspan=2, sticky='ew')
-    qVEntry = Entry(fbFrame, textvariable=STATE.qv, width=10,
-                    validate='all', validatecommand=(valFloat, '%P'))
+    qVEntry = FloatEntry(fbFrame, textvariable=STATE.qv, width=10)
     qVEntry.grid(row=2, column=4)
 
     Label(fbFrame, text='Max Acceptable Control Effort (V):', anchor='e').grid(
         row=3, column=2, columnspan=2, sticky='ew')
-    effortEntry = Entry(fbFrame, textvariable=STATE.max_effort, width=10,
-                        validate='all', validatecommand=(valFloat, '%P'))
+    effortEntry = FloatEntry(fbFrame, textvariable=STATE.max_effort, width=10)
     effortEntry.grid(row=3, column=4)
 
     Label(fbFrame, text='Loop Type:', anchor='e').grid(
@@ -610,12 +605,10 @@ def configure_gui():
     STATE.loop_type.trace_add('write', enableErrorBounds)
 
     Label(fbFrame, text='kV:', anchor='e').grid(row=5, column=2, sticky='ew')
-    kVFBEntry = Entry(fbFrame, textvariable=STATE.kv, width=10,
-                      validate='all', validatecommand=(valFloat, '%P'))
+    kVFBEntry = FloatEntry(fbFrame, textvariable=STATE.kv, width=10)
     kVFBEntry.grid(row=5, column=3)
     Label(fbFrame, text='kA:', anchor='e').grid(row=6, column=2, sticky='ew')
-    kAFBEntry = Entry(fbFrame, textvariable=STATE.ka, width=10,
-                      validate='all', validatecommand=(valFloat, '%P'))
+    kAFBEntry = FloatEntry(fbFrame, textvariable=STATE.ka, width=10)
     kAFBEntry.grid(row=6, column=3)
 
     calcGainsButton = Button(fbFrame, text='Calculate Optimal Controller Gains',
@@ -623,11 +616,11 @@ def configure_gui():
     calcGainsButton.grid(row=7, column=2, columnspan=3)
 
     Label(fbFrame, text='kP:', anchor='e').grid(row=8, column=2, sticky='ew')
-    kPEntry = Entry(fbFrame, textvariable=STATE.kp, width=10,
+    kPEntry = FloatEntry(fbFrame, textvariable=STATE.kp, width=10,
                     state='readonly').grid(row=8, column=3)
 
     Label(fbFrame, text='kD:', anchor='e').grid(row=9, column=2, sticky='ew')
-    kDEntry = Entry(fbFrame, textvariable=STATE.kd, width=10,
+    kDEntry = FloatEntry(fbFrame, textvariable=STATE.kd, width=10,
                     state='readonly').grid(row=9, column=3)
 
 #
@@ -1047,10 +1040,10 @@ def main():
     global STATE
     STATE = ProgramState()
 
-    mainGUI.title("RobotPy Drive Characterization Tool")
+    STATE.mainGUI.title("RobotPy Drive Characterization Tool")
 
     configure_gui()
-    mainGUI.mainloop()
+    STATE.mainGUI.mainloop()
 
 
 if __name__ == "__main__":
