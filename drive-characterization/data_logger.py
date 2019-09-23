@@ -36,7 +36,7 @@ import time
 import threading
 import os
 
-from data_analyzer import AUTOSPEED_COL, L_ENCODER_P_COL, R_ENCODER_P_COL
+from data_analyzer import AUTOSPEED_COL, L_ENCODER_P_COL, R_ENCODER_P_COL, IntEntry, FloatEntry
 
 import tkinter
 from tkinter import *
@@ -133,7 +133,6 @@ def configure_gui():
         disableTestButtons()
         threading.Thread(target=RUNNER.runTest, args = ("fast-backward", 0, .001, lambda: finishTest(STATE.fb_completed))).start()
 
-
     # TOP OF WINDOW (FILE SELECTION)
 
     topFrame = Frame(mainGUI)
@@ -154,7 +153,7 @@ def configure_gui():
     timestampEnabled.grid(row=1, column=2)
 
     Label(topFrame, text="Team Number:", anchor='e').grid(row=1, column=3, sticky='ew')
-    teamNumEntry = Entry(topFrame, textvariable=STATE.team_number, width=6)
+    teamNumEntry = IntEntry(topFrame, textvariable=STATE.team_number, width=6)
     teamNumEntry.grid(row=1, column=4)
 
     # WINDOW BODY (TEST RUNNING CONTROLS)
@@ -170,8 +169,12 @@ def configure_gui():
     connected.grid(row=0, column=1, sticky='ew')
 
     Label(bodyFrame, text="Quasistatic ramp rate (V/s):", anchor='e').grid(row=0, column=2, sticky='ew')
-    rampEntry = Entry(bodyFrame, textvariable=STATE.quasi_ramp_rate)
+    rampEntry = FloatEntry(bodyFrame, textvariable=STATE.quasi_ramp_rate)
     rampEntry.grid(row=0, column=3, sticky='ew')
+
+    Label(bodyFrame, text="Dynamic step voltage (V):", anchor='e').grid(row=1, column=2, sticky='ew')
+    stepEntry = FloatEntry(bodyFrame, textvariable=STATE.dynamic_step_voltage)
+    stepEntry.grid(row=1, column=3, sticky='ew')
 
     quasiForwardButton = Button(bodyFrame, text = "Quasistatic Forward", command = quasiForward, state='disabled')
     quasiForwardButton.grid(row=1, column=0, sticky='ew')
@@ -228,22 +231,22 @@ class GuiState:
 
     # GUI bindings
 
-    file_path = StringVar(mainGUI)
-    timestamp_enabled = BooleanVar(mainGUI)
-    team_number = IntVar(mainGUI)
-    connected = StringVar(mainGUI)
+    file_path = StringVar()
+    timestamp_enabled = BooleanVar()
+    team_number = IntVar()
+    connected = StringVar()
 
-    sf_completed = StringVar(mainGUI)
-    sb_completed = StringVar(mainGUI)
-    ff_completed = StringVar(mainGUI)
-    fb_completed = StringVar(mainGUI)
+    sf_completed = StringVar()
+    sb_completed = StringVar()
+    ff_completed = StringVar()
+    fb_completed = StringVar()
 
-    quasi_ramp_rate = DoubleVar(mainGUI)
-    dynamic_step_voltage = DoubleVar(mainGUI)
+    quasi_ramp_rate = DoubleVar()
+    dynamic_step_voltage = DoubleVar()
 
     def __init__(self):
         # GUI bindings
-        self.file_path.set(os.path.join(os.getcwd(), "characterization-data"))
+        self.file_path.set(os.path.join(os.getcwd(), "characterization-data.json"))
         self.timestamp_enabled.set(True)
         self.team_number.set(0)
         self.connected.set("Not connected")
@@ -252,6 +255,9 @@ class GuiState:
         self.sb_completed.set("Not Run")
         self.ff_completed.set("Not Run")
         self.fb_completed.set("Not Run")
+
+        self.quasi_ramp_rate.set(.25)
+        self.dynamic_step_voltage.set(6)
 
         self.task_queue = queue.Queue()
 
@@ -503,7 +509,6 @@ def main():
     mainGUI.title("RobotPy Drive Characterization Data Logger")
 
     configure_gui()
-
     mainGUI.mainloop()
 
 
