@@ -40,10 +40,10 @@ setuptools.setup(
     version="1.0.0",
     author="Eli Barnett, Dustin Spicuzza",
     author_email="dustin@virtualroadside.com",
-    packages=["drive_characterization", "arm_characterization", "elevator_characterization", "characterization_tool"],
+    packages=["drive_characterization", "arm_characterization", "elevator_characterization", "cli"],
     entry_points={
         "console_scripts": [
-            "characterization-tool = characterization_tool.cli:main"
+            "robot-characterization = cli.cli:main"
         ],    
     },
     long_description=long_description,
