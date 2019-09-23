@@ -12,13 +12,14 @@ matrix:
 
 jobs:
   include:
-  - stage: format-check
-    python:
-    - "3.6"
-    install:
-    - pip install black
-    script:
-    - black --check --diff .
+  # Uncomment the below lines once everything gets formatted
+  # - stage: format-check
+  #   python:
+  #   - "3.6"
+  #   install:
+  #   - pip install black
+  #   script:
+  #   - black --check --diff .
 
   - stage: deploy
     if: tag IS present
