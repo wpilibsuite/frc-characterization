@@ -36,7 +36,9 @@ import time
 import threading
 import os
 
-from data_analyzer import AUTOSPEED_COL, L_ENCODER_P_COL, R_ENCODER_P_COL, IntEntry, FloatEntry
+from utils.utils import IntEntry, FloatEntry
+
+from drive_characterization.data_analyzer import AUTOSPEED_COL, L_ENCODER_P_COL, R_ENCODER_P_COL
 
 import tkinter
 from tkinter import *
@@ -66,7 +68,7 @@ def configure_gui():
             json.dump(RUNNER.stored_data, fp, indent=4, separators=(",", ": "))
 
     def connect():
-        if STATE.team_number.get():
+        if STATE.team_number.get() != 0:
             NetworkTables.startClientTeam(STATE.team_number.get())
         else:
             NetworkTables.initialize(server="localhost")
@@ -422,7 +424,7 @@ class TestRunner:
                     return qdata
 
                 time.sleep(0.050)
-                self.autospeed = self.autospeed + (ramp * .05)/12
+                self.autospeed = self.autospeed/12 + (ramp * .05)/12
 
                 NetworkTables.flush()
         finally:

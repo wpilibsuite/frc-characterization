@@ -17,41 +17,14 @@ from tkinter import *
 from tkinter import filedialog
 from os.path import basename, exists, dirname, join, splitext
 
+from utils.utils import IntEntry, FloatEntry
+
 import control as cnt
 import frccontrol as frccnt
 import numpy as np
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from mpl_toolkits.mplot3d import Axes3D
-
-def validateInt(P):
-    if str.isdigit(P) or P == "":
-        return True
-    else:
-        return False
-
-def validateFloat(P):
-    def isfloat(value):
-        try:
-            float(value)
-            return True
-        except ValueError:
-            return False
-
-    if isfloat(P) or P == "":
-        return True
-    else:
-        return False
-
-class IntEntry(Entry):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, validate="all")
-        self["validatecommand"] = (self.register(validateInt), '%P')
-
-class FloatEntry(Entry):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, validate="all")
-        self["validatecommand"] = (self.register(validateFloat), '%P')
 
 STATE = None
 
