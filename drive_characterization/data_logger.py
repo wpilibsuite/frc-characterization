@@ -38,7 +38,11 @@ import os
 
 from utils.utils import IntEntry, FloatEntry
 
-from drive_characterization.data_analyzer import AUTOSPEED_COL, L_ENCODER_P_COL, R_ENCODER_P_COL
+from drive_characterization.data_analyzer import (
+    AUTOSPEED_COL,
+    L_ENCODER_P_COL,
+    R_ENCODER_P_COL,
+)
 
 import tkinter
 from tkinter import *
@@ -50,15 +54,20 @@ import logging
 STATE = None
 RUNNER = None
 
-def configure_gui():
 
+def configure_gui():
     def getFile():
         file_path = tkinter.filedialog.asksaveasfilename(
-            parent=STATE.mainGUI, title='Choose the data file (.JSON)', initialdir=os.getcwd(), defaultextension=".json", filetypes = (("JSON","*.json"),))
-        fileEntry.configure(state='normal')
+            parent=STATE.mainGUI,
+            title="Choose the data file (.JSON)",
+            initialdir=os.getcwd(),
+            defaultextension=".json",
+            filetypes=(("JSON", "*.json"),),
+        )
+        fileEntry.configure(state="normal")
         fileEntry.delete(0, END)
         fileEntry.insert(0, file_path)
-        fileEntry.configure(state='readonly')
+        fileEntry.configure(state="readonly")
 
     def save():
         if STATE.timestamp_enabled.get():
@@ -90,27 +99,28 @@ def configure_gui():
             STATE.mainGUI.after(10, waitForConnection)
 
     def disableTestButtons():
-            quasiForwardButton.configure(state='disabled')
-            quasiBackwardButton.configure(state='disabled')
-            dynamicForwardButton.configure(state='disabled')
-            dynamicBackwardButton.configure(state='disabled')
-            saveButton.configure(state='disabled')
+        quasiForwardButton.configure(state="disabled")
+        quasiBackwardButton.configure(state="disabled")
+        dynamicForwardButton.configure(state="disabled")
+        dynamicBackwardButton.configure(state="disabled")
+        saveButton.configure(state="disabled")
 
     def enableTestButtons():
-            quasiForwardButton.configure(state='normal')
-            quasiBackwardButton.configure(state='normal')
-            dynamicForwardButton.configure(state='normal')
-            dynamicBackwardButton.configure(state='normal')
-            if (STATE.sf_completed.get() == "Completed" and
-                STATE.sb_completed.get() == "Completed" and
-                STATE.ff_completed.get() == "Completed" and
-                STATE.fb_completed.get() == "Completed"):
-                saveButton.configure(state='normal')
+        quasiForwardButton.configure(state="normal")
+        quasiBackwardButton.configure(state="normal")
+        dynamicForwardButton.configure(state="normal")
+        dynamicBackwardButton.configure(state="normal")
+        if (
+            STATE.sf_completed.get() == "Completed"
+            and STATE.sb_completed.get() == "Completed"
+            and STATE.ff_completed.get() == "Completed"
+            and STATE.fb_completed.get() == "Completed"
+        ):
+            saveButton.configure(state="normal")
 
     def finishTest(textEntry):
         textEntry.set("Completed")
         enableTestButtons()
-
 
     def runPostedTasks():
         while STATE.runTask():
@@ -120,39 +130,74 @@ def configure_gui():
     def quasiForward():
         disableTestButtons()
         STATE.sf_completed.set("Running...")
-        threading.Thread(target=RUNNER.runTest, args = ("slow-forward", 0, STATE.quasi_ramp_rate.get(), lambda: finishTest(STATE.sf_completed))).start()
+        threading.Thread(
+            target=RUNNER.runTest,
+            args=(
+                "slow-forward",
+                0,
+                STATE.quasi_ramp_rate.get(),
+                lambda: finishTest(STATE.sf_completed),
+            ),
+        ).start()
 
     def quasiBackward():
         disableTestButtons()
         STATE.sb_completed.set("Running...")
-        threading.Thread(target=RUNNER.runTest, args = ("slow-backward", 0, STATE.quasi_ramp_rate.get(), lambda: finishTest(STATE.sb_completed))).start()
+        threading.Thread(
+            target=RUNNER.runTest,
+            args=(
+                "slow-backward",
+                0,
+                STATE.quasi_ramp_rate.get(),
+                lambda: finishTest(STATE.sb_completed),
+            ),
+        ).start()
 
     def dynamicForward():
         disableTestButtons()
         STATE.ff_completed.set("Running...")
-        threading.Thread(target=RUNNER.runTest, args = ("fast-forward", STATE.dynamic_step_voltage.get(), 0, lambda: finishTest(STATE.ff_completed))).start()
+        threading.Thread(
+            target=RUNNER.runTest,
+            args=(
+                "fast-forward",
+                STATE.dynamic_step_voltage.get(),
+                0,
+                lambda: finishTest(STATE.ff_completed),
+            ),
+        ).start()
 
     def dynamicBackward():
         disableTestButtons()
         STATE.fb_completed.set("Running...")
-        threading.Thread(target=RUNNER.runTest, args = ("fast-backward", STATE.dynamic_step_voltage.get(), 0, lambda: finishTest(STATE.fb_completed))).start()
+        threading.Thread(
+            target=RUNNER.runTest,
+            args=(
+                "fast-backward",
+                STATE.dynamic_step_voltage.get(),
+                0,
+                lambda: finishTest(STATE.fb_completed),
+            ),
+        ).start()
 
     # TOP OF WINDOW (FILE SELECTION)
 
     topFrame = Frame(STATE.mainGUI)
     topFrame.grid(row=0, column=0)
 
-    Button(topFrame, text="Select Save Location/Name",
-           command=getFile).grid(row=0, column=0, sticky='ew')
+    Button(topFrame, text="Select Save Location/Name", command=getFile).grid(
+        row=0, column=0, sticky="ew"
+    )
 
     fileEntry = Entry(topFrame, textvariable=STATE.file_path, width=80)
     fileEntry.grid(row=0, column=1, columnspan=10)
-    fileEntry.configure(state='readonly')
+    fileEntry.configure(state="readonly")
 
     saveButton = Button(topFrame, text="Save Data", command=save, state="disabled")
-    saveButton.grid(row=1, column=0, sticky='ew')
+    saveButton.grid(row=1, column=0, sticky="ew")
 
-    Label(topFrame, text = "Add Timestamp:", anchor='e').grid(row=1, column=1, sticky='ew')
+    Label(topFrame, text="Add Timestamp:", anchor="e").grid(
+        row=1, column=1, sticky="ew"
+    )
     timestampEnabled = Checkbutton(topFrame, variable=STATE.timestamp_enabled)
     timestampEnabled.grid(row=1, column=2)
 
@@ -161,51 +206,63 @@ def configure_gui():
 
     # WINDOW BODY (TEST RUNNING CONTROLS)
 
-    bodyFrame = Frame(STATE.mainGUI, bd=2, relief='groove')
-    bodyFrame.grid(row=1, column=0, sticky='ew')
+    bodyFrame = Frame(STATE.mainGUI, bd=2, relief="groove")
+    bodyFrame.grid(row=1, column=0, sticky="ew")
 
-    connectButton = Button(bodyFrame, text = "Connect to Robot", command = connect)
-    connectButton.grid(row=0, column=0, sticky='ew')
+    connectButton = Button(bodyFrame, text="Connect to Robot", command=connect)
+    connectButton.grid(row=0, column=0, sticky="ew")
 
     connected = Entry(bodyFrame, textvariable=STATE.connected)
     connected.configure(state="readonly")
-    connected.grid(row=0, column=1, sticky='ew')
+    connected.grid(row=0, column=1, sticky="ew")
 
-    Label(bodyFrame, text="Team Number:", anchor='e').grid(row=0, column=2, sticky='ew')
+    Label(bodyFrame, text="Team Number:", anchor="e").grid(row=0, column=2, sticky="ew")
     teamNumEntry = IntEntry(bodyFrame, textvariable=STATE.team_number, width=6)
-    teamNumEntry.grid(row=0, column=3, sticky='ew')
+    teamNumEntry.grid(row=0, column=3, sticky="ew")
 
-    Label(bodyFrame, text="Quasistatic ramp rate (V/s):", anchor='e').grid(row=1, column=2, sticky='ew')
+    Label(bodyFrame, text="Quasistatic ramp rate (V/s):", anchor="e").grid(
+        row=1, column=2, sticky="ew"
+    )
     rampEntry = FloatEntry(bodyFrame, textvariable=STATE.quasi_ramp_rate)
-    rampEntry.grid(row=1, column=3, sticky='ew')
+    rampEntry.grid(row=1, column=3, sticky="ew")
 
-    Label(bodyFrame, text="Dynamic step voltage (V):", anchor='e').grid(row=3, column=2, sticky='ew')
+    Label(bodyFrame, text="Dynamic step voltage (V):", anchor="e").grid(
+        row=3, column=2, sticky="ew"
+    )
     stepEntry = FloatEntry(bodyFrame, textvariable=STATE.dynamic_step_voltage)
-    stepEntry.grid(row=3, column=3, sticky='ew')
+    stepEntry.grid(row=3, column=3, sticky="ew")
 
-    quasiForwardButton = Button(bodyFrame, text = "Quasistatic Forward", command = quasiForward, state='disabled')
-    quasiForwardButton.grid(row=1, column=0, sticky='ew')
+    quasiForwardButton = Button(
+        bodyFrame, text="Quasistatic Forward", command=quasiForward, state="disabled"
+    )
+    quasiForwardButton.grid(row=1, column=0, sticky="ew")
 
     quasiForwardCompleted = Entry(bodyFrame, textvariable=STATE.sf_completed)
     quasiForwardCompleted.configure(state="readonly")
     quasiForwardCompleted.grid(row=1, column=1)
 
-    quasiBackwardButton = Button(bodyFrame, text = "Quasistatic Backward", command = quasiBackward, state='disabled')
-    quasiBackwardButton.grid(row=2, column=0, sticky='ew')
+    quasiBackwardButton = Button(
+        bodyFrame, text="Quasistatic Backward", command=quasiBackward, state="disabled"
+    )
+    quasiBackwardButton.grid(row=2, column=0, sticky="ew")
 
     quasiBackwardCompleted = Entry(bodyFrame, textvariable=STATE.sb_completed)
     quasiBackwardCompleted.configure(state="readonly")
     quasiBackwardCompleted.grid(row=2, column=1)
 
-    dynamicForwardButton = Button(bodyFrame, text = "Dynamic Forward", command = dynamicForward, state='disabled')
-    dynamicForwardButton.grid(row=3, column=0, sticky='ew')
+    dynamicForwardButton = Button(
+        bodyFrame, text="Dynamic Forward", command=dynamicForward, state="disabled"
+    )
+    dynamicForwardButton.grid(row=3, column=0, sticky="ew")
 
     dynamicForwardCompleted = Entry(bodyFrame, textvariable=STATE.ff_completed)
     dynamicForwardCompleted.configure(state="readonly")
     dynamicForwardCompleted.grid(row=3, column=1)
 
-    dynamicBackwardButton = Button(bodyFrame, text = "Dynamic Backward", command = dynamicBackward, state='disabled')
-    dynamicBackwardButton.grid(row=4, column=0, sticky='ew')
+    dynamicBackwardButton = Button(
+        bodyFrame, text="Dynamic Backward", command=dynamicBackward, state="disabled"
+    )
+    dynamicBackwardButton.grid(row=4, column=0, sticky="ew")
 
     dynamicBackwardCompleted = Entry(bodyFrame, textvariable=STATE.fb_completed)
     dynamicBackwardCompleted.configure(state="readonly")
@@ -216,6 +273,7 @@ def configure_gui():
 
     runPostedTasks()
 
+
 logger = logging.getLogger("logger")
 
 # FMSControlData bitfields
@@ -225,6 +283,7 @@ TEST_FIELD = 1 << 2
 EMERGENCY_STOP_FIELD = 1 << 3
 FMS_ATTACHED_FIELD = 1 << 4
 DS_ATTACHED_FIELD = 1 << 5
+
 
 def translate_control_word(value):
     value = int(value)
@@ -237,8 +296,8 @@ def translate_control_word(value):
     else:
         return "teleop"
 
-class GuiState:
 
+class GuiState:
     def __init__(self):
         self.mainGUI = tkinter.Tk()
 
@@ -267,7 +326,7 @@ class GuiState:
         self.fb_completed.set("Not Run")
 
         self.quasi_ramp_rate = DoubleVar()
-        self.quasi_ramp_rate.set(.25)
+        self.quasi_ramp_rate.set(0.25)
 
         self.dynamic_step_voltage = DoubleVar()
         self.dynamic_step_voltage.set(6)
@@ -283,6 +342,7 @@ class GuiState:
             return True
         except queue.Empty:
             return False
+
 
 class TestRunner:
 
@@ -300,7 +360,7 @@ class TestRunner:
     def __init__(self):
 
         self.stored_data = {}
-        
+
         self.queue = queue.Queue()
         self.mode = "disabled"
         self.data = []
@@ -424,7 +484,7 @@ class TestRunner:
                     return qdata
 
                 time.sleep(0.050)
-                self.autospeed = self.autospeed/12 + (ramp * .05)/12
+                self.autospeed = self.autospeed / 12 + (ramp * 0.05) / 12
 
                 NetworkTables.flush()
         finally:
@@ -464,11 +524,15 @@ class TestRunner:
             # print("before it hits something!")
             # print("")
 
-            STATE.postTask(lambda: tkinter.messagebox.showinfo("Running " + name,
-                                        "Please enable the robot in autonomous mode, and then "
-                                        + "disable it before it runs out of space.\n"
-                                        + "Note: The robot will continue to move until you disable it - "
-                                        + "It is your responsibility to ensure it does not hit anything!"))
+            STATE.postTask(
+                lambda: tkinter.messagebox.showinfo(
+                    "Running " + name,
+                    "Please enable the robot in autonomous mode, and then "
+                    + "disable it before it runs out of space.\n"
+                    + "Note: The robot will continue to move until you disable it - "
+                    + "It is your responsibility to ensure it does not hit anything!",
+                )
+            )
 
             # Wait for robot to signal that it entered autonomous mode
             with self.lock:
@@ -477,34 +541,60 @@ class TestRunner:
             data = self.wait_for_stationary()
             if data is not None:
                 if data in ("connected", "disconnected"):
-                    STATE.postTask(lambda: tkinter.messagebox.showerror("Error!", "NT disconnected, results won't be reliable. Giving up."))
+                    STATE.postTask(
+                        lambda: tkinter.messagebox.showerror(
+                            "Error!",
+                            "NT disconnected, results won't be reliable. Giving up.",
+                        )
+                    )
                     return
                 else:
-                    STATE.postTask(lambda: tkinter.messagebox.showerror("Error!", "Robot exited autonomous mode before data could be sent?"))
+                    STATE.postTask(
+                        lambda: tkinter.messagebox.showerror(
+                            "Error!",
+                            "Robot exited autonomous mode before data could be sent?",
+                        )
+                    )
                     return
 
             # Ramp the voltage at the specified rate
             data = self.ramp_voltage_in_auto(initial_speed, ramp)
             if data in ("connected", "disconnected"):
-                STATE.postTask(lambda: tkinter.messagebox.showerror("Error!", "NT disconnected, results won't be reliable. Giving up."))
+                STATE.postTask(
+                    lambda: tkinter.messagebox.showerror(
+                        "Error!",
+                        "NT disconnected, results won't be reliable. Giving up.",
+                    )
+                )
                 return
 
             # output sanity check
             if len(data) < 3:
-               STATE.postTask(lambda: tkinter.messagebox.showwarning("Warning!", "There wasn't a lot of data received during that last run"))
+                STATE.postTask(
+                    lambda: tkinter.messagebox.showwarning(
+                        "Warning!",
+                        "There wasn't a lot of data received during that last run",
+                    )
+                )
             else:
                 left_distance = data[-1][L_ENCODER_P_COL] - data[0][L_ENCODER_P_COL]
                 right_distance = data[-1][R_ENCODER_P_COL] - data[0][R_ENCODER_P_COL]
 
-                STATE.postTask(lambda: tkinter.messagebox.showinfo(name + " Complete",
-                                               "The robot reported traveling the following distance:\n"
-                                               + "Left:  %.3f ft" % left_distance + "\n"
-                                               + "Right: %.3f ft" % right_distance + "\n"
-                                               + "If that doesn't seem quite right... you should change the encoder calibration"
-                                               + "in the robot program or fix your encoders!"))
+                STATE.postTask(
+                    lambda: tkinter.messagebox.showinfo(
+                        name + " Complete",
+                        "The robot reported traveling the following distance:\n"
+                        + "Left:  %.3f ft" % left_distance
+                        + "\n"
+                        + "Right: %.3f ft" % right_distance
+                        + "\n"
+                        + "If that doesn't seem quite right... you should change the encoder calibration"
+                        + "in the robot program or fix your encoders!",
+                    )
+                )
 
             self.stored_data[name] = data
-        
+
         finally:
 
             self.autospeed = 0
