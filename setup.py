@@ -7,12 +7,14 @@ setuptools.setup(
     author="Eli Barnett",
     author_email="emichaelbarnett@gmail.com",
     description="RobotPy Characterization Library",
-    packages=["drive_characterization", "cli", "utils"],
-    entry_points={
-        "console_scripts": [
-            "robotpy-characterization = cli.cli:main"
-        ],    
-    },
+    packages=[
+        "arm_characterization",
+        "drive_characterization",
+        "elevator_characterization",
+        "cli",
+        "utils",
+    ],
+    entry_points={"console_scripts": ["robotpy-characterization = cli.cli:main"]},
     url="https://github.com/robotpy/robot-characterization",
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -24,7 +26,7 @@ setuptools.setup(
         "matplotlib",
         "pynetworktables>=2018.1.2",
         "statsmodels",
-        "argcomplete"
+        "argcomplete",
     ],
     python_requires=">=3.4",
 )

@@ -36,11 +36,7 @@ import os
 
 from utils.utils import IntEntry, FloatEntry
 
-from drive_characterization.data_analyzer import (
-    AUTOSPEED_COL,
-    L_ENCODER_P_COL,
-    R_ENCODER_P_COL,
-)
+from elevator_characterization.data_analyzer import AUTOSPEED_COL, ENCODER_P_COL
 
 import tkinter
 from tkinter import *
@@ -431,8 +427,7 @@ class TestRunner:
         logger.info("Waiting for robot to stop moving for at least 1 second...")
 
         first_stationary_time = time.monotonic()
-        last_l_encoder = 0
-        last_r_encoder = 0
+        last_encoder = 0
 
         while True:
             # check the queue in case we switched out of auto mode
@@ -446,23 +441,18 @@ class TestRunner:
             last_data = self.last_data
 
             try:
-                l_encoder = last_data[L_ENCODER_P_COL]
-                r_encoder = last_data[R_ENCODER_P_COL]
+                encoder = last_data[ENCODER_P_COL]
             except IndexError:
                 print(self.last_data)
                 raise
 
-            if (
-                abs(last_l_encoder - l_encoder) > 0.01
-                or abs(last_r_encoder - r_encoder) > 0.01
-            ):
+            if abs(last_encoder - encoder) > 0.01:
                 first_stationary_time = now
             elif now - first_stationary_time > 1:
                 logger.info("Robot has waited long enough, beginning test")
                 return
 
-            last_l_encoder = l_encoder
-            last_r_encoder = r_encoder
+            last_encoder = encoder
 
     def ramp_voltage_in_auto(self, initial_speed, ramp):
 
@@ -575,16 +565,13 @@ class TestRunner:
                     )
                 )
             else:
-                left_distance = data[-1][L_ENCODER_P_COL] - data[0][L_ENCODER_P_COL]
-                right_distance = data[-1][R_ENCODER_P_COL] - data[0][R_ENCODER_P_COL]
+                distance = data[-1][ENCODER_P_COL] - data[0][ENCODER_P_COL]
 
                 STATE.postTask(
                     lambda: tkinter.messagebox.showinfo(
                         name + " Complete",
                         "The robot reported traveling the following distance:\n"
-                        + "Left:  %.3f units" % left_distance
-                        + "\n"
-                        + "Right: %.3f units" % right_distance
+                        + "%.3f units" % distance
                         + "\n"
                         + "If that doesn't seem quite right... you should change the encoder calibration"
                         + "in the robot program or fix your encoders!",
@@ -607,7 +594,7 @@ def main():
     STATE = GuiState()
     RUNNER = TestRunner()
 
-    STATE.mainGUI.title("RobotPy Drive Characterization Data Logger")
+    STATE.mainGUI.title("RobotPy Arm Characterization Data Logger")
 
     configure_gui()
     STATE.mainGUI.mainloop()
