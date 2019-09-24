@@ -28,8 +28,8 @@ from mpl_toolkits.mplot3d import Axes3D
 
 STATE = None
 
-class ProgramState:
 
+class ProgramState:
     def __init__(self):
         self.mainGUI = tkinter.Tk()
 
@@ -37,16 +37,16 @@ class ProgramState:
         self.window_size.set(8)
 
         self.motion_threshold = DoubleVar()
-        self.motion_threshold.set(.2)
+        self.motion_threshold.set(0.2)
 
         self.subset = StringVar()
-        self.subset.set('All Combined')
+        self.subset.set("All Combined")
 
         self.units = StringVar()
-        self.units.set('Feet')
+        self.units.set("Feet")
 
         self.wheel_diam = DoubleVar()
-        self.wheel_diam.set('.333')
+        self.wheel_diam.set(".333")
 
         self.stored_data = None
 
@@ -67,16 +67,16 @@ class ProgramState:
         self.r_square = DoubleVar()
 
         self.qp = DoubleVar()
-        self.qp.set(.1)
+        self.qp.set(0.1)
 
         self.qv = DoubleVar()
-        self.qv.set(.2)
+        self.qv.set(0.2)
 
         self.max_effort = DoubleVar()
         self.max_effort.set(7)
 
         self.period = DoubleVar()
-        self.period.set(.02)
+        self.period.set(0.02)
 
         self.max_controller_output = DoubleVar()
         self.max_controller_output.set(12)
@@ -84,12 +84,11 @@ class ProgramState:
         self.controller_time_normalized = BooleanVar()
         self.controller_time_normalized.set(True)
 
-
         self.gearing = DoubleVar()
         self.gearing.set(1)
 
         self.controller_type = StringVar()
-        self.controller_type.set('Onboard')
+        self.controller_type.set("Onboard")
 
         self.encoder_ppr = IntVar()
         self.encoder_ppr.set(4096)
@@ -98,13 +97,13 @@ class ProgramState:
         self.has_slave.set(False)
 
         self.slave_period = DoubleVar()
-        self.slave_period.set(.01)
+        self.slave_period.set(0.01)
 
         self.gain_units_preset = StringVar()
-        self.gain_units_preset.set('Default')
+        self.gain_units_preset.set("Default")
 
         self.loop_type = StringVar()
-        self.loop_type.set('Position')
+        self.loop_type.set("Position")
 
         self.kp = DoubleVar()
         self.kd = DoubleVar()
@@ -112,15 +111,16 @@ class ProgramState:
 
 # Set up main window
 
-def configure_gui():
 
+def configure_gui():
     def getFile():
         dataFile = tkinter.filedialog.askopenfile(
-            parent=STATE.mainGUI, mode='rb', title='Choose the data file (.JSON)')
-        fileEntry.configure(state='normal')
+            parent=STATE.mainGUI, mode="rb", title="Choose the data file (.JSON)"
+        )
+        fileEntry.configure(state="normal")
         fileEntry.delete(0, END)
         fileEntry.insert(0, dataFile.name)
-        fileEntry.configure(state='readonly')
+        fileEntry.configure(state="readonly")
 
         data = json.load(dataFile)
 
@@ -131,173 +131,264 @@ def configure_gui():
 
         STATE.stored_data = data
 
-        analyzeButton.configure(state='normal')
+        analyzeButton.configure(state="normal")
 
     def runAnalysis():
 
-        (STATE.quasi_forward_l, STATE.quasi_backward_l, STATE.step_forward_l, STATE.step_backward_l,
-         STATE.quasi_forward_r, STATE.quasi_backward_r, STATE.step_forward_r, STATE.step_backward_r) = prepare_data(
-            STATE.stored_data, window=STATE.window_size.get())
+        (
+            STATE.quasi_forward_l,
+            STATE.quasi_backward_l,
+            STATE.step_forward_l,
+            STATE.step_backward_l,
+            STATE.quasi_forward_r,
+            STATE.quasi_backward_r,
+            STATE.step_forward_r,
+            STATE.step_backward_r,
+        ) = prepare_data(STATE.stored_data, window=STATE.window_size.get())
 
-        if (STATE.quasi_forward_l is None
+        if (
+            STATE.quasi_forward_l is None
             or STATE.quasi_backward_l is None
             or STATE.step_forward_l is None
             or STATE.step_backward_l is None
             or STATE.quasi_forward_r is None
             or STATE.quasi_backward_r is None
             or STATE.step_forward_r is None
-                or STATE.step_backward_r is None):
+            or STATE.step_backward_r is None
+        ):
             return
 
-        if STATE.subset.get() == 'Forward Left':
+        if STATE.subset.get() == "Forward Left":
+            ks, kv, ka, rsquare = calcFit(STATE.quasi_forward_l, STATE.step_forward_l)
+        elif STATE.subset.get() == "Forward Right":
+            ks, kv, ka, rsquare = calcFit(STATE.quasi_forward_r, STATE.step_forward_r)
+        elif STATE.subset.get() == "Backward Left":
+            ks, kv, ka, rsquare = calcFit(STATE.quasi_backward_l, STATE.step_backward_l)
+        elif STATE.subset.get() == "Backward Right":
+            ks, kv, ka, rsquare = calcFit(STATE.quasi_backward_r, STATE.step_backward_r)
+        elif STATE.subset.get() == "Forward Combined":
             ks, kv, ka, rsquare = calcFit(
-                STATE.quasi_forward_l, STATE.step_forward_l)
-        elif STATE.subset.get() == 'Forward Right':
-            ks, kv, ka, rsquare = calcFit(
-                STATE.quasi_forward_r, STATE.step_forward_r)
-        elif STATE.subset.get() == 'Backward Left':
-            ks, kv, ka, rsquare = calcFit(
-                STATE.quasi_backward_l, STATE.step_backward_l)
-        elif STATE.subset.get() == 'Backward Right':
-            ks, kv, ka, rsquare = calcFit(
-                STATE.quasi_backward_r, STATE.step_backward_r)
-        elif STATE.subset.get() == 'Forward Combined':
-            ks, kv, ka, rsquare = calcFit(
-                np.concatenate(
-                    (STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
-                np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1))
-        elif STATE.subset.get() == 'Backward Combined':
+                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
+                np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1),
+            )
+        elif STATE.subset.get() == "Backward Combined":
             ks, kv, ka, rsquare = calcFit(
                 np.concatenate(
-                    (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
-                np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1))
+                    (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1
+                ),
+                np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
+            )
         else:
             ks, kv, ka, rsquare = calcFit(
-                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r,
-                                STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
-                np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
-                                STATE.step_backward_l, STATE.step_backward_r), axis=1))
+                np.concatenate(
+                    (
+                        STATE.quasi_forward_l,
+                        STATE.quasi_forward_r,
+                        STATE.quasi_backward_l,
+                        STATE.quasi_backward_r,
+                    ),
+                    axis=1,
+                ),
+                np.concatenate(
+                    (
+                        STATE.step_forward_l,
+                        STATE.step_forward_r,
+                        STATE.step_backward_l,
+                        STATE.step_backward_r,
+                    ),
+                    axis=1,
+                ),
+            )
 
-        STATE.ks.set(float('%.3g' % ks))
-        STATE.kv.set(float('%.3g' % kv))
-        STATE.ka.set(float('%.3g' % ka))
-        STATE.r_square.set(float('%.3g' % rsquare))
+        STATE.ks.set(float("%.3g" % ks))
+        STATE.kv.set(float("%.3g" % kv))
+        STATE.ka.set(float("%.3g" % ka))
+        STATE.r_square.set(float("%.3g" % rsquare))
 
         calcGains()
 
-        timePlotsButton.configure(state='normal')
-        voltPlotsButton.configure(state='normal')
-        fancyPlotButton.configure(state='normal')
-        calcGainsButton.configure(state='normal')
+        timePlotsButton.configure(state="normal")
+        voltPlotsButton.configure(state="normal")
+        fancyPlotButton.configure(state="normal")
+        calcGainsButton.configure(state="normal")
 
     def plotTimeDomain():
-        if STATE.subset.get() == 'Forward Left':
+        if STATE.subset.get() == "Forward Left":
+            _plotTimeDomain("Forward Left", STATE.quasi_forward_l, STATE.step_forward_l)
+        elif STATE.subset.get() == "Forward Right":
             _plotTimeDomain(
-                'Forward Left', STATE.quasi_forward_l, STATE.step_forward_l)
-        elif STATE.subset.get() == 'Forward Right':
-            _plotTimeDomain('Forward Right',
-                            STATE.quasi_forward_r, STATE.step_forward_r)
-        elif STATE.subset.get() == 'Backward Left':
-            _plotTimeDomain('Backward Left',
-                            STATE.quasi_backward_l, STATE.step_backward_l)
-        elif STATE.subset.get() == 'Backward Right':
-            _plotTimeDomain('Backward Right',
-                            STATE.quasi_backward_r, STATE.step_backward_r)
-        elif STATE.subset.get() == 'Forward Combined':
-            _plotTimeDomain("Forward Combined",
-                            np.concatenate(
-                                (STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
-                            np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1))
-        elif STATE.subset.get() == 'Backward Combined':
-            _plotTimeDomain("Backward Combined",
-                            np.concatenate(
-                                (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
-                            np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1))
+                "Forward Right", STATE.quasi_forward_r, STATE.step_forward_r
+            )
+        elif STATE.subset.get() == "Backward Left":
+            _plotTimeDomain(
+                "Backward Left", STATE.quasi_backward_l, STATE.step_backward_l
+            )
+        elif STATE.subset.get() == "Backward Right":
+            _plotTimeDomain(
+                "Backward Right", STATE.quasi_backward_r, STATE.step_backward_r
+            )
+        elif STATE.subset.get() == "Forward Combined":
+            _plotTimeDomain(
+                "Forward Combined",
+                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
+                np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1),
+            )
+        elif STATE.subset.get() == "Backward Combined":
+            _plotTimeDomain(
+                "Backward Combined",
+                np.concatenate(
+                    (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1
+                ),
+                np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
+            )
         else:
-            _plotTimeDomain("All Combined",
-                            np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r,
-                                            STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
-                            np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
-                                            STATE.step_backward_l, STATE.step_backward_r), axis=1))
+            _plotTimeDomain(
+                "All Combined",
+                np.concatenate(
+                    (
+                        STATE.quasi_forward_l,
+                        STATE.quasi_forward_r,
+                        STATE.quasi_backward_l,
+                        STATE.quasi_backward_r,
+                    ),
+                    axis=1,
+                ),
+                np.concatenate(
+                    (
+                        STATE.step_forward_l,
+                        STATE.step_forward_r,
+                        STATE.step_backward_l,
+                        STATE.step_backward_r,
+                    ),
+                    axis=1,
+                ),
+            )
 
     def plotVoltageDomain():
-        if STATE.subset.get() == 'Forward Left':
+        if STATE.subset.get() == "Forward Left":
             _plotVoltageDomain(
-                'Forward Left', STATE.quasi_forward_l, STATE.step_forward_l)
-        elif STATE.subset.get() == 'Forward Right':
+                "Forward Left", STATE.quasi_forward_l, STATE.step_forward_l
+            )
+        elif STATE.subset.get() == "Forward Right":
             _plotVoltageDomain(
-                'Forward Right', STATE.quasi_forward_r, STATE.step_forward_r)
-        elif STATE.subset.get() == 'Backward Left':
+                "Forward Right", STATE.quasi_forward_r, STATE.step_forward_r
+            )
+        elif STATE.subset.get() == "Backward Left":
             _plotVoltageDomain(
-                'Backward Left', STATE.quasi_backward_l, STATE.step_backward_l)
-        elif STATE.subset.get() == 'Backward Right':
+                "Backward Left", STATE.quasi_backward_l, STATE.step_backward_l
+            )
+        elif STATE.subset.get() == "Backward Right":
             _plotVoltageDomain(
-                'Backward Right', STATE.quasi_backward_r, STATE.step_backward_r)
-        elif STATE.subset.get() == 'Forward Combined':
-            _plotVoltageDomain("Forward Combined",
-                               np.concatenate(
-                                   (STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
-                               np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1))
-        elif STATE.subset.get() == 'Backward Combined':
-            _plotVoltageDomain("Backward Combined",
-                               np.concatenate(
-                                   (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
-                               np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1))
+                "Backward Right", STATE.quasi_backward_r, STATE.step_backward_r
+            )
+        elif STATE.subset.get() == "Forward Combined":
+            _plotVoltageDomain(
+                "Forward Combined",
+                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
+                np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1),
+            )
+        elif STATE.subset.get() == "Backward Combined":
+            _plotVoltageDomain(
+                "Backward Combined",
+                np.concatenate(
+                    (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1
+                ),
+                np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
+            )
         else:
-            _plotVoltageDomain("All Combined",
-                               np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r,
-                                               STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
-                               np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
-                                               STATE.step_backward_l, STATE.step_backward_r), axis=1))
+            _plotVoltageDomain(
+                "All Combined",
+                np.concatenate(
+                    (
+                        STATE.quasi_forward_l,
+                        STATE.quasi_forward_r,
+                        STATE.quasi_backward_l,
+                        STATE.quasi_backward_r,
+                    ),
+                    axis=1,
+                ),
+                np.concatenate(
+                    (
+                        STATE.step_forward_l,
+                        STATE.step_forward_r,
+                        STATE.step_backward_l,
+                        STATE.step_backward_r,
+                    ),
+                    axis=1,
+                ),
+            )
 
     def plot3D():
-        if STATE.subset.get() == 'Forward Left':
-            _plot3D('Forward Left', STATE.quasi_forward_l, STATE.step_forward_l)
-        elif STATE.subset.get() == 'Forward Right':
-            _plot3D('Forward Right', STATE.quasi_forward_r,
-                    STATE.step_forward_r)
-        elif STATE.subset.get() == 'Backward Left':
-            _plot3D('Backward Left', STATE.quasi_backward_l,
-                    STATE.step_backward_l)
-        elif STATE.subset.get() == 'Backward Right':
-            _plot3D('Backward Right', STATE.quasi_backward_r,
-                    STATE.step_backward_r)
-        elif STATE.subset.get() == 'Forward Combined':
-            _plot3D("Forward Combined",
-                    np.concatenate(
-                        (STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
-                    np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1))
-        elif STATE.subset.get() == 'Backward Combined':
-            _plot3D("Backward Combined",
-                    np.concatenate(
-                        (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
-                    np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1))
+        if STATE.subset.get() == "Forward Left":
+            _plot3D("Forward Left", STATE.quasi_forward_l, STATE.step_forward_l)
+        elif STATE.subset.get() == "Forward Right":
+            _plot3D("Forward Right", STATE.quasi_forward_r, STATE.step_forward_r)
+        elif STATE.subset.get() == "Backward Left":
+            _plot3D("Backward Left", STATE.quasi_backward_l, STATE.step_backward_l)
+        elif STATE.subset.get() == "Backward Right":
+            _plot3D("Backward Right", STATE.quasi_backward_r, STATE.step_backward_r)
+        elif STATE.subset.get() == "Forward Combined":
+            _plot3D(
+                "Forward Combined",
+                np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
+                np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1),
+            )
+        elif STATE.subset.get() == "Backward Combined":
+            _plot3D(
+                "Backward Combined",
+                np.concatenate(
+                    (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1
+                ),
+                np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
+            )
         else:
-            _plot3D("All Combined",
-                    np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r,
-                                    STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1),
-                    np.concatenate((STATE.step_forward_l, STATE.step_forward_r,
-                                    STATE.step_backward_l, STATE.step_backward_r), axis=1))
+            _plot3D(
+                "All Combined",
+                np.concatenate(
+                    (
+                        STATE.quasi_forward_l,
+                        STATE.quasi_forward_r,
+                        STATE.quasi_backward_l,
+                        STATE.quasi_backward_r,
+                    ),
+                    axis=1,
+                ),
+                np.concatenate(
+                    (
+                        STATE.step_forward_l,
+                        STATE.step_forward_r,
+                        STATE.step_backward_l,
+                        STATE.step_backward_r,
+                    ),
+                    axis=1,
+                ),
+            )
 
     def calcGains():
 
-        period = STATE.period.get() if not STATE.has_slave.get() else STATE.slave_period.get()
+        period = (
+            STATE.period.get()
+            if not STATE.has_slave.get()
+            else STATE.slave_period.get()
+        )
 
-        if STATE.loop_type.get() == 'Position':
+        if STATE.loop_type.get() == "Position":
             kp, kd = _calcGainsPos(
                 STATE.kv.get(),
                 STATE.ka.get(),
                 STATE.qp.get(),
                 STATE.qv.get(),
                 STATE.max_effort.get(),
-                period)
+                period,
+            )
         else:
             kp, kd = _calcGainsVel(
                 STATE.kv.get(),
                 STATE.ka.get(),
                 STATE.qv.get(),
                 STATE.max_effort.get(),
-                period)
+                period,
+            )
 
         # Scale gains to output
         kp = kp / 12 * STATE.max_controller_output.get()
@@ -305,127 +396,144 @@ def configure_gui():
 
         # Rescale kD if not time-normalized
         if not STATE.controller_time_normalized.get():
-            kd = kd/STATE.period.get()
+            kd = kd / STATE.period.get()
 
         # Get correct conversion factor for rotations
-        if STATE.units.get() == 'Radians':
-            rotation = 2*math.pi
-        elif STATE.units.get() == 'Rotations':
+        if STATE.units.get() == "Radians":
+            rotation = 2 * math.pi
+        elif STATE.units.get() == "Rotations":
             rotation = 1
         else:
             rotation = STATE.wheel_diam.get() * math.pi
 
         # Convert to controller-native units
-        if STATE.controller_type.get() == 'Talon':
+        if STATE.controller_type.get() == "Talon":
             kp = kp * rotation / (STATE.encoder_ppr.get() * STATE.gearing.get())
             kd = kd * rotation / (STATE.encoder_ppr.get() * STATE.gearing.get())
-            if STATE.loop_type.get() == 'Velocity':
+            if STATE.loop_type.get() == "Velocity":
                 kp = kp * 10
 
-        STATE.kp.set(float('%.3g' % kp))
-        STATE.kd.set(float('%.3g' % kd))
+        STATE.kp.set(float("%.3g" % kp))
+        STATE.kd.set(float("%.3g" % kd))
 
     def presetGains(*args):
 
         presets = {
-            'Default': lambda: (
+            "Default": lambda: (
                 STATE.max_controller_output.set(12),
-                STATE.period.set(.02),
+                STATE.period.set(0.02),
                 STATE.controller_time_normalized.set(True),
-                STATE.controller_type.set('Onboard')),
-            'WPILib (new)': lambda: (
+                STATE.controller_type.set("Onboard"),
+            ),
+            "WPILib (new)": lambda: (
                 STATE.max_controller_output.set(1),
-                STATE.period.set(.02),
+                STATE.period.set(0.02),
                 STATE.controller_time_normalized.set(True),
-                STATE.controller_type.set('Onboard')),
-            'WPILib (old)': lambda: (
+                STATE.controller_type.set("Onboard"),
+            ),
+            "WPILib (old)": lambda: (
                 STATE.max_controller_output.set(1),
-                STATE.period.set(.05),
+                STATE.period.set(0.05),
                 STATE.controller_time_normalized.set(False),
-                STATE.controller_type.set('Onboard')),
-            'Talon (new)': lambda: (
+                STATE.controller_type.set("Onboard"),
+            ),
+            "Talon (new)": lambda: (
                 STATE.max_controller_output.set(1),
-                STATE.period.set(.001),
+                STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(True),
-                STATE.controller_type.set('Talon')),
-            'Talon (old)': lambda: (
+                STATE.controller_type.set("Talon"),
+            ),
+            "Talon (old)": lambda: (
                 STATE.max_controller_output.set(1023),
-                STATE.period.set(.001),
+                STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
-                STATE.controller_type.set('Talon')),
-            'Spark MAX': lambda: (
+                STATE.controller_type.set("Talon"),
+            ),
+            "Spark MAX": lambda: (
                 STATE.max_controller_output.set(1),
-                STATE.period.set(.001),
+                STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
-                STATE.controller_type.set('Spark')),
+                STATE.controller_type.set("Spark"),
+            ),
         }
 
         presets.get(STATE.gain_units_preset.get(), "Default")()
 
     def enableOffboard(*args):
-        if STATE.controller_type.get() == 'Onboard':
-            gearingEntry.configure(state='disabled')
-            pprEntry.configure(state='disabled')
-            hasSlave.configure(state='disabled')
-            slavePeriodEntry.configure(state='disabled')
-        elif STATE.controller_type.get() == 'Talon':
-            gearingEntry.configure(state='normal')
-            pprEntry.configure(state='normal')
-            hasSlave.configure(state='normal')
+        if STATE.controller_type.get() == "Onboard":
+            gearingEntry.configure(state="disabled")
+            pprEntry.configure(state="disabled")
+            hasSlave.configure(state="disabled")
+            slavePeriodEntry.configure(state="disabled")
+        elif STATE.controller_type.get() == "Talon":
+            gearingEntry.configure(state="normal")
+            pprEntry.configure(state="normal")
+            hasSlave.configure(state="normal")
             if STATE.has_slave.get():
-                slavePeriodEntry.configure(state='normal')
+                slavePeriodEntry.configure(state="normal")
             else:
-                slavePeriodEntry.configure(state='disabled')
+                slavePeriodEntry.configure(state="disabled")
         else:
-            gearingEntry.configure(state='disabled')
-            pprEntry.configure(state='disabled')
-            hasSlave.configure(state='normal')
+            gearingEntry.configure(state="disabled")
+            pprEntry.configure(state="disabled")
+            hasSlave.configure(state="normal")
             if STATE.has_slave.get():
-                slavePeriodEntry.configure(state='normal')
+                slavePeriodEntry.configure(state="normal")
             else:
-                slavePeriodEntry.configure(state='disabled')
+                slavePeriodEntry.configure(state="disabled")
 
     def enableWheelDiam(*args):
-        if (STATE.units.get() == 'Feet'
-            or STATE.units.get() == 'Inches'
-                or STATE.units.get() == 'Meters'):
-            diamEntry.configure(state='normal')
+        if (
+            STATE.units.get() == "Feet"
+            or STATE.units.get() == "Inches"
+            or STATE.units.get() == "Meters"
+        ):
+            diamEntry.configure(state="normal")
         else:
-            diamEntry.configure(state='disabled')
+            diamEntry.configure(state="disabled")
 
     def enableErrorBounds(*args):
-        if STATE.loop_type.get() == 'Position':
-            qPEntry.configure(state='normal')
+        if STATE.loop_type.get() == "Position":
+            qPEntry.configure(state="normal")
         else:
-            qPEntry.configure(state='disabled')
+            qPEntry.configure(state="disabled")
 
     # TOP OF WINDOW (FILE SELECTION)
 
     topFrame = Frame(STATE.mainGUI)
     topFrame.grid(row=0, column=0, columnspan=4)
 
-    Button(topFrame, text="Select Data File",
-           command=getFile).grid(row=0, column=0, padx=4)
+    Button(topFrame, text="Select Data File", command=getFile).grid(
+        row=0, column=0, padx=4
+    )
 
     fileEntry = Entry(topFrame, width=80)
     fileEntry.grid(row=0, column=1, columnspan=3)
-    fileEntry.configure(state='readonly')
+    fileEntry.configure(state="readonly")
 
-    Label(topFrame, text='Units:', width=10).grid(row=0, column=4)
-    unitChoices = {'Feet', 'Inches', 'Meters', 'Radians', 'Rotations'}
+    Label(topFrame, text="Units:", width=10).grid(row=0, column=4)
+    unitChoices = {"Feet", "Inches", "Meters", "Radians", "Rotations"}
     unitsMenu = OptionMenu(topFrame, STATE.units, *sorted(unitChoices))
     unitsMenu.configure(width=10)
-    unitsMenu.grid(row=0, column=5, sticky='ew')
-    STATE.units.trace_add('write', enableWheelDiam)
+    unitsMenu.grid(row=0, column=5, sticky="ew")
+    STATE.units.trace_add("write", enableWheelDiam)
 
-    Label(topFrame, text='Wheel Diameter (units):', anchor='e').grid(
-        row=1, column=3, columnspan=2, sticky='ew')
+    Label(topFrame, text="Wheel Diameter (units):", anchor="e").grid(
+        row=1, column=3, columnspan=2, sticky="ew"
+    )
     diamEntry = FloatEntry(topFrame, textvariable=STATE.wheel_diam)
     diamEntry.grid(row=1, column=5)
 
-    Label(topFrame, text='Subset:', width=15).grid(row=0, column=6)
-    subsets = {'All Combined', 'Forward Left', 'Forward Right',
-               'Forward Combined', 'Backward Left', 'Backward Right', 'Backward Combined'}
+    Label(topFrame, text="Subset:", width=15).grid(row=0, column=6)
+    subsets = {
+        "All Combined",
+        "Forward Left",
+        "Forward Right",
+        "Forward Combined",
+        "Backward Left",
+        "Backward Right",
+        "Backward Combined",
+    }
     dirMenu = OptionMenu(topFrame, STATE.subset, *sorted(subsets))
     dirMenu.configure(width=20)
     dirMenu.grid(row=0, column=7)
@@ -435,175 +543,205 @@ def configure_gui():
 
     # FEEDFORWARD ANALYSIS FRAME
 
-    ffFrame = Frame(STATE.mainGUI, bd=2, relief='groove')
-    ffFrame.grid(row=1, column=0, columnspan=3, sticky='ns')
+    ffFrame = Frame(STATE.mainGUI, bd=2, relief="groove")
+    ffFrame.grid(row=1, column=0, columnspan=3, sticky="ns")
 
-    Label(ffFrame, text="Feedforward Analysis").grid(
-        row=0, column=0, columnspan=5)
+    Label(ffFrame, text="Feedforward Analysis").grid(row=0, column=0, columnspan=5)
 
-    analyzeButton = Button(ffFrame, text="Analyze Data",
-                           command=runAnalysis, state='disabled')
-    analyzeButton.grid(row=1, column=0, sticky='ew')
+    analyzeButton = Button(
+        ffFrame, text="Analyze Data", command=runAnalysis, state="disabled"
+    )
+    analyzeButton.grid(row=1, column=0, sticky="ew")
 
-    timePlotsButton = Button(ffFrame, text="Time-Domain Diagnostics",
-                             command=plotTimeDomain, state='disabled')
-    timePlotsButton.grid(row=2, column=0, sticky='ew')
+    timePlotsButton = Button(
+        ffFrame,
+        text="Time-Domain Diagnostics",
+        command=plotTimeDomain,
+        state="disabled",
+    )
+    timePlotsButton.grid(row=2, column=0, sticky="ew")
 
-    voltPlotsButton = Button(ffFrame, text="Voltage-Domain Diagnostics",
-                             command=plotVoltageDomain, state='disabled')
-    voltPlotsButton.grid(row=3, column=0, sticky='ew')
+    voltPlotsButton = Button(
+        ffFrame,
+        text="Voltage-Domain Diagnostics",
+        command=plotVoltageDomain,
+        state="disabled",
+    )
+    voltPlotsButton.grid(row=3, column=0, sticky="ew")
 
-    fancyPlotButton = Button(ffFrame, text="3D Diagnostics",
-                             command=plot3D, state='disabled')
-    fancyPlotButton.grid(row=4, column=0, sticky='ew')
+    fancyPlotButton = Button(
+        ffFrame, text="3D Diagnostics", command=plot3D, state="disabled"
+    )
+    fancyPlotButton.grid(row=4, column=0, sticky="ew")
 
-    Label(ffFrame, text='Accel Window Size:', anchor='e').grid(
-        row=1, column=1, sticky='ew')
-    windowEntry = IntEntry(ffFrame, textvariable=STATE.window_size,
-                        width=5)
+    Label(ffFrame, text="Accel Window Size:", anchor="e").grid(
+        row=1, column=1, sticky="ew"
+    )
+    windowEntry = IntEntry(ffFrame, textvariable=STATE.window_size, width=5)
     windowEntry.grid(row=1, column=2)
 
-    Label(ffFrame, text='Motion Threshold (units/s):',
-          anchor='e').grid(row=2, column=1, sticky='ew')
-    thresholdEntry = FloatEntry(ffFrame, textvariable=STATE.motion_threshold,
-                           width=5)
+    Label(ffFrame, text="Motion Threshold (units/s):", anchor="e").grid(
+        row=2, column=1, sticky="ew"
+    )
+    thresholdEntry = FloatEntry(ffFrame, textvariable=STATE.motion_threshold, width=5)
     thresholdEntry.grid(row=2, column=2)
 
-    Label(ffFrame, text='kS:', anchor='e').grid(row=1, column=3, sticky='ew')
+    Label(ffFrame, text="kS:", anchor="e").grid(row=1, column=3, sticky="ew")
     kSEntry = FloatEntry(ffFrame, textvariable=STATE.ks, width=10)
     kSEntry.grid(row=1, column=4)
-    kSEntry.configure(state='readonly')
+    kSEntry.configure(state="readonly")
 
-    Label(ffFrame, text='kV:', anchor='e').grid(row=2, column=3, sticky='ew')
+    Label(ffFrame, text="kV:", anchor="e").grid(row=2, column=3, sticky="ew")
     kVEntry = FloatEntry(ffFrame, textvariable=STATE.kv, width=10)
     kVEntry.grid(row=2, column=4)
-    kVEntry.configure(state='readonly')
+    kVEntry.configure(state="readonly")
 
-    Label(ffFrame, text='kA:', anchor='e').grid(row=3, column=3, sticky='ew')
+    Label(ffFrame, text="kA:", anchor="e").grid(row=3, column=3, sticky="ew")
     kAEntry = FloatEntry(ffFrame, textvariable=STATE.ka, width=10)
     kAEntry.grid(row=3, column=4)
-    kAEntry.configure(state='readonly')
+    kAEntry.configure(state="readonly")
 
-    Label(ffFrame, text='r-squared:',
-          anchor='e').grid(row=4, column=3, sticky='ew')
+    Label(ffFrame, text="r-squared:", anchor="e").grid(row=4, column=3, sticky="ew")
     rSquareEntry = FloatEntry(ffFrame, textvariable=STATE.r_square, width=10)
     rSquareEntry.grid(row=4, column=4)
-    rSquareEntry.configure(state='readonly')
+    rSquareEntry.configure(state="readonly")
 
     for child in ffFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
 
     # FEEDBACK ANALYSIS FRAME
 
-    fbFrame = Frame(STATE.mainGUI, bd=2, relief='groove')
+    fbFrame = Frame(STATE.mainGUI, bd=2, relief="groove")
     fbFrame.grid(row=1, column=3, columnspan=5)
 
-    Label(fbFrame, text='Feedback Analysis').grid(
-        row=0, column=0, columnspan=5)
+    Label(fbFrame, text="Feedback Analysis").grid(row=0, column=0, columnspan=5)
 
-    Label(fbFrame, text='Gain Settings Preset:',
-          anchor='e').grid(row=1, column=0, sticky='ew')
+    Label(fbFrame, text="Gain Settings Preset:", anchor="e").grid(
+        row=1, column=0, sticky="ew"
+    )
     presetChoices = {
-        'Default', 'WPILib (new)', 'WPILib (old)', 'Talon (new)', 'Talon (old)', 'Spark MAX'}
-    presetMenu = OptionMenu(
-        fbFrame, STATE.gain_units_preset, *sorted(presetChoices))
+        "Default",
+        "WPILib (new)",
+        "WPILib (old)",
+        "Talon (new)",
+        "Talon (old)",
+        "Spark MAX",
+    }
+    presetMenu = OptionMenu(fbFrame, STATE.gain_units_preset, *sorted(presetChoices))
     presetMenu.grid(row=1, column=1)
     presetMenu.config(width=12)
-    STATE.gain_units_preset.trace_add('write', presetGains)
+    STATE.gain_units_preset.trace_add("write", presetGains)
 
-    Label(fbFrame, text='Controller Period (s):',
-          anchor='e').grid(row=2, column=0, sticky='ew')
+    Label(fbFrame, text="Controller Period (s):", anchor="e").grid(
+        row=2, column=0, sticky="ew"
+    )
     periodEntry = FloatEntry(fbFrame, textvariable=STATE.period, width=10)
     periodEntry.grid(row=2, column=1)
 
-    Label(fbFrame, text='Max Controller Output:',
-          anchor='e').grid(row=3, column=0, sticky='ew')
-    controllerMaxEntry = FloatEntry(fbFrame, textvariable=STATE.max_controller_output, width=10)
+    Label(fbFrame, text="Max Controller Output:", anchor="e").grid(
+        row=3, column=0, sticky="ew"
+    )
+    controllerMaxEntry = FloatEntry(
+        fbFrame, textvariable=STATE.max_controller_output, width=10
+    )
     controllerMaxEntry.grid(row=3, column=1)
 
-    Label(fbFrame, text='Time-Normalized Controller:',
-          anchor='e').grid(row=4, column=0, sticky='ew')
-    normalizedButton = Checkbutton(
-        fbFrame, variable=STATE.controller_time_normalized)
+    Label(fbFrame, text="Time-Normalized Controller:", anchor="e").grid(
+        row=4, column=0, sticky="ew"
+    )
+    normalizedButton = Checkbutton(fbFrame, variable=STATE.controller_time_normalized)
     normalizedButton.grid(row=4, column=1)
 
-    Label(fbFrame, text='Controller Type:', anchor='e').grid(
-        row=5, column=0, sticky='ew')
-    controllerTypes = {'Onboard', 'Talon', 'Spark'}
+    Label(fbFrame, text="Controller Type:", anchor="e").grid(
+        row=5, column=0, sticky="ew"
+    )
+    controllerTypes = {"Onboard", "Talon", "Spark"}
     controllerTypeMenu = OptionMenu(
-        fbFrame, STATE.controller_type, *sorted(controllerTypes))
+        fbFrame, STATE.controller_type, *sorted(controllerTypes)
+    )
     controllerTypeMenu.grid(row=5, column=1)
-    STATE.controller_type.trace_add('write', enableOffboard)
+    STATE.controller_type.trace_add("write", enableOffboard)
 
-    Label(fbFrame, text='Post-Encoder Gearing:',
-          anchor='e').grid(row=6, column=0, sticky='ew')
+    Label(fbFrame, text="Post-Encoder Gearing:", anchor="e").grid(
+        row=6, column=0, sticky="ew"
+    )
     gearingEntry = FloatEntry(fbFrame, textvariable=STATE.gearing, width=10)
-    gearingEntry.configure(state='disabled')
+    gearingEntry.configure(state="disabled")
     gearingEntry.grid(row=6, column=1)
 
-    Label(fbFrame, text='Encoder PPR:', anchor='e').grid(
-        row=7, column=0, sticky='ew')
+    Label(fbFrame, text="Encoder PPR:", anchor="e").grid(row=7, column=0, sticky="ew")
     pprEntry = FloatEntry(fbFrame, textvariable=STATE.encoder_ppr, width=10)
-    pprEntry.configure(state='disabled')
+    pprEntry.configure(state="disabled")
     pprEntry.grid(row=7, column=1)
 
-    Label(fbFrame, text='Has Slave:', anchor='e').grid(
-        row=8, column=0, sticky='ew')
+    Label(fbFrame, text="Has Slave:", anchor="e").grid(row=8, column=0, sticky="ew")
     hasSlave = Checkbutton(fbFrame, variable=STATE.has_slave)
     hasSlave.grid(row=8, column=1)
-    hasSlave.configure(state='disabled')
-    STATE.has_slave.trace_add('write', enableOffboard)
+    hasSlave.configure(state="disabled")
+    STATE.has_slave.trace_add("write", enableOffboard)
 
-    Label(fbFrame, text='Slave Update Period (s):',
-          anchor='e').grid(row=9, column=0, sticky='ew')
+    Label(fbFrame, text="Slave Update Period (s):", anchor="e").grid(
+        row=9, column=0, sticky="ew"
+    )
     slavePeriodEntry = FloatEntry(fbFrame, textvariable=STATE.slave_period, width=10)
     slavePeriodEntry.grid(row=9, column=1)
-    slavePeriodEntry.configure(state='disabled')
+    slavePeriodEntry.configure(state="disabled")
 
-    Label(fbFrame, text='Max Acceptable Position Error (units):', anchor='e').grid(
-        row=1, column=2, columnspan=2, sticky='ew')
+    Label(fbFrame, text="Max Acceptable Position Error (units):", anchor="e").grid(
+        row=1, column=2, columnspan=2, sticky="ew"
+    )
     qPEntry = FloatEntry(fbFrame, textvariable=STATE.qp, width=10)
     qPEntry.grid(row=1, column=4)
 
-    Label(fbFrame, text='Max Acceptable Velocity Error (units/s):', anchor='e').grid(
-        row=2, column=2, columnspan=2, sticky='ew')
+    Label(fbFrame, text="Max Acceptable Velocity Error (units/s):", anchor="e").grid(
+        row=2, column=2, columnspan=2, sticky="ew"
+    )
     qVEntry = FloatEntry(fbFrame, textvariable=STATE.qv, width=10)
     qVEntry.grid(row=2, column=4)
 
-    Label(fbFrame, text='Max Acceptable Control Effort (V):', anchor='e').grid(
-        row=3, column=2, columnspan=2, sticky='ew')
+    Label(fbFrame, text="Max Acceptable Control Effort (V):", anchor="e").grid(
+        row=3, column=2, columnspan=2, sticky="ew"
+    )
     effortEntry = FloatEntry(fbFrame, textvariable=STATE.max_effort, width=10)
     effortEntry.grid(row=3, column=4)
 
-    Label(fbFrame, text='Loop Type:', anchor='e').grid(
-        row=4, column=2, columnspan=2, sticky='ew')
-    loopTypes = {'Position', 'Velocity'}
+    Label(fbFrame, text="Loop Type:", anchor="e").grid(
+        row=4, column=2, columnspan=2, sticky="ew"
+    )
+    loopTypes = {"Position", "Velocity"}
     loopTypeMenu = OptionMenu(fbFrame, STATE.loop_type, *sorted(loopTypes))
     loopTypeMenu.configure(width=8)
     loopTypeMenu.grid(row=4, column=4)
-    STATE.loop_type.trace_add('write', enableErrorBounds)
+    STATE.loop_type.trace_add("write", enableErrorBounds)
 
-    Label(fbFrame, text='kV:', anchor='e').grid(row=5, column=2, sticky='ew')
+    Label(fbFrame, text="kV:", anchor="e").grid(row=5, column=2, sticky="ew")
     kVFBEntry = FloatEntry(fbFrame, textvariable=STATE.kv, width=10)
     kVFBEntry.grid(row=5, column=3)
-    Label(fbFrame, text='kA:', anchor='e').grid(row=6, column=2, sticky='ew')
+    Label(fbFrame, text="kA:", anchor="e").grid(row=6, column=2, sticky="ew")
     kAFBEntry = FloatEntry(fbFrame, textvariable=STATE.ka, width=10)
     kAFBEntry.grid(row=6, column=3)
 
-    calcGainsButton = Button(fbFrame, text='Calculate Optimal Controller Gains',
-                             command=calcGains, state='disabled')
+    calcGainsButton = Button(
+        fbFrame,
+        text="Calculate Optimal Controller Gains",
+        command=calcGains,
+        state="disabled",
+    )
     calcGainsButton.grid(row=7, column=2, columnspan=3)
 
-    Label(fbFrame, text='kP:', anchor='e').grid(row=8, column=2, sticky='ew')
-    kPEntry = FloatEntry(fbFrame, textvariable=STATE.kp, width=10,
-                    state='readonly').grid(row=8, column=3)
+    Label(fbFrame, text="kP:", anchor="e").grid(row=8, column=2, sticky="ew")
+    kPEntry = FloatEntry(
+        fbFrame, textvariable=STATE.kp, width=10, state="readonly"
+    ).grid(row=8, column=3)
 
-    Label(fbFrame, text='kD:', anchor='e').grid(row=9, column=2, sticky='ew')
-    kDEntry = FloatEntry(fbFrame, textvariable=STATE.kd, width=10,
-                    state='readonly').grid(row=9, column=3)
+    Label(fbFrame, text="kD:", anchor="e").grid(row=9, column=2, sticky="ew")
+    kDEntry = FloatEntry(
+        fbFrame, textvariable=STATE.kd, width=10, state="readonly"
+    ).grid(row=9, column=3)
 
     for child in fbFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
+
 
 #
 # These parameters are used to indicate which column of data each parameter
@@ -643,8 +781,7 @@ PREPARED_ACC_COL = 4
 
 PREPARED_MAX_COL = PREPARED_ACC_COL
 
-JSON_DATA_KEYS = ["slow-forward", "slow-backward",
-                  "fast-forward", "fast-backward"]
+JSON_DATA_KEYS = ["slow-forward", "slow-backward", "fast-forward", "fast-backward"]
 
 # From 449's R script (note: R is 1-indexed)
 
@@ -689,7 +826,7 @@ def trim_quasi_testdata(data):
 def trim_step_testdata(data):
     # removes anything before the max acceleration
     max_accel_idx = np.argmax(np.abs(data[PREPARED_ACC_COL]))
-    return data[:, max_accel_idx + 1:]
+    return data[:, max_accel_idx + 1 :]
 
 
 def compute_accel(data, window):
@@ -699,8 +836,11 @@ def compute_accel(data, window):
 
     # deal with incomplete data
     if len(data[TIME_COL]) < window * 2:
-        tkinter.messagebox.showinfo("Error!", "Not enough data points to compute acceleration. "
-                                    + "Try running with a smaller window setting or a smaller threshold.")
+        tkinter.messagebox.showinfo(
+            "Error!",
+            "Not enough data points to compute acceleration. "
+            + "Try running with a smaller window setting or a smaller threshold.",
+        )
         return None
 
     # Compute left/right acceleration
@@ -765,9 +905,11 @@ def prepare_data(data, window):
 
     for x in JSON_DATA_KEYS:
         data[x][L_VOLTS_COL] = np.copysign(
-            data[x][L_VOLTS_COL], data[x][L_ENCODER_V_COL])
+            data[x][L_VOLTS_COL], data[x][L_ENCODER_V_COL]
+        )
         data[x][R_VOLTS_COL] = np.copysign(
-            data[x][R_VOLTS_COL], data[x][R_ENCODER_V_COL])
+            data[x][R_VOLTS_COL], data[x][R_ENCODER_V_COL]
+        )
 
     # trim quasi data before computing acceleration
     sf_trim = trim_quasi_testdata(data["slow-forward"])
@@ -821,32 +963,26 @@ def _plotTimeDomain(subset, qu, step):
     ax1.set_xlabel("Time")
     ax1.set_ylabel("Velocity")
     ax1.set_title("Quasistatic velocity vs time")
-    plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_VEL_COL],
-                marker=".", c="#000000")
+    plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_VEL_COL], marker=".", c="#000000")
 
     ax = plt.subplot(222, sharey=ax1)
     ax.set_xlabel("Time")
     ax.set_ylabel("Velocity")
     ax.set_title("Dynamic velocity vs time")
-    plt.scatter(
-        step[PREPARED_TM_COL], step[PREPARED_VEL_COL], marker=".", c="#000000"
-    )
+    plt.scatter(step[PREPARED_TM_COL], step[PREPARED_VEL_COL], marker=".", c="#000000")
 
     # dynamic vel and accel vs time
     ax2 = plt.subplot(223)
     ax2.set_xlabel("Time")
     ax2.set_ylabel("Acceleration")
     ax2.set_title("Quasistatic acceleration vs time")
-    plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_ACC_COL],
-                marker=".", c="#000000")
+    plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_ACC_COL], marker=".", c="#000000")
 
     ax = plt.subplot(224, sharey=ax2)
     ax.set_xlabel("Time")
     ax.set_ylabel("Acceleration")
     ax.set_title("Dynamic acceleration vs time")
-    plt.scatter(
-        step[PREPARED_TM_COL], step[PREPARED_ACC_COL], marker=".", c="#000000"
-    )
+    plt.scatter(step[PREPARED_TM_COL], step[PREPARED_ACC_COL], marker=".", c="#000000")
 
     # Fix overlapping axis labels
     plt.tight_layout(pad=0.5)
@@ -880,8 +1016,9 @@ def _plotVoltageDomain(subset, qu, step):
     ax.set_ylabel("Velocity")
     ax.set_title("Quasistatic velocity vs velocity-portion voltage")
     plt.scatter(
-        qu[PREPARED_V_COL] - ks *
-        np.sign(qu[PREPARED_VEL_COL]) - ka * qu[PREPARED_ACC_COL],
+        qu[PREPARED_V_COL]
+        - ks * np.sign(qu[PREPARED_VEL_COL])
+        - ka * qu[PREPARED_ACC_COL],
         qu[PREPARED_VEL_COL],
         marker=".",
         c="#000000",
@@ -897,16 +1034,16 @@ def _plotVoltageDomain(subset, qu, step):
     ax.set_ylabel("Acceleration")
     ax.set_title("Dynamic acceleration vs acceleration-portion voltage")
     plt.scatter(
-        step[PREPARED_V_COL] - ks *
-        np.sign(step[PREPARED_VEL_COL]) - kv * step[PREPARED_VEL_COL],
+        step[PREPARED_V_COL]
+        - ks * np.sign(step[PREPARED_VEL_COL])
+        - kv * step[PREPARED_VEL_COL],
         step[PREPARED_ACC_COL],
         marker=".",
         c="#000000",
     )
 
     # show fit line from multiple regression
-    y = np.linspace(np.min(step[PREPARED_ACC_COL]),
-                    np.max(step[PREPARED_ACC_COL]))
+    y = np.linspace(np.min(step[PREPARED_ACC_COL]), np.max(step[PREPARED_ACC_COL]))
     plt.plot(ka * y, y)
 
     # Fix overlapping axis labels
@@ -943,11 +1080,11 @@ def _plot3D(subset, qu, step):
 
     # Show best fit plane
     vv, aa = np.meshgrid(
-        np.linspace(np.min(vel), np.max(vel)),
-        np.linspace(np.min(accel), np.max(accel)),
+        np.linspace(np.min(vel), np.max(vel)), np.linspace(np.min(accel), np.max(accel))
     )
-    ax.plot_surface(vv, aa, ks * np.sign(vv) + kv * vv +
-                    ka * aa, alpha=0.2, color=[0, 1, 1])
+    ax.plot_surface(
+        vv, aa, ks * np.sign(vv) + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1]
+    )
 
     plt.show()
 
