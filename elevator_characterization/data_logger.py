@@ -594,7 +594,7 @@ def main():
     STATE = GuiState()
     RUNNER = TestRunner()
 
-    STATE.mainGUI.title("RobotPy Arm Characterization Data Logger")
+    STATE.mainGUI.title("RobotPy Elevator Characterization Data Logger")
 
     configure_gui()
     STATE.mainGUI.mainloop()
