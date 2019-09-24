@@ -11,3 +11,7 @@ bin
 .vscode
 .wpilib
 build
+
+robotpy_characterization.egg-info
+dist
+__pycache__

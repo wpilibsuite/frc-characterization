@@ -4,8 +4,8 @@ import cli.cli
 setuptools.setup(
     name="robotpy-characterization",
     version="0.0.1",
-    author="Eli Barnett",
-    author_email="emichaelbarnett@gmail.com",
+    author="Eli Barnett, Dustin Spicuzza",
+    author_email="emichaelbarnett@gmail.com, dustin@virtualroadside.com",
     description="RobotPy Characterization Library",
     packages=[
         "arm_characterization",
@@ -18,7 +18,7 @@ setuptools.setup(
     url="https://github.com/robotpy/robot-characterization",
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: Apache License",
+        "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
     install_requires=[
@@ -28,5 +28,5 @@ setuptools.setup(
         "statsmodels",
         "argcomplete",
     ],
-    python_requires=">=3.4",
+    python_requires=">=3.4"
 )
