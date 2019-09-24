@@ -457,6 +457,9 @@ def configure_gui():
     dirMenu.configure(width=20)
     dirMenu.grid(row=0, column=7)
 
+    for child in topFrame.winfo_children():
+        child.grid_configure(padx=1, pady=1)
+
     # FEEDFORWARD ANALYSIS FRAME
 
     ffFrame = Frame(STATE.mainGUI, bd=2, relief='groove')
@@ -513,6 +516,9 @@ def configure_gui():
     rSquareEntry = FloatEntry(ffFrame, textvariable=STATE.r_square, width=10)
     rSquareEntry.grid(row=4, column=4)
     rSquareEntry.configure(state='readonly')
+
+    for child in ffFrame.winfo_children():
+        child.grid_configure(padx=1, pady=1)
 
     # FEEDBACK ANALYSIS FRAME
 
@@ -622,6 +628,9 @@ def configure_gui():
     Label(fbFrame, text='kD:', anchor='e').grid(row=9, column=2, sticky='ew')
     kDEntry = FloatEntry(fbFrame, textvariable=STATE.kd, width=10,
                     state='readonly').grid(row=9, column=3)
+
+    for child in fbFrame.winfo_children():
+        child.grid_configure(padx=1, pady=1)
 
 #
 # These parameters are used to indicate which column of data each parameter

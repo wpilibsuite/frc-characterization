@@ -61,10 +61,9 @@ def configure_gui():
     def save():
         if STATE.timestamp_enabled.get():
             name, ext = os.path.splitext(STATE.file_path.get())
-            STATE.file_path.set(name + time.strftime("%Y%m%d-%H%M-%S") + ext)
-        filename = filename + ".json"
+            filename = name + time.strftime("%Y%m%d-%H%M-%S") + ext
         with open(filename, "w") as fp:
-            json.dump(STATE.stored_data, fp, indent=4, separators=(",", ": "))
+            json.dump(RUNNER.stored_data, fp, indent=4, separators=(",", ": "))
 
     def connect():
         if STATE.team_number.get():
@@ -107,8 +106,9 @@ def configure_gui():
                 saveButton.configure(state='normal')
 
     def finishTest(textEntry):
-        enableTestButtons()
         textEntry.set("Completed")
+        enableTestButtons()
+
 
     def runPostedTasks():
         while STATE.runTask():
@@ -117,19 +117,23 @@ def configure_gui():
 
     def quasiForward():
         disableTestButtons()
-        threading.Thread(target=RUNNER.runTest, args = ("slow-forward", 0, .001, lambda: finishTest(STATE.sf_completed))).start()
+        STATE.sf_completed.set("Running...")
+        threading.Thread(target=RUNNER.runTest, args = ("slow-forward", 0, STATE.quasi_ramp_rate.get(), lambda: finishTest(STATE.sf_completed))).start()
 
     def quasiBackward():
         disableTestButtons()
-        threading.Thread(target=RUNNER.runTest, args = ("slow-backward", 0, .001, lambda: finishTest(STATE.sb_completed))).start()
+        STATE.sb_completed.set("Running...")
+        threading.Thread(target=RUNNER.runTest, args = ("slow-backward", 0, STATE.quasi_ramp_rate.get(), lambda: finishTest(STATE.sb_completed))).start()
 
     def dynamicForward():
         disableTestButtons()
-        threading.Thread(target=RUNNER.runTest, args = ("fast-forward", 0, .001, lambda: finishTest(STATE.ff_completed))).start()
+        STATE.ff_completed.set("Running...")
+        threading.Thread(target=RUNNER.runTest, args = ("fast-forward", STATE.dynamic_step_voltage.get(), 0, lambda: finishTest(STATE.ff_completed))).start()
 
     def dynamicBackward():
         disableTestButtons()
-        threading.Thread(target=RUNNER.runTest, args = ("fast-backward", 0, .001, lambda: finishTest(STATE.fb_completed))).start()
+        STATE.fb_completed.set("Running...")
+        threading.Thread(target=RUNNER.runTest, args = ("fast-backward", STATE.dynamic_step_voltage.get(), 0, lambda: finishTest(STATE.fb_completed))).start()
 
     # TOP OF WINDOW (FILE SELECTION)
 
@@ -150,9 +154,8 @@ def configure_gui():
     timestampEnabled = Checkbutton(topFrame, variable=STATE.timestamp_enabled)
     timestampEnabled.grid(row=1, column=2)
 
-    Label(topFrame, text="Team Number:", anchor='e').grid(row=1, column=3, sticky='ew')
-    teamNumEntry = IntEntry(topFrame, textvariable=STATE.team_number, width=6)
-    teamNumEntry.grid(row=1, column=4)
+    for child in topFrame.winfo_children():
+        child.grid_configure(padx=1, pady=1)
 
     # WINDOW BODY (TEST RUNNING CONTROLS)
 
@@ -166,13 +169,17 @@ def configure_gui():
     connected.configure(state="readonly")
     connected.grid(row=0, column=1, sticky='ew')
 
-    Label(bodyFrame, text="Quasistatic ramp rate (V/s):", anchor='e').grid(row=0, column=2, sticky='ew')
-    rampEntry = FloatEntry(bodyFrame, textvariable=STATE.quasi_ramp_rate)
-    rampEntry.grid(row=0, column=3, sticky='ew')
+    Label(bodyFrame, text="Team Number:", anchor='e').grid(row=0, column=2, sticky='ew')
+    teamNumEntry = IntEntry(bodyFrame, textvariable=STATE.team_number, width=6)
+    teamNumEntry.grid(row=0, column=3, sticky='ew')
 
-    Label(bodyFrame, text="Dynamic step voltage (V):", anchor='e').grid(row=1, column=2, sticky='ew')
+    Label(bodyFrame, text="Quasistatic ramp rate (V/s):", anchor='e').grid(row=1, column=2, sticky='ew')
+    rampEntry = FloatEntry(bodyFrame, textvariable=STATE.quasi_ramp_rate)
+    rampEntry.grid(row=1, column=3, sticky='ew')
+
+    Label(bodyFrame, text="Dynamic step voltage (V):", anchor='e').grid(row=3, column=2, sticky='ew')
     stepEntry = FloatEntry(bodyFrame, textvariable=STATE.dynamic_step_voltage)
-    stepEntry.grid(row=1, column=3, sticky='ew')
+    stepEntry.grid(row=3, column=3, sticky='ew')
 
     quasiForwardButton = Button(bodyFrame, text = "Quasistatic Forward", command = quasiForward, state='disabled')
     quasiForwardButton.grid(row=1, column=0, sticky='ew')
@@ -188,7 +195,7 @@ def configure_gui():
     quasiBackwardCompleted.configure(state="readonly")
     quasiBackwardCompleted.grid(row=2, column=1)
 
-    dynamicForwardButton = Button(bodyFrame, text = "Dynamic Backward", command = dynamicForward, state='disabled')
+    dynamicForwardButton = Button(bodyFrame, text = "Dynamic Forward", command = dynamicForward, state='disabled')
     dynamicForwardButton.grid(row=3, column=0, sticky='ew')
 
     dynamicForwardCompleted = Entry(bodyFrame, textvariable=STATE.ff_completed)
@@ -201,6 +208,9 @@ def configure_gui():
     dynamicBackwardCompleted = Entry(bodyFrame, textvariable=STATE.fb_completed)
     dynamicBackwardCompleted.configure(state="readonly")
     dynamicBackwardCompleted.grid(row=4, column=1)
+
+    for child in bodyFrame.winfo_children():
+        child.grid_configure(padx=1, pady=1)
 
     runPostedTasks()
 
@@ -412,7 +422,7 @@ class TestRunner:
                     return qdata
 
                 time.sleep(0.050)
-                self.autospeed = self.autospeed + ramp
+                self.autospeed = self.autospeed + (ramp * .05)/12
 
                 NetworkTables.flush()
         finally:
@@ -484,7 +494,7 @@ class TestRunner:
                 left_distance = data[-1][L_ENCODER_P_COL] - data[0][L_ENCODER_P_COL]
                 right_distance = data[-1][R_ENCODER_P_COL] - data[0][R_ENCODER_P_COL]
 
-                STATE.postTask(lambda: tkinter.messagebox.showmessage(name + " Complete",
+                STATE.postTask(lambda: tkinter.messagebox.showinfo(name + " Complete",
                                                "The robot reported traveling the following distance:\n"
                                                + "Left:  %.3f ft" % left_distance + "\n"
                                                + "Right: %.3f ft" % right_distance + "\n"
