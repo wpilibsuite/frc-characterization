@@ -45,11 +45,7 @@ import logging
 
 # GUI SETUP
 
-STATE = None
-RUNNER = None
-
-
-def configure_gui():
+def configure_gui(STATE, RUNNER):
     def getFile():
         file_path = tkinter.filedialog.asksaveasfilename(
             parent=STATE.mainGUI,
@@ -589,14 +585,12 @@ class TestRunner:
 
 def main():
 
-    global STATE
-    global RUNNER
     STATE = GuiState()
     RUNNER = TestRunner()
 
     STATE.mainGUI.title("RobotPy Elevator Characterization Data Logger")
 
-    configure_gui()
+    configure_gui(STATE, RUNNER)
     STATE.mainGUI.mainloop()
 
 

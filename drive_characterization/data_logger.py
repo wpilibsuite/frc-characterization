@@ -49,11 +49,7 @@ import logging
 
 # GUI SETUP
 
-STATE = None
-RUNNER = None
-
-
-def configure_gui():
+def configure_gui(STATE, RUNNER):
     def getFile():
         file_path = tkinter.filedialog.asksaveasfilename(
             parent=STATE.mainGUI,
@@ -344,9 +340,6 @@ class GuiState:
 
 class TestRunner:
 
-    # Test data
-    stored_data = None
-
     # Change this key to whatever NT key you want to log
     log_key = "/robot/telemetry"
 
@@ -602,14 +595,13 @@ class TestRunner:
 
 def main():
 
-    global STATE
-    global RUNNER
     STATE = GuiState()
     RUNNER = TestRunner()
 
     STATE.mainGUI.title("RobotPy Drive Characterization Data Logger")
 
-    configure_gui()
+    configure_gui(STATE, RUNNER)
+
     STATE.mainGUI.mainloop()
 
 
