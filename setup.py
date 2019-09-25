@@ -1,9 +1,8 @@
 import setuptools
-import cli.cli
 
 setuptools.setup(
     name="robotpy-characterization",
-    version="0.0.1",
+    version="0.0.5",
     author="Eli Barnett, Dustin Spicuzza",
     author_email="emichaelbarnett@gmail.com, dustin@virtualroadside.com",
     description="RobotPy Characterization Library",
@@ -22,6 +21,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
+        "control",
         "frccontrol",
         "matplotlib",
         "pynetworktables>=2018.1.2",

@@ -26,8 +26,6 @@ import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from mpl_toolkits.mplot3d import Axes3D
 
-STATE = None
-
 #
 # These parameters are used to indicate which column of data each parameter
 # can be found at
@@ -108,7 +106,7 @@ class ProgramState:
 # Set up main window
 
 
-def configure_gui():
+def configure_gui(STATE):
     def getFile():
         dataFile = tkinter.filedialog.askopenfile(
             parent=STATE.mainGUI, mode="rb", title="Choose the data file (.JSON)"
@@ -926,12 +924,11 @@ def _calcGains(kv, ka, qp, qv, effort, period):
 
 def main():
 
-    global STATE
     STATE = ProgramState()
 
     STATE.mainGUI.title("RobotPy Arm Characterization Tool")
 
-    configure_gui()
+    configure_gui(STATE)
     STATE.mainGUI.mainloop()
 
 
