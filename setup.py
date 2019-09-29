@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="robotpy-characterization",
-    version="0.0.5",
+    version="0.0.6",
     author="Eli Barnett, Dustin Spicuzza",
     author_email="emichaelbarnett@gmail.com, dustin@virtualroadside.com",
     description="RobotPy Characterization Library",
