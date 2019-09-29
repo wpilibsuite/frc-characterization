@@ -1,1 +1,1 @@
-recursive-include drive_characterization/robot *.*
+recursive-include **/robot *.*

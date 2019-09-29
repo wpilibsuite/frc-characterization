@@ -17,28 +17,18 @@ import shutil
 # import pkg_resources
 import importlib.resources as resources
 
+langs = (
+    "java",
+    "cpp",
+    "python",
+)
 
-def armDataLogger(dir):
-    arm_characterization.data_logger.main()
+controllers = (
+    "spark",
+    "talonsrx",
+)
 
-
-def armDataAnalyzer(dir):
-    arm_characterization.data_analyzer.main()
-
-
-def armNewProject(dir):
-    print(dir)
-
-
-def driveDataLogger(dir):
-    drive_characterization.data_logger.main()
-
-
-def driveDataAnalyzer(dir):
-    drive_characterization.data_analyzer.main()
-
-
-def driveNewProject(dir):
+def newProject(dir, mech):
 
     if not dir:
         dir = filedialog.askdirectory(title = "Choose directory for characterization robot project",
@@ -46,21 +36,43 @@ def driveNewProject(dir):
 
     dir = os.path.join(dir, "characterization_project")
 
-    with resources.path(drive_characterization, "robot") as path:
+    menu = SelectionMenu(langs, "Select programming language")
+    menu.show()
+    menu.join()
+    lang = langs[menu.selected_option]
+
+    menu = SelectionMenu(controllers, "Select your motor controller model")
+    menu.show()
+    menu.join()
+    controller = controllers[menu.selected_option]
+
+    proj ="robot-" + lang + "-" + controller
+
+    with resources.path(mech, "robot") as path:
+        path = os.path.join(path, proj)
         shutil.copytree(src=path, dst=dir)
 
-    # shutil.copytree(src=resources.path(robot), dst=dir)
+def loggerArm(dir):
+    arm_characterization.data_logger.main()
 
-def elevatorDataLogger(dir):
+
+def analyzerArm(dir):
+    arm_characterization.data_analyzer.main()
+
+
+def loggerDrive(dir):
+    drive_characterization.data_logger.main()
+
+
+def analyzerDrive(dir):
+    drive_characterization.data_analyzer.main()
+
+def loggerElevator(dir):
     elevator_characterization.data_logger.main()
 
 
-def elevatorDataAnalyzer(dir):
+def analyzerElevator(dir):
     elevator_characterization.data_analyzer.main()
-
-
-def elevatorNewProject(dir):
-    print(dir)
 
 
 # def elevatorDataLogger():
@@ -73,19 +85,19 @@ def elevatorNewProject(dir):
 
 tool_dict = {
     "drive": {
-        "new": driveNewProject,
-        "logger": driveDataLogger,
-        "analyzer": driveDataAnalyzer,
+        "new": lambda dir: newProject(dir, drive_characterization),
+        "logger": loggerDrive,
+        "analyzer": analyzerDrive,
     },
     "arm": {
-        "new": armNewProject,
-       "logger": armDataLogger,
-        "analyzer": armDataAnalyzer,
+        "new": lambda dir: newProject(dir, arm_characterization),
+       "logger": loggerArm,
+        "analyzer": analyzerArm,
     },
     "elevator": {
-        "new": elevatorNewProject,
-        "logger": elevatorDataLogger,
-        "analyzer": elevatorDataAnalyzer,
+        "new": lambda dir: newProject(dir, elevator_characterization),
+        "logger": loggerElevator,
+        "analyzer": analyzerElevator,
     }
 }
 
