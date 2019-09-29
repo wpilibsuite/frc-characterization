@@ -14,25 +14,22 @@ import os
 from os import getcwd
 from sys import argv
 import shutil
+
 # import pkg_resources
 import importlib.resources as resources
 
-langs = (
-    "java",
-    "cpp",
-    "python",
-)
+langs = ("java", "cpp", "python")
 
-controllers = (
-    "spark",
-    "talonsrx",
-)
+controllers = ("spark", "talonsrx")
+
 
 def newProject(dir, mech):
 
     if not dir:
-        dir = filedialog.askdirectory(title = "Choose directory for characterization robot project",
-                                       initialdir = getcwd())
+        dir = filedialog.askdirectory(
+            title="Choose directory for characterization robot project",
+            initialdir=getcwd(),
+        )
 
     dir = os.path.join(dir, "characterization_project")
 
@@ -46,11 +43,12 @@ def newProject(dir, mech):
     menu.join()
     controller = controllers[menu.selected_option]
 
-    proj ="robot-" + lang + "-" + controller
+    proj = "robot-" + lang + "-" + controller
 
     with resources.path(mech, "robot") as path:
         path = os.path.join(path, proj)
         shutil.copytree(src=path, dst=dir)
+
 
 def loggerArm(dir):
     arm_characterization.data_logger.main()
@@ -66,6 +64,7 @@ def loggerDrive(dir):
 
 def analyzerDrive(dir):
     drive_characterization.data_analyzer.main()
+
 
 def loggerElevator(dir):
     elevator_characterization.data_logger.main()
@@ -91,48 +90,54 @@ tool_dict = {
     },
     "arm": {
         "new": lambda dir: newProject(dir, arm_characterization),
-       "logger": loggerArm,
+        "logger": loggerArm,
         "analyzer": analyzerArm,
     },
     "elevator": {
         "new": lambda dir: newProject(dir, elevator_characterization),
         "logger": loggerElevator,
         "analyzer": analyzerElevator,
-    }
+    },
 }
 
 
 def main():
 
     if len(argv) < 2:
-        menu = SelectionMenu(list(tool_dict.keys()), "What type of mechanism are you characterizing?")
+        menu = SelectionMenu(
+            list(tool_dict.keys()), "What type of mechanism are you characterizing?"
+        )
         menu.show()
         menu.join()
         mech_type = list(tool_dict.keys())[menu.selected_option]
 
-        menu = SelectionMenu(list(list(tool_dict.values())[0].keys()), "What tool do you want to use?")
+        menu = SelectionMenu(
+            list(list(tool_dict.values())[0].keys()), "What tool do you want to use?"
+        )
         menu.show()
         menu.join()
         tool_type = list(list(tool_dict.values())[0].keys())[menu.selected_option]
 
         tool_dict[mech_type][tool_type](None)
     else:
-        parser = argparse.ArgumentParser(description="RobotPy characterization tools CLI")
-        parser.add_argument(
-            "mech_type",
-            choices=list(tool_dict.keys()), 
-            help="Mechanism type being characterized"
+        parser = argparse.ArgumentParser(
+            description="RobotPy characterization tools CLI"
         )
         parser.add_argument(
-            "tool_type", 
+            "mech_type",
+            choices=list(tool_dict.keys()),
+            help="Mechanism type being characterized",
+        )
+        parser.add_argument(
+            "tool_type",
             choices=list(list(tool_dict.values())[0].keys()),
-            help="Tool type to use"
+            help="Tool type to use",
         )
         parser.add_argument(
             "project_directory",
             help="The project directory if creating a new project",
-            nargs = "?",
-            default = None
+            nargs="?",
+            default=None,
         )
         argcomplete.autocomplete(parser)
 
