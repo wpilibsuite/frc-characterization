@@ -27,6 +27,8 @@ setuptools.setup(
         "pynetworktables>=2018.1.2",
         "statsmodels",
         "argcomplete",
+        "console-menu",
     ],
-    python_requires=">=3.4"
+    python_requires=">=3.4",
+    include_package_data=True
 )
