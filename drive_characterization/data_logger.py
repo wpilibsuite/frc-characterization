@@ -20,32 +20,28 @@
 # Change the following constant if your robot wheels are slipping during the
 # the fast test, or if the robot is not moving
 
-from networktables import NetworkTables, __version__ as ntversion
+import json
+import logging
+import os
+import queue
+import threading
+import time
+import tkinter
+from tkinter import *
+
+from drive_characterization.data_analyzer import (AUTOSPEED_COL,
+                                                  L_ENCODER_P_COL,
+                                                  R_ENCODER_P_COL)
+from networktables import NetworkTables
+from networktables import __version__ as ntversion
 from networktables.util import ntproperty
+from utils.utils import FloatEntry, IntEntry
 
 # Older versions of pynetworktables (and ntcore) had bugs related to flush()
 if tuple(map(int, ntversion.split(".")[:3])) < (2018, 1, 2):
     print("Requires pynetworktables >= 2018.1.3, %s is installed" % ntversion)
     exit(1)
 
-import json
-import queue
-import time
-import threading
-import os
-
-from utils.utils import IntEntry, FloatEntry
-
-from drive_characterization.data_analyzer import (
-    AUTOSPEED_COL,
-    L_ENCODER_P_COL,
-    R_ENCODER_P_COL,
-)
-
-import tkinter
-from tkinter import *
-
-import logging
 
 # GUI SETUP
 
