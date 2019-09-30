@@ -12,6 +12,7 @@ setuptools.setup(
         "elevator_characterization",
         "cli",
         "utils",
+        "newproject"
     ],
     entry_points={"console_scripts": ["robotpy-characterization = cli.cli:main"]},
     url="https://github.com/robotpy/robot-characterization",
@@ -28,6 +29,7 @@ setuptools.setup(
         "statsmodels",
         "argcomplete",
         "console-menu",
+        "mako",
     ],
     python_requires=">=3.4",
     include_package_data=True

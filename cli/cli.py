@@ -1,22 +1,22 @@
-import drive_characterization.data_analyzer
-import drive_characterization.data_logger
-import arm_characterization.data_analyzer
-import arm_characterization.data_logger
-import elevator_characterization.data_analyzer
-import elevator_characterization.data_logger
-
 import argparse
-import argcomplete
-from consolemenu import SelectionMenu
-from tkinter import filedialog
-
-import os
-from os import getcwd
-from sys import argv
-import shutil
-
 # import pkg_resources
 import importlib.resources as resources
+import os
+import shutil
+from os import getcwd
+from sys import argv
+from tkinter import filedialog
+
+import argcomplete
+import arm_characterization.data_analyzer
+import arm_characterization.data_logger
+import drive_characterization.data_analyzer
+import drive_characterization.data_logger
+import elevator_characterization.data_analyzer
+import elevator_characterization.data_logger
+from consolemenu import SelectionMenu
+
+import newproject
 
 langs = ("java", "cpp", "python")
 
@@ -25,29 +25,7 @@ controllers = ("spark", "talonsrx")
 
 def newProject(dir, mech):
 
-    if not dir:
-        dir = filedialog.askdirectory(
-            title="Choose directory for characterization robot project",
-            initialdir=getcwd(),
-        )
-
-    dir = os.path.join(dir, "characterization_project")
-
-    menu = SelectionMenu(langs, "Select programming language")
-    menu.show()
-    menu.join()
-    lang = langs[menu.selected_option]
-
-    menu = SelectionMenu(controllers, "Select your motor controller model")
-    menu.show()
-    menu.join()
-    controller = controllers[menu.selected_option]
-
-    proj = "robot-" + lang + "-" + controller
-
-    with resources.path(mech, "robot") as path:
-        path = os.path.join(path, proj)
-        shutil.copytree(src=path, dst=dir)
+    newproject.main(mech)
 
 
 def loggerArm(dir):
@@ -131,11 +109,11 @@ def main():
         parser.add_argument(
             "tool_type",
             choices=list(list(tool_dict.values())[0].keys()),
-            help="Tool type to use",
+            help="Create new project, start data recorder/logger, or start data analyzer",
         )
         parser.add_argument(
             "project_directory",
-            help="The project directory if creating a new project",
+            help="Location for the project directory (if creating a new project)",
             nargs="?",
             default=None,
         )
