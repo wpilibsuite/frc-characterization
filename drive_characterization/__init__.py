@@ -24,3 +24,8 @@ def genRobotCode(projectType, config):
     elif projectType == 'Talon':
         print('not yet supported :<')
 
+def genBuildGradle(projectType, team):
+    if projectType == 'Simple':
+        with resources.path(__name__, 'templates') as path:
+            with open(os.path.join(path, 'Simple', 'build.mako'), 'r') as template:
+                return Template(template.read()).render(team=team)
