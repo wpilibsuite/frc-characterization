@@ -2,6 +2,8 @@ import tkinter
 from tkinter import *
 from tkinter import filedialog
 
+from subprocess import Popen, PIPE
+
 import os
 import shutil
 
@@ -11,7 +13,7 @@ import drive_characterization
 
 from utils.utils import IntEntry
 from utils.utils import FloatEntry
-
+from utils.utils import TextExtension
 
 def configureGUI(STATE, mech):
     def getProjectLocation():
@@ -34,31 +36,32 @@ def configureGUI(STATE, mech):
         configEntry.insert(0, file_path)
         configEntry.configure(state='readonly')
 
-    def genDefaultConfig():
-        shutil.copy(
-            src=os.path.join(templatePath, 'robotconfig.py'),
-            dst=STATE.project_path.get(),
-        )
+    def saveConfig():
+        with open(STATE.config_path.get(), 'w+') as config:
+            config.write(STATE.config.get())
 
     def updateTemplatePath(*args):
         nonlocal templatePath
         with resources.path(mech, 'templates') as path:
             templatePath = os.path.join(path, STATE.project_type.get())
+        getDefaultConfig()
 
     def updateConfigPath(*args):
         configEntry.configure(state='normal')
         STATE.config_path.set(os.path.join(STATE.project_path.get(), 'robotconfig.py'))
         configEntry.configure(state='readonly')
 
+    def getDefaultConfig():
+        with open(os.path.join(templatePath, 'robotconfig.py'), 'r') as config:
+            STATE.config.set(config.read())
+
     def readConfig():
         try:
             with open(STATE.config_path.get(), 'r') as config:
-                STATE.config = eval(config.read())
+                STATE.config.set(config.read())
         except:
             tkinter.messagebox.showerror('Error!', 'Could not open/read config file.')
             return
-
-        genProjButton.configure(state='normal')
 
     def genProject():
         dst = os.path.join(STATE.project_path.get(), 'characterization-project')
@@ -69,10 +72,22 @@ def configureGUI(STATE, mech):
             with open(
                 os.path.join(dst, 'src', 'main', 'java', 'dc', 'Robot.java'), 'w+'
             ) as robot:
-                robot.write(mech.genRobotCode(STATE.project_type.get(), STATE.config))
+                robot.write(mech.genRobotCode(STATE.project_type.get(), eval(STATE.config.get())))
+            with open(os.path.join(dst, 'Build.gradle'), 'w+') as build:
+                build.write(mech.genBuildGradle(STATE.project_type.get(), STATE.team_number.get()))
+
+    def deployProject():
+        os.chdir(os.path.join(STATE.project_path.get(), 'characterization-project'))
+        if os.name == 'Windows':
+            Popen([os.path.join(STATE.project_path.get(), 'characterization-project', 'gradlew.bat'), 'deploy'], stdin=PIPE)
+        else:
+            Popen([os.path.join(STATE.project_path.get(), 'characterization-project', 'gradlew'), 'deploy'], stdin=PIPE)
+
 
     templatePath = None
     updateTemplatePath()
+
+    getDefaultConfig()
 
     # TOP OF WINDOW
 
@@ -89,9 +104,11 @@ def configureGUI(STATE, mech):
     projLocationEntry.grid(row=0, column=1, columnspan=10)
     STATE.project_path.trace_add('write', updateConfigPath)
 
+    Label(topFrame, text="Project Type:", anchor='e').grid(row=0, column=11, sticky='ew')
+
     projectChoices = {'Simple', 'Talon'}
     projTypeMenu = OptionMenu(topFrame, STATE.project_type, *sorted(projectChoices))
-    projTypeMenu.grid(row=0, column=11, sticky='ew')
+    projTypeMenu.grid(row=0, column=12, sticky='ew')
     STATE.project_type.trace_add('write', updateTemplatePath)
 
     Button(topFrame, text='Select Config File', command=getConfigPath).grid(
@@ -102,26 +119,37 @@ def configureGUI(STATE, mech):
     )
     configEntry.grid(row=1, column=1, columnspan=10)
 
-    Button(topFrame, text='Generate Default Config', command=genDefaultConfig).grid(
+    Button(topFrame, text='Save Config', command=saveConfig).grid(
         row=1, column=11
     )
+
+    readConfigButton = Button(topFrame, text='Read Config', command=readConfig)
+    readConfigButton.grid(row=1, column=12, sticky='ew')
+
+    Label(topFrame, text='Team Number:', anchor='e').grid(row=2, column=0, sticky='ew')
+    teamNumberEntry = IntEntry(topFrame, textvariable=STATE.team_number)
+    teamNumberEntry.grid(row=2, column=1, sticky='ew')
 
     for child in topFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
 
-    # Bottom Frame
+    # Body Frame
 
-    bottomFrame = Frame(STATE.mainGUI, bd=2, relief='groove')
-    bottomFrame.grid(row=1, column=0, sticky='ew')
+    bodyFrame = Frame(STATE.mainGUI, bd=2, relief='groove')
+    bodyFrame.grid(row=1, column=0, sticky='ew')
 
-    readConfigButton = Button(bottomFrame, text='Read Config', command=readConfig)
-    readConfigButton.grid(row=0, column=0, sticky='ew')
+    genProjButton = Button(bodyFrame, text='Generate Project', command=genProject)
+    genProjButton.grid(row=1, column=0, sticky='ew')
 
-    genProjButton = Button(bottomFrame, text='Generate Project', command=genProject)
-    genProjButton.grid(row=0, column=1, sticky='ew')
-    genProjButton.configure(state='disabled')
+    deployButton = Button(bodyFrame, text='Deploy Project', command=deployProject)
+    deployButton.grid(row=2, column=0, sticky='ew')
 
-    for child in bottomFrame.winfo_children():
+    configEditPane = TextExtension(bodyFrame, textvariable=STATE.config)
+    configEditPane.grid(row=0, column=1, rowspan=30, columnspan=10)
+
+    
+
+    for child in bodyFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
 
 class GuiState:
@@ -137,7 +165,9 @@ class GuiState:
         self.project_type = StringVar()
         self.project_type.set('Simple')
 
-        self.config = None
+        self.config = StringVar()
+    
+        self.team_number = IntVar()
 
 
 def main(mech):
