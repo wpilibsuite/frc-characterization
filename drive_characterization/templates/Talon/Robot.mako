@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -28,15 +29,15 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
-  static private double WHEEL_DIAMETER = 0.5;
-  static private double ENCODER_PULSE_PER_REV = 4096;
+  static private double WHEEL_DIAMETER = ${diam};
+  static private double ENCODER_PULSE_PER_REV = ${ppr};
   static private int PIDIDX = 0;
 
   Joystick stick;
   DifferentialDrive drive;
 
-  WPI_TalonSRX leftFrontMotor;
-  WPI_TalonSRX rightFrontMotor;
+  WPI_TalonSRX leftMaster;
+  WPI_TalonSRX rightMaster;
 
   Supplier<Double> leftEncoderPosition;
   Supplier<Double> leftEncoderRate;
@@ -56,40 +57,52 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    leftFrontMotor = new WPI_TalonSRX(1);
-    leftFrontMotor.setInverted(false);
-    leftFrontMotor.setSensorPhase(false);
-    leftFrontMotor.setNeutralMode(NeutralMode.Brake);
+    ${lcontrollers[0]} leftMaster = new ${lcontrollers[0]}(${lports[0]});
+    % if linverted[0] ^ turn:
+    leftMaster.setInverted(true);
+    % endif
+    % if lencoderinv:
+    leftMaster.setSensorPhase(true);
+    % else:
+    leftMaster.setSensorPhase(false);
+    % endif
+    leftMaster.setNeutralMode(NeutralMode.Brake);
 
-    rightFrontMotor = new WPI_TalonSRX(2);
-    rightFrontMotor.setInverted(false);
-    rightFrontMotor.setSensorPhase(true);
-    rightFrontMotor.setNeutralMode(NeutralMode.Brake);
+    ${rcontrollers[0]} rightMaster = new ${rcontrollers[0]}(${rports[0]});
+    % if linverted[0]:
+    rightMaster.setInverted(true);
+    % endif
+    % if rencoderinv:
+    rightMaster.setSensorPhase(true);
+    % else:
+    rightMaster.setSensorPhase(false);
+    % endif
+    rightMaster.setNeutralMode(NeutralMode.Brake);
 
-    // left rear follows front
-    WPI_TalonSRX leftRearMotor = new WPI_TalonSRX(3);
-    leftRearMotor.setInverted(false);
-    leftRearMotor.setSensorPhase(false);
-    leftRearMotor.follow(leftFrontMotor);
-    leftRearMotor.setNeutralMode(NeutralMode.Brake);
+    % for controller in lcontrollers[1:]:
+    ${controller} leftFollower${loop.index} = new ${controller}(${lports[loop.index]});
+    % if linverted[loop.index+1] ^ turn:
+    leftFollower${loop.index}.setInverted(true);
+    % endif
+    leftFollower${loop.index}.follow(leftMaster);
+    leftFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
+    % endfor
 
-    // right rear follows front
-    WPI_TalonSRX rightRearMotor = new WPI_TalonSRX(4);
-    rightRearMotor.setInverted(false);
-    rightRearMotor.setSensorPhase(true);
-    rightRearMotor.follow(rightRearMotor);
-    rightRearMotor.setNeutralMode(NeutralMode.Brake);
+    % for controller in rcontrollers[1:]:
+    ${controller} rightFollower${loop.index} = new ${controller}(${rports[loop.index]});
+    % if rinverted[loop.index+1] ^ turn:
+    rightFollower${loop.index}.setInverted(true);
+    % endif
+    rightFollower${loop.index}.follow(rightMaster);
+    rightFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
+    % endfor
 
     //
     // Configure drivetrain movement
     //
 
-    SpeedControllerGroup leftGroup =
-        new SpeedControllerGroup(leftFrontMotor, leftRearMotor);
-    SpeedControllerGroup rightGroup =
-        new SpeedControllerGroup(rightFrontMotor, rightRearMotor);
+    drive = new DifferentialDrive(leftMaster, rightMaster);
 
-    drive = new DifferentialDrive(leftGroup, rightGroup);
     drive.setDeadband(0);
 
     //
@@ -100,25 +113,30 @@ public class Robot extends TimedRobot {
     double encoderConstant =
         (1 / ENCODER_PULSE_PER_REV) * WHEEL_DIAMETER * Math.PI;
 
-    leftFrontMotor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
+    leftMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
                                                 PIDIDX, 10);
     leftEncoderPosition = ()
-        -> leftFrontMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
+        -> leftMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
     leftEncoderRate = ()
-        -> leftFrontMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
+        -> leftMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
                10;
 
-    rightFrontMotor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
+    % if rencoderinv is not None:
+    rightMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
                                                  PIDIDX, 10);
     rightEncoderPosition = ()
-        -> rightFrontMotor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
+        -> rightMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
     rightEncoderRate = ()
-        -> rightFrontMotor.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
+        -> rightMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
                10;
+    % else:
+    rightEncoderPosition = leftEncoderPosition;
+    rightEncoderRate = leftEncoderRate;
+    % endif
 
     // Reset encoders
-    leftFrontMotor.setSelectedSensorPosition(0);
-    rightFrontMotor.setSelectedSensorPosition(0);
+    leftMaster.setSelectedSensorPosition(0);
+    rightMaster.setSelectedSensorPosition(0);
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
@@ -180,8 +198,8 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double leftMotorVolts = leftFrontMotor.getMotorOutputVoltage();
-    double rightMotorVolts = rightFrontMotor.getMotorOutputVoltage();
+    double leftMotorVolts = leftMaster.getMotorOutputVoltage();
+    double rightMotorVolts = rightMaster.getMotorOutputVoltage();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);

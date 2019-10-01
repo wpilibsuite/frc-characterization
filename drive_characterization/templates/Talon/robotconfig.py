@@ -1,15 +1,12 @@
 {
   # Class names of motor controllers used.
   # Options:
-  # 'Spark'
-  # 'Victor'
-  # 'Victor SP'
-  # 'PWMTalonSRX'
-  # 'PWMVictorSPX'
   # 'WPI_TalonSRX'
   # 'WPI_VictorSPX'
-  'rightControllerTypes': ('Spark', 'Spark'),
-  'leftControllerTypes': ('Spark', 'Spark'),
+  # Note: The first motor on each side should always be a Talon, as the
+  # VictorSPX does not support encoder connections
+  'rightControllerTypes': ('WPI_TalonSRX', 'WPI_TalonSRX'),
+  'leftControllerTypes': ('WPI_TalonSRX', 'WPI_TalonSRX'),
 
   # Ports for the left-side motors
   'leftMotorPorts': (0, 1),
@@ -27,10 +24,6 @@
   # If your robot has only one encoder, remove all of the right encoder fields
   # Encoder pulses-per-revolution (*NOT* cycles per revolution!)
   'encoderPPR': 512,
-  # Ports for the left-side encoder
-  'leftEncoderPorts': (0, 1),
-  # Ports for the right-side encoder
-  'rightEncoderPorts': (2, 3),
   # Whether the left encoder is inverted
   'leftEncoderInverted': False,
   # Whether the right encoder is inverted:

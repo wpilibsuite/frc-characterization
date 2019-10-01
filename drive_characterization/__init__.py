@@ -20,12 +20,27 @@ def genRobotCode(projectType, config):
                     turn=config['turn'],
                     lencoderports=config['leftEncoderPorts'],
                     rencoderports=config['rightEncoderPorts'],
+                    lencoderinv=config['leftEncoderInverted'],
+                    rencoderinv=config['rightEncoderInverted'],
             )
     elif projectType == 'Talon':
-        print('not yet supported :<')
+        with resources.path(__name__, 'templates') as path:
+            with open(os.path.join(path, 'Talon', 'Robot.mako'), 'r') as template:
+                return Template(template.read()).render(
+                    diam=config['wheelDiameter'],
+                    ppr=config['encoderPPR'],
+                    lports=config['leftMotorPorts'],
+                    rports=config['rightMotorPorts'],
+                    linverted=config['leftMotorsInverted'],
+                    rinverted=config['rightMotorsInverted'],
+                    lcontrollers=config['leftControllerTypes'],
+                    rcontrollers=config['rightControllerTypes'],
+                    turn=config['turn'],
+                    lencoderinv=config['leftEncoderInverted'],
+                    rencoderinv=config['rightEncoderInverted'],
+            )
 
 def genBuildGradle(projectType, team):
-    if projectType == 'Simple':
-        with resources.path(__name__, 'templates') as path:
-            with open(os.path.join(path, 'Simple', 'build.mako'), 'r') as template:
-                return Template(template.read()).render(team=team)
+    with resources.path(__name__, 'templates') as path:
+        with open(os.path.join(path, projectType, 'build.mako'), 'r') as template:
+            return Template(template.read()).render(team=team)

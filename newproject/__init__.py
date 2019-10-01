@@ -65,24 +65,27 @@ def configureGUI(STATE, mech):
 
     def genProject():
         dst = os.path.join(STATE.project_path.get(), 'characterization-project')
-        with resources.path(mech, 'robot') as path:
-            shutil.copytree(
-                src=os.path.join(path, 'project-' + STATE.project_type.get()), dst=dst
-            )
-            with open(
-                os.path.join(dst, 'src', 'main', 'java', 'dc', 'Robot.java'), 'w+'
-            ) as robot:
-                robot.write(mech.genRobotCode(STATE.project_type.get(), eval(STATE.config.get())))
-            with open(os.path.join(dst, 'Build.gradle'), 'w+') as build:
-                build.write(mech.genBuildGradle(STATE.project_type.get(), STATE.team_number.get()))
+        try:
+            with resources.path(mech, 'robot') as path:
+                shutil.copytree(
+                    src=os.path.join(path, 'project-' + STATE.project_type.get()), dst=dst
+                )
+                with open(
+                    os.path.join(dst, 'src', 'main', 'java', 'dc', 'Robot.java'), 'w+'
+                ) as robot:
+                    robot.write(mech.genRobotCode(STATE.project_type.get(), eval(STATE.config.get())))
+                with open(os.path.join(dst, 'Build.gradle'), 'w+') as build:
+                    build.write(mech.genBuildGradle(STATE.project_type.get(), STATE.team_number.get()))
+        except:
+            tkinter.messagebox.showerror("Error!", "Unable to generate project - config may be bad")
+            shutil.rmtree(dst)
 
     def deployProject():
         os.chdir(os.path.join(STATE.project_path.get(), 'characterization-project'))
-        if os.name == 'Windows':
+        if os.name == 'nt':
             Popen([os.path.join(STATE.project_path.get(), 'characterization-project', 'gradlew.bat'), 'deploy'], stdin=PIPE)
         else:
             Popen([os.path.join(STATE.project_path.get(), 'characterization-project', 'gradlew'), 'deploy'], stdin=PIPE)
-
 
     templatePath = None
     updateTemplatePath()
@@ -108,6 +111,7 @@ def configureGUI(STATE, mech):
 
     projectChoices = {'Simple', 'Talon'}
     projTypeMenu = OptionMenu(topFrame, STATE.project_type, *sorted(projectChoices))
+    projTypeMenu.configure(width=10)
     projTypeMenu.grid(row=0, column=12, sticky='ew')
     STATE.project_type.trace_add('write', updateTemplatePath)
 
@@ -174,6 +178,7 @@ def main(mech):
     STATE = GuiState()
 
     configureGUI(STATE, mech)
+    STATE.mainGUI.title('RobotPy Characterization New Project Tool')
 
     STATE.mainGUI.mainloop()
 
