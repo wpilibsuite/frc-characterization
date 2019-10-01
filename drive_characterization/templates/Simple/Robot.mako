@@ -9,6 +9,9 @@ package dc;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Encoder;
@@ -51,12 +54,19 @@ public class Robot extends TimedRobot {
     stick = new Joystick(0);
 
     ${lcontrollers[0]} leftMotor1 = new ${lcontrollers[0]}(${lports[0]});
+    % if linverted[0]:
+    leftMotor1.setInverted(true);
+    % endif
+
     ${rcontrollers[0]} rightMotor1 = new ${lcontrollers[0]}(${rports[0]});
+    % if rinverted[0]:
+    rightMotor1.setInverted(true);
+    % endif
 
     SpeedController[] leftMotors = new SpeedController[${len(lports) - 1}];
     % for port in lports[1:]:
     leftMotors[${loop.index}] = new ${lcontrollers[loop.index]}(${port});
-    % if linverted[loop.index]:
+    % if linverted[loop.index+1]:
     leftMotors[${loop.index}].setInverted(true);
     % endif
     % endfor
@@ -64,7 +74,7 @@ public class Robot extends TimedRobot {
     SpeedController[] rightMotors = new SpeedController[${len(lports) - 1}];
     % for port in rports[1:]:
     rightMotors[${loop.index}] = new ${rcontrollers[loop.index]}(${port});
-    % if rinverted[loop.index]:
+    % if rinverted[loop.index+1]:
     rightMotors[${loop.index}].setInverted(true);
     % endif
     % endfor
@@ -92,15 +102,24 @@ public class Robot extends TimedRobot {
     double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * WHEEL_DIAMETER * Math.PI;
 
     Encoder leftEncoder = new Encoder(${lencoderports[0]}, ${lencoderports[1]});
+    % if lencoderinv:
+    leftEncoder.setReverseDirection(true);
+    % endif
     leftEncoder.setDistancePerPulse(encoderConstant);
     leftEncoderPosition = leftEncoder::getDistance;
     leftEncoderRate = leftEncoder::getRate;
 
+    % if rencoderports:
     Encoder rightEncoder = new Encoder(${rencoderports[0]}, ${rencoderports[1]});
+    % if rencoderinv:
+    rightEncoder.setReverseDirection(true);
+    % endif
     rightEncoder.setDistancePerPulse(encoderConstant);
     rightEncoderPosition = rightEncoder::getDistance;
     rightEncoderRate = rightEncoder::getRate;
-
+    % else:
+    Encoder rightEncoder = leftEncoder;
+    % endif
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
