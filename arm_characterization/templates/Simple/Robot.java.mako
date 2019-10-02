@@ -1,9 +1,9 @@
 /**
- * This is a very simple robot program that can be used to send telemetry to
- * the data_logger script to characterize your drivetrain. If you wish to use
- * your actual robot code, you only need to implement the simple logic in the
- * autonomousPeriodic function and change the NetworkTables update rate
- */
+* This is a very simple robot program that can be used to send telemetry to
+* the data_logger script to characterize your drivetrain. If you wish to use
+* your actual robot code, you only need to implement the simple logic in the
+* autonomousPeriodic function and change the NetworkTables update rate
+*/
 
 package dc;
 
@@ -28,31 +28,31 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
-	// The offset of encoder zero from horizontal, in degrees.
-	// It is CRUCIAL that this be set correctly, or the characterization will not work!
-	static private double OFFSET = ${offset};
-	static private double ENCODER_PULSE_PER_REV = ${ppr};
+  // The offset of encoder zero from horizontal, in degrees.
+  // It is CRUCIAL that this be set correctly, or the characterization will not work!
+  static private double OFFSET = ${offset};
+  static private double ENCODER_PULSE_PER_REV = ${ppr};
 
-	Joystick stick;
+  Joystick stick;
 
-	Supplier<Double> encoderPosition;
-	Supplier<Double> encoderRate;
+  Supplier<Double> encoderPosition;
+  Supplier<Double> encoderRate;
 
-	NetworkTableEntry autoSpeedEntry = NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
-	NetworkTableEntry telemetryEntry = NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
+  NetworkTableEntry autoSpeedEntry = NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
+  NetworkTableEntry telemetryEntry = NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
 
-	double priorAutospeed = 0;
-	Number[] numberArray = new Number[6];
+  double priorAutospeed = 0;
+  Number[] numberArray = new Number[6];
 
-	@Override
-	public void robotInit() {
+  @Override
+  public void robotInit() {
 
-		stick = new Joystick(0);
+    stick = new Joystick(0);
 
-		${controllers[0]} armMotor1 = new ${controllers[0]}(${ports[0]});
-		% if inverted[0]:
-		armMotor.setInverted(false);
-		% endif
+    ${controllers[0]} armMotor1 = new ${controllers[0]}(${ports[0]});
+    % if inverted[0]:
+    armMotor.setInverted(false);
+    % endif
 
     SpeedController[] armMotors = new SpeedController[${len(ports) - 1}];
     % for port in ports[1:]:
@@ -62,101 +62,101 @@ public class Robot extends TimedRobot {
     % endif
     % endfor
 
-		SpeedControllerGroup armMotor = new SpeedControllerGroup(armMotor1, armMotors);
-		
-		//
-		// Configure encoder related functions -- getDistance and getrate should return
-		// degrees and degrees/sec
-		//
+    SpeedControllerGroup armMotor = new SpeedControllerGroup(armMotor1, armMotors);
 
-		% if units == 'Degrees':
-		double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * 360.;
-		% else if units == 'Radians':
-		double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * 2. * Math.PI;
-		% else:
-		double encoderConstant = (1 / ENCODER_PULSE_PER_REV);
-		% endif
+    //
+    // Configure encoder related functions -- getDistance and getrate should return
+    // degrees and degrees/sec
+    //
 
-		Encoder encoder = new Encoder(${encoderports{0}}, ${encoderports[1]});
-		encoder.setDistancePerPulse(encoderConstant);
-		% if encoderinv:
-		encoder.setReverseDirection(true);
-		% endif
-		encoderPosition = () -> encoder.getDistance() + OFFSET;
-		encoderRate = encoder::getRate;
+    % if units == 'Degrees':
+    double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * 360.;
+    % else if units == 'Radians':
+    double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * 2. * Math.PI;
+    % else:
+    double encoderConstant = (1 / ENCODER_PULSE_PER_REV);
+    % endif
+
+    Encoder encoder = new Encoder(${encoderports{0}}, ${encoderports[1]});
+    encoder.setDistancePerPulse(encoderConstant);
+    % if encoderinv:
+    encoder.setReverseDirection(true);
+    % endif
+    encoderPosition = () -> encoder.getDistance() + OFFSET;
+    encoderRate = encoder::getRate;
 
 
-		// Set the update rate instead of using flush because of a ntcore bug
-		// -> probably don't want to do this on a robot in competition
-		NetworkTableInstance.getDefault().setUpdateRate(0.010);
-	}
+    // Set the update rate instead of using flush because of a ntcore bug
+    // -> probably don't want to do this on a robot in competition
+    NetworkTableInstance.getDefault().setUpdateRate(0.010);
+  }
 
-	@Override
-	public void disabledInit() {
-		System.out.println("Robot disabled");
-		armMotor.set(0);
-	}
+  @Override
+  public void disabledInit() {
+    System.out.println("Robot disabled");
+    armMotor.set(0);
+  }
 
-	@Override
-	public void disabledPeriodic() {
-	}
+  @Override
+  public void disabledPeriodic() {
+  }
 
-	@Override
-	public void robotPeriodic() {
-		// feedback for users, but not used by the control program
-		SmartDashboard.putNumber("encoder_pos", encoderPosition.get());
-		SmartDashboard.putNumber("encoder_rate", encoderRate.get());
-	}
+  @Override
+  public void robotPeriodic() {
+    // feedback for users, but not used by the control program
+    SmartDashboard.putNumber("encoder_pos", encoderPosition.get());
+    SmartDashboard.putNumber("encoder_rate", encoderRate.get());
+  }
 
-	@Override
-	public void teleopInit() {
-		System.out.println("Robot in operator control mode");
-	}
+  @Override
+  public void teleopInit() {
+    System.out.println("Robot in operator control mode");
+  }
 
-	@Override
-	public void teleopPeriodic() {
-		armMotor.set(-stick.getY());
-	}
+  @Override
+  public void teleopPeriodic() {
+    armMotor.set(-stick.getY());
+  }
 
-	@Override
-	public void autonomousInit() {
-		System.out.println("Robot in autonomous mode");
-	}
+  @Override
+  public void autonomousInit() {
+    System.out.println("Robot in autonomous mode");
+  }
 
-	/**
-	 * If you wish to just use your own robot program to use with the data logging
-	 * program, you only need to copy/paste the logic below into your code and
-	 * ensure it gets called periodically in autonomous mode
-	 * 
-	 * Additionally, you need to set NetworkTables update rate to 10ms using the
-	 * setUpdateRate call.
-	 */
-	@Override
-	public void autonomousPeriodic() {
+  /**
+  * If you wish to just use your own robot program to use with the data logging
+  * program, you only need to copy/paste the logic below into your code and
+  * ensure it gets called periodically in autonomous mode
+  * 
+  * Additionally, you need to set NetworkTables update rate to 10ms using the
+  * setUpdateRate call.
+  */
+  @Override
+  public void autonomousPeriodic() {
 
-		// Retrieve values to send back before telling the motors to do something
-		double now = Timer.getFPGATimestamp();
+    // Retrieve values to send back before telling the motors to do something
+    double now = Timer.getFPGATimestamp();
 
-		double position = encoderPosition.get();
-		double rate = encoderRate.get();
+    double position = encoderPosition.get();
+    double rate = encoderRate.get();
 
-		double battery = RobotController.getBatteryVoltage();
-		double motorVolts = battery * Math.abs(priorAutospeed);
+    double battery = RobotController.getBatteryVoltage();
+    double motorVolts = battery * Math.abs(priorAutospeed);
 
-		// Retrieve the commanded speed from NetworkTables
-		double autospeed = autoSpeedEntry.getDouble(0);
-		priorAutospeed = autospeed;
+    // Retrieve the commanded speed from NetworkTables
+    double autospeed = autoSpeedEntry.getDouble(0);
+    priorAutospeed = autospeed;
 
-		// command motors to do things
-		armMotor.set(autospeed);
+    // command motors to do things
+    armMotor.set(autospeed);
 
-		// send telemetry data array back to NT
-		numberArray[0] = now;
-		numberArray[1] = battery;
-		numberArray[2] = autospeed;
-		numberArray[3] = motorVolts;
-		numberArray[4] = position;
-		numberArray[5] = rate;
-		telemetryEntry.setNumberArray(numberArray);
-	}
+    // send telemetry data array back to NT
+    numberArray[0] = now;
+    numberArray[1] = battery;
+    numberArray[2] = autospeed;
+    numberArray[3] = motorVolts;
+    numberArray[4] = position;
+    numberArray[5] = rate;
+    telemetryEntry.setNumberArray(numberArray);
+  }
 }
