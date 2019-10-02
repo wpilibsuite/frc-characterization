@@ -48,62 +48,62 @@ class ProgramState:
         self.step_forward = None
         self.step_backward = None
 
-        self.window_size = IntVar(STATE.mainGUI)
+        self.window_size = IntVar(self.mainGUI)
         self.window_size.set(8)
 
-        self.motion_threshold = DoubleVar(STATE.mainGUI)
+        self.motion_threshold = DoubleVar(self.mainGUI)
         self.motion_threshold.set(20)
 
-        self.direction = StringVar(STATE.mainGUI)
+        self.direction = StringVar(self.mainGUI)
         self.direction.set('Combined')
 
-        self.units = StringVar(STATE.mainGUI)
+        self.units = StringVar(self.mainGUI)
         self.units.set('Degrees')
 
-        self.ks = DoubleVar(STATE.mainGUI)
-        self.kv = DoubleVar(STATE.mainGUI)
-        self.ka = DoubleVar(STATE.mainGUI)
-        self.kcos = DoubleVar(STATE.mainGUI)
-        self.r_square = DoubleVar(STATE.mainGUI)
+        self.ks = DoubleVar(self.mainGUI)
+        self.kv = DoubleVar(self.mainGUI)
+        self.ka = DoubleVar(self.mainGUI)
+        self.kcos = DoubleVar(self.mainGUI)
+        self.r_square = DoubleVar(self.mainGUI)
 
-        self.qp = DoubleVar(STATE.mainGUI)
+        self.qp = DoubleVar(self.mainGUI)
         self.qp.set(2)
 
-        self.qv = DoubleVar(STATE.mainGUI)
+        self.qv = DoubleVar(self.mainGUI)
         self.qv.set(4)
 
-        self.max_effort = DoubleVar(STATE.mainGUI)
+        self.max_effort = DoubleVar(self.mainGUI)
         self.max_effort.set(7)
 
-        self.period = DoubleVar(STATE.mainGUI)
+        self.period = DoubleVar(self.mainGUI)
         self.period.set(0.02)
 
-        self.max_controller_output = DoubleVar(STATE.mainGUI)
+        self.max_controller_output = DoubleVar(self.mainGUI)
         self.max_controller_output.set(12)
 
-        self.controller_time_normalized = BooleanVar(STATE.mainGUI)
+        self.controller_time_normalized = BooleanVar(self.mainGUI)
         self.controller_time_normalized.set(True)
 
-        self.gearing = DoubleVar(STATE.mainGUI)
+        self.gearing = DoubleVar(self.mainGUI)
         self.gearing.set(1)
 
-        self.controller_type = StringVar(STATE.mainGUI)
+        self.controller_type = StringVar(self.mainGUI)
         self.controller_type.set('Onboard')
 
-        self.encoder_ppr = IntVar(STATE.mainGUI)
+        self.encoder_ppr = IntVar(self.mainGUI)
         self.encoder_ppr.set(4096)
 
-        self.has_slave = BooleanVar(STATE.mainGUI)
+        self.has_slave = BooleanVar(self.mainGUI)
         self.has_slave.set(False)
 
-        self.slave_period = DoubleVar(STATE.mainGUI)
+        self.slave_period = DoubleVar(self.mainGUI)
         self.slave_period.set(0.01)
 
-        self.gain_units_preset = StringVar(STATE.mainGUI)
+        self.gain_units_preset = StringVar(self.mainGUI)
         self.gain_units_preset.set('Default')
 
-        self.kp = DoubleVar(STATE.mainGUI)
-        self.kd = DoubleVar(STATE.mainGUI)
+        self.kp = DoubleVar(self.mainGUI)
+        self.kd = DoubleVar(self.mainGUI)
 
 
 # Set up main window

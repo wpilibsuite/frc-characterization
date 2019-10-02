@@ -3,7 +3,7 @@
   # Options:
   # 'WPI_TalonSRX'
   # 'WPI_VictorSPX'
-  # Note: The first motor on each side should always be a Talon, as the
+  # Note: The first motor on each side should always be a TalonSRX, as the
   # VictorSPX does not support encoder connections
   'rightControllerTypes': ('WPI_TalonSRX', 'WPI_TalonSRX'),
   'leftControllerTypes': ('WPI_TalonSRX', 'WPI_TalonSRX'),

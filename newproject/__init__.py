@@ -88,9 +88,12 @@ def configureGUI(STATE, mech):
             ):
                 shutil.rmtree(dst)
                 genProject()
-        except:
+        except Exception as e:
             tkinter.messagebox.showerror(
-                "Error!", "Unable to generate project - config may be bad"
+                "Error!",
+                "Unable to generate project - config may be bad.\n"
+                + 'Details:\n'
+                + repr(e),
             )
             shutil.rmtree(dst)
 
@@ -144,8 +147,13 @@ def configureGUI(STATE, mech):
             if out != "":
                 window.stdoutText.insert(END, out)
 
-            if not (out == "" and process.poll() is None):
+            if process.poll() is None:
                 STATE.mainGUI.after(10, lambda: updateStdout(process, window))
+            elif process.poll() != 0:
+                tkinter.messagebox.showerror(
+                    "Error!",
+                    "Deployment failed!\n" + "Check the console for more details."
+                )
 
     def runLogger():
         mech.data_logger.main(STATE.team_number.get(), STATE.project_path.get())

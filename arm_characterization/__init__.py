@@ -15,22 +15,20 @@ def genRobotCode(projectType, config):
                     controllers=config['controllerTypes'],
                     encoderports=config['encoderPorts'],
                     encoderinv=config['encoderInverted'],
+                    offset=config['offset'],
+                    units=config['units']
             )
     elif projectType == 'Talon':
         with resources.path(__name__, 'templates') as path:
             with open(os.path.join(path, 'Talon', 'Robot.java.mako'), 'r') as template:
                 return Template(template.read()).render(
-                    diam=config['wheelDiameter'],
                     ppr=config['encoderPPR'],
-                    lports=config['leftMotorPorts'],
-                    rports=config['rightMotorPorts'],
-                    linverted=config['leftMotorsInverted'],
-                    rinverted=config['rightMotorsInverted'],
-                    lcontrollers=config['leftControllerTypes'],
-                    rcontrollers=config['rightControllerTypes'],
-                    turn=config['turn'],
-                    lencoderinv=config['leftEncoderInverted'],
-                    rencoderinv=config['rightEncoderInverted'],
+                    ports=config['motorPorts'],
+                    inverted=config['motorsInverted'],
+                    controllers=config['controllerTypes'],
+                    encoderinv=config['encoderInverted'],
+                    offset=config['offset'],
+                    units=config['units']
             )
 
 def genBuildGradle(projectType, team):
