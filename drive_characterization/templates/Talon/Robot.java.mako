@@ -60,6 +60,8 @@ public class Robot extends TimedRobot {
     ${lcontrollers[0]} leftMaster = new ${lcontrollers[0]}(${lports[0]});
     % if linverted[0] ^ turn:
     leftMaster.setInverted(true);
+    % else:
+    leftMaster.setInverted(false);
     % endif
     % if lencoderinv:
     leftMaster.setSensorPhase(true);
@@ -71,6 +73,8 @@ public class Robot extends TimedRobot {
     ${rcontrollers[0]} rightMaster = new ${rcontrollers[0]}(${rports[0]});
     % if linverted[0]:
     rightMaster.setInverted(true);
+    % else:
+    rightMaster.setInverted(false);
     % endif
     % if rencoderinv:
     rightMaster.setSensorPhase(true);
@@ -79,22 +83,26 @@ public class Robot extends TimedRobot {
     % endif
     rightMaster.setNeutralMode(NeutralMode.Brake);
 
-    % for controller in lcontrollers[1:]:
-    ${controller} leftFollower${loop.index} = new ${controller}(${lports[loop.index]});
+    % for port in lports[1:]:
+    ${lcontrollers[loop.index+1]} leftSlave${loop.index} = new ${lcontrollers[loop.index+1]}(${port});
     % if linverted[loop.index+1] ^ turn:
-    leftFollower${loop.index}.setInverted(true);
+    leftSlave${loop.index}.setInverted(true);
+    % else:
+    leftSlave.setInverted(false);
     % endif
-    leftFollower${loop.index}.follow(leftMaster);
-    leftFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
+    leftSlave${loop.index}.follow(leftMaster);
+    leftSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
     % endfor
 
-    % for controller in rcontrollers[1:]:
-    ${controller} rightFollower${loop.index} = new ${controller}(${rports[loop.index]});
+    % for port in rports[1:]:
+    ${rcontrollers[loop.index+1]} rightSlave${loop.index} = new ${rcontrollers[loop.index+1]}(${port});
     % if rinverted[loop.index+1] ^ turn:
-    rightFollower${loop.index}.setInverted(true);
+    rightSlave${loop.index}.setInverted(true);
+    % else:
+    rightSlave.setInverted(false);
     % endif
-    rightFollower${loop.index}.follow(rightMaster);
-    rightFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
+    rightSlave${loop.index}.follow(rightMaster);
+    rightSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
     % endfor
 
     //

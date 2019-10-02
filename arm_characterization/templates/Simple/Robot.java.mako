@@ -44,6 +44,8 @@ public class Robot extends TimedRobot {
   double priorAutospeed = 0;
   Number[] numberArray = new Number[6];
 
+  SpeedControllerGroup armMotor;
+
   @Override
   public void robotInit() {
 
@@ -56,13 +58,13 @@ public class Robot extends TimedRobot {
 
     SpeedController[] armMotors = new SpeedController[${len(ports) - 1}];
     % for port in ports[1:]:
-    armMotors[${loop.index}] = new ${controllers[loop.index]}(${port});
+    armMotors[${loop.index}] = new ${controllers[loop.index+1]}(${port});
     % if inverted[loop.index+1]:
     armMotors[${loop.index}].setInverted(true);
     % endif
     % endfor
 
-    SpeedControllerGroup armMotor = new SpeedControllerGroup(armMotor1, armMotors);
+    armMotor = new SpeedControllerGroup(armMotor1, armMotors);
 
     //
     // Configure encoder related functions -- getDistance and getrate should return
@@ -71,13 +73,15 @@ public class Robot extends TimedRobot {
 
     % if units == 'Degrees':
     double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * 360.;
-    % else if units == 'Radians':
+    % elif units == 'Radians':
     double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * 2. * Math.PI;
-    % else:
+    % elif units == 'Rotations':
     double encoderConstant = (1 / ENCODER_PULSE_PER_REV);
+    % else:
+    double encoderConstant = 1;
     % endif
 
-    Encoder encoder = new Encoder(${encoderports{0}}, ${encoderports[1]});
+    Encoder encoder = new Encoder(${encoderports[0]}, ${encoderports[1]});
     encoder.setDistancePerPulse(encoderConstant);
     % if encoderinv:
     encoder.setReverseDirection(true);

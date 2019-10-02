@@ -29,11 +29,11 @@ def newProject(dir, mech):
 
 
 def loggerArm(dir):
-    arm_characterization.data_logger.main(0)
+    arm_characterization.data_logger.main(0, getcwd(), arm_characterization.data_logger.TestRunner)
 
 
 def analyzerArm(dir):
-    arm_characterization.data_analyzer.main()
+    arm_characterization.data_analyzer.main(getcwd())
 
 
 def loggerDrive(dir):

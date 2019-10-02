@@ -65,7 +65,7 @@ public class Robot extends TimedRobot {
 
     SpeedController[] leftMotors = new SpeedController[${len(lports) - 1}];
     % for port in lports[1:]:
-    leftMotors[${loop.index}] = new ${lcontrollers[loop.index]}(${port});
+    leftMotors[${loop.index}] = new ${lcontrollers[loop.index+1]}(${port});
     % if linverted[loop.index+1]:
     leftMotors[${loop.index}].setInverted(true);
     % endif
@@ -73,7 +73,7 @@ public class Robot extends TimedRobot {
 
     SpeedController[] rightMotors = new SpeedController[${len(lports) - 1}];
     % for port in rports[1:]:
-    rightMotors[${loop.index}] = new ${rcontrollers[loop.index]}(${port});
+    rightMotors[${loop.index}] = new ${rcontrollers[loop.index+1]}(${port});
     % if rinverted[loop.index+1]:
     rightMotors[${loop.index}].setInverted(true);
     % endif

@@ -29,20 +29,19 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
-  static private double WHEEL_DIAMETER = ${diam};
+  // The offset of encoder zero from horizontal, in degrees.
+  // It is CRUCIAL that this be set correctly, or the characterization will not
+  // work!
+  static private double OFFSET = ${offset};
   static private double ENCODER_PULSE_PER_REV = ${ppr};
   static private int PIDIDX = 0;
 
   Joystick stick;
-  DifferentialDrive drive;
 
-  WPI_TalonSRX leftMaster;
-  WPI_TalonSRX rightMaster;
+  ${controllers[0]} armMaster;
 
-  Supplier<Double> leftEncoderPosition;
-  Supplier<Double> leftEncoderRate;
-  Supplier<Double> rightEncoderPosition;
-  Supplier<Double> rightEncoderRate;
+  Supplier<Double> encoderPosition;
+  Supplier<Double> encoderRate;
 
   NetworkTableEntry autoSpeedEntry =
       NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
@@ -50,93 +49,62 @@ public class Robot extends TimedRobot {
       NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
 
   double priorAutospeed = 0;
-  Number[] numberArray = new Number[9];
+  Number[] numberArray = new Number[6];
 
   @Override
   public void robotInit() {
 
     stick = new Joystick(0);
 
-    ${lcontrollers[0]} leftMaster = new ${lcontrollers[0]}(${lports[0]});
-    % if linverted[0] ^ turn:
-    leftMaster.setInverted(true);
-    % endif
-    % if lencoderinv:
-    leftMaster.setSensorPhase(true);
+    armMaster = new ${controllers[0]}(${ports[0]});
+    % if inverted[0]:
+    armMaster.setInverted(true);
     % else:
-    leftMaster.setSensorPhase(false);
+    armMaster.setInverted(false);
     % endif
-    leftMaster.setNeutralMode(NeutralMode.Brake);
-
-    ${rcontrollers[0]} rightMaster = new ${rcontrollers[0]}(${rports[0]});
-    % if linverted[0]:
-    rightMaster.setInverted(true);
-    % endif
-    % if rencoderinv:
-    rightMaster.setSensorPhase(true);
+    % if encoderinv:
+    armMaster.setSensorPhase(true);
     % else:
-    rightMaster.setSensorPhase(false);
+    armMaster.setSensorPhase(false);
     % endif
-    rightMaster.setNeutralMode(NeutralMode.Brake);
+    armMaster.setNeutralMode(NeutralMode.Brake);
 
-    % for controller in lcontrollers[1:]:
-    ${controller} leftFollower${loop.index} = new ${controller}(${lports[loop.index]});
-    % if linverted[loop.index+1] ^ turn:
-    leftFollower${loop.index}.setInverted(true);
+    % for port in ports[1:]:
+    ${controllers[loop.index+1]} armSlave${loop.index} = new ${controllers[loop.index+1]}(${port});
+    % if inverted[loop.index+1]:
+    armSlave${loop.index}.setInverted(true);
+    % else:
+    armSlave${loop.index}.setInverted(false);
     % endif
-    leftFollower${loop.index}.follow(leftMaster);
-    leftFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
+    armSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
+    armSlave${loop.index}.follow(armMaster);
     % endfor
-
-    % for controller in rcontrollers[1:]:
-    ${controller} rightFollower${loop.index} = new ${controller}(${rports[loop.index]});
-    % if rinverted[loop.index+1] ^ turn:
-    rightFollower${loop.index}.setInverted(true);
-    % endif
-    rightFollower${loop.index}.follow(rightMaster);
-    rightFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
-    % endfor
-
-    //
-    // Configure drivetrain movement
-    //
-
-    drive = new DifferentialDrive(leftMaster, rightMaster);
-
-    drive.setDeadband(0);
 
     //
     // Configure encoder related functions -- getDistance and getrate should
-    // return ft and ft/s
+    // return degrees and degrees/sec
     //
 
-    double encoderConstant =
-        (1 / ENCODER_PULSE_PER_REV) * WHEEL_DIAMETER * Math.PI;
-
-    leftMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
-                                                PIDIDX, 10);
-    leftEncoderPosition = ()
-        -> leftMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
-    leftEncoderRate = ()
-        -> leftMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
-               10;
-
-    % if rencoderinv is not None:
-    rightMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
-                                                 PIDIDX, 10);
-    rightEncoderPosition = ()
-        -> rightMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
-    rightEncoderRate = ()
-        -> rightMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
-               10;
+    % if units == 'Degrees':
+    double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * 360.;
+    % elif units == 'Radians':
+    double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * 2. * Math.PI;
+    % elif units == 'Rotations':
+    double encoderConstant = (1 / ENCODER_PULSE_PER_REV);
     % else:
-    rightEncoderPosition = leftEncoderPosition;
-    rightEncoderRate = leftEncoderRate;
+    double encoderConstant = 1;
     % endif
 
+    armMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX,
+                                          10);
+    encoderPosition = ()
+        -> armMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant +
+               OFFSET;
+    encoderRate =
+        () -> armMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
+
     // Reset encoders
-    leftMaster.setSelectedSensorPosition(0);
-    rightMaster.setSelectedSensorPosition(0);
+    armMaster.setSelectedSensorPosition(0);
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
@@ -146,7 +114,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    drive.tankDrive(0, 0);
+    armMaster.set(0);
   }
 
   @Override
@@ -155,10 +123,8 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     // feedback for users, but not used by the control program
-    SmartDashboard.putNumber("l_encoder_pos", leftEncoderPosition.get());
-    SmartDashboard.putNumber("l_encoder_rate", leftEncoderRate.get());
-    SmartDashboard.putNumber("r_encoder_pos", rightEncoderPosition.get());
-    SmartDashboard.putNumber("r_encoder_rate", rightEncoderRate.get());
+    SmartDashboard.putNumber("encoder_pos", encoderPosition.get());
+    SmartDashboard.putNumber("encoder_rate", encoderRate.get());
   }
 
   @Override
@@ -168,7 +134,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    drive.arcadeDrive(-stick.getY(), stick.getX());
+    armMaster.set(-stick.getY());
   }
 
   @Override
@@ -190,35 +156,27 @@ public class Robot extends TimedRobot {
     // Retrieve values to send back before telling the motors to do something
     double now = Timer.getFPGATimestamp();
 
-    double leftPosition = leftEncoderPosition.get();
-    double leftRate = leftEncoderRate.get();
-
-    double rightPosition = rightEncoderPosition.get();
-    double rightRate = rightEncoderRate.get();
+    double position = encoderPosition.get();
+    double rate = encoderRate.get();
 
     double battery = RobotController.getBatteryVoltage();
 
-    double leftMotorVolts = leftMaster.getMotorOutputVoltage();
-    double rightMotorVolts = rightMaster.getMotorOutputVoltage();
+    double motorVolts = armMaster.getMotorOutputVoltage();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
 
     // command motors to do things
-    drive.tankDrive(autospeed, autospeed, false);
+    armMaster.set(autospeed);
 
     // send telemetry data array back to NT
     numberArray[0] = now;
     numberArray[1] = battery;
     numberArray[2] = autospeed;
-    numberArray[3] = leftMotorVolts;
-    numberArray[4] = rightMotorVolts;
-    numberArray[5] = leftPosition;
-    numberArray[6] = rightPosition;
-    numberArray[7] = leftRate;
-    numberArray[8] = rightRate;
-
+    numberArray[3] = motorVolts;
+    numberArray[4] = position;
+    numberArray[5] = rate;
     telemetryEntry.setNumberArray(numberArray);
   }
 }
