@@ -88,9 +88,11 @@ def configureGUI(STATE, mech):
                         )
                     )
         except FileExistsError:
-            tkinter.messagebox.showerror(
-                'Error!', 'Project directory already exists!'
-            )
+            if tkinter.messagebox.askyesno(
+                'Warning!', 'Project directory already exists!  Do you want to overwrite it?'
+            ):
+                shutil.rmtree(dst)
+                genProject()
         except:
             tkinter.messagebox.showerror(
                 'Error!', 'Unable to generate project - config may be bad'

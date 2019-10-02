@@ -10,6 +10,7 @@ setuptools.setup(
         "arm_characterization",
         "drive_characterization",
         "elevator_characterization",
+        "logger_gui",
         "cli",
         "utils",
         "newproject"
