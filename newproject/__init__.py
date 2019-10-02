@@ -143,7 +143,7 @@ def configureGUI(STATE, mech):
             if out != "":
                 window.stdoutText.insert(END, out)
 
-            if not (out == "" and process.poll() is none):
+            if not (out == "" and process.poll() is None):
                 STATE.mainGUI.after(10, lambda: updateStdout(process, window))
 
     templatePath = None
