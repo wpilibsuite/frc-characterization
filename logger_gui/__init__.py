@@ -29,9 +29,11 @@ import time
 import tkinter
 from tkinter import *
 
-from drive_characterization.data_analyzer import (AUTOSPEED_COL,
-                                                  L_ENCODER_P_COL,
-                                                  R_ENCODER_P_COL)
+from drive_characterization.data_analyzer import (
+    AUTOSPEED_COL,
+    L_ENCODER_P_COL,
+    R_ENCODER_P_COL,
+)
 from networktables import NetworkTables
 from networktables import __version__ as ntversion
 from networktables.util import ntproperty
@@ -44,6 +46,7 @@ if tuple(map(int, ntversion.split(".")[:3])) < (2018, 1, 2):
 
 
 # GUI SETUP
+
 
 def configure_gui(STATE, RUNNER):
     def getFile():
@@ -329,7 +332,7 @@ class GuiState:
             self.mainGUI.after_cancel(self.task_handle)
             self.mainGUI.destroy()
 
-        self.mainGUI.protocol('WM_DELETE_WINDOW', onClose)
+        self.mainGUI.protocol("WM_DELETE_WINDOW", onClose)
 
     def postTask(self, task):
         self.task_queue.put(task)
@@ -340,6 +343,7 @@ class GuiState:
             return True
         except queue.Empty:
             return False
+
 
 def main(team, dir, runner):
 
@@ -358,8 +362,8 @@ if __name__ == "__main__":
 
     main(0, os.getcwd(), TestRunner)
 
-    # log_datefmt = "%H:%M:%S"
-    # log_format = "%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s"
+    # log_datefmt = '%H:%M:%S'
+    # log_format = '%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s'
 
     # logging.basicConfig(level=logging.INFO, datefmt=log_datefmt, format=log_format)
 

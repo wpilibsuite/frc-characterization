@@ -27,14 +27,16 @@ import queue
 import threading
 import time
 
-from drive_characterization.data_analyzer import (AUTOSPEED_COL,
-                                                  L_ENCODER_P_COL,
-                                                  R_ENCODER_P_COL)
+import logger_gui
+from drive_characterization.data_analyzer import (
+    AUTOSPEED_COL,
+    L_ENCODER_P_COL,
+    R_ENCODER_P_COL,
+)
 from networktables import NetworkTables
 from networktables import __version__ as ntversion
 from networktables.util import ntproperty
 
-import logger_gui
 
 class TestRunner:
 
