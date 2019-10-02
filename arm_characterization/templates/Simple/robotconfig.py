@@ -8,34 +8,21 @@
   # 'PWMVictorSPX'
   # 'WPI_TalonSRX'
   # 'WPI_VictorSPX'
-  'rightControllerTypes': ('Spark', 'Spark'),
-  'leftControllerTypes': ('Spark', 'Spark'),
+  'controllerTypes': ('Spark'),
+  
+  # Ports for the motors
+  'motorPorts': (0),
 
-  # Ports for the left-side motors
-  'leftMotorPorts': (0, 1),
-  # Ports for the right-side motors
-  'rightMotorPorts': (2, 3),
-
-  # Inversions for the left-side motors
-  'leftMotorsInverted': (False, False),
-  # Inversions for the right side motors
-  'rightMotorsInverted': (False, False),
-
-  # Wheel diameter (in units of your choice - will dictate units of analysis)
-  'wheelDiameter': .333,
+  # Inversions for the motors
+  'motorsInverted': (False),
 
   # If your robot has only one encoder, remove all of the right encoder fields
   # Encoder pulses-per-revolution (*NOT* cycles per revolution!)
+  # This value should be the pulses per revolution *of the wheels*, and so
+  # should take into account gearing between the encoder and the wheels
   'encoderPPR': 512,
   # Ports for the left-side encoder
-  'leftEncoderPorts': (0, 1),
-  # Ports for the right-side encoder
-  'rightEncoderPorts': (2, 3),
+  'encoderPorts': (0, 1),
   # Whether the left encoder is inverted
-  'leftEncoderInverted': False,
-  # Whether the right encoder is inverted:
-  'rightEncoderInverted': False,
-
-  # Whether the robot should turn (for angular tests)
-  'turn': False,
+  'encoderInverted': False,
 }
