@@ -87,6 +87,10 @@ def configureGUI(STATE, mech):
                             STATE.project_type.get(), STATE.team_number.get()
                         )
                     )
+        except FileExistsError:
+            tkinter.messagebox.showerror(
+                'Error!', 'Project directory already exists!'
+            )
         except:
             tkinter.messagebox.showerror(
                 'Error!', 'Unable to generate project - config may be bad'
