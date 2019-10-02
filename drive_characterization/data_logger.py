@@ -113,10 +113,9 @@ def configure_gui(STATE, RUNNER):
         enableTestButtons()
 
     def runPostedTasks():
-        if STATE.mainGUI.winfo_exists():
-            while STATE.runTask():
-                pass
-            STATE.mainGUI.after(10, runPostedTasks)
+        while STATE.runTask():
+            pass
+        STATE.task_handle = STATE.mainGUI.after(10, runPostedTasks)
 
     def quasiForward():
         disableTestButtons()
@@ -323,6 +322,14 @@ class GuiState:
         self.dynamic_step_voltage.set(6)
 
         self.task_queue = queue.Queue()
+
+        self.task_handle = None
+
+        def onClose():
+            self.mainGUI.after_cancel(self.task_handle)
+            self.mainGUI.destroy()
+
+        self.mainGUI.protocol('WM_DELETE_WINDOW', onClose)
 
     def postTask(self, task):
         self.task_queue.put(task)
