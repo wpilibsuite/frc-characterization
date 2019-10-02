@@ -29,7 +29,7 @@ def newProject(dir, mech):
 
 
 def loggerArm(dir):
-    arm_characterization.data_logger.main()
+    arm_characterization.data_logger.main(0)
 
 
 def analyzerArm(dir):
@@ -37,15 +37,15 @@ def analyzerArm(dir):
 
 
 def loggerDrive(dir):
-    drive_characterization.data_logger.main()
+    drive_characterization.data_logger.main(0, getcwd())
 
 
 def analyzerDrive(dir):
-    drive_characterization.data_analyzer.main()
+    drive_characterization.data_analyzer.main(getcwd())
 
 
 def loggerElevator(dir):
-    elevator_characterization.data_logger.main()
+    elevator_characterization.data_logger.main(0)
 
 
 def analyzerElevator(dir):

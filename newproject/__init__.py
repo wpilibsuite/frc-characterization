@@ -98,7 +98,7 @@ def configureGUI(STATE, mech):
             shutil.rmtree(dst)
 
     def deployProject():
-        if STATE.team_number == 0:
+        if STATE.team_number.get() == 0:
             cmd = 'simulatejava'
         else:
             cmd = 'deploy'
@@ -149,6 +149,12 @@ def configureGUI(STATE, mech):
 
             if not (out == '' and process.poll() is None):
                 STATE.mainGUI.after(10, lambda: updateStdout(process, window))
+
+    def runLogger():
+        mech.data_logger.main(STATE.team_number.get(), STATE.project_path.get())
+
+    def runAnalyzer():
+        mech.data_analyzer.main(STATE.project_path.get())
 
     templatePath = None
     updateTemplatePath()
@@ -211,6 +217,12 @@ def configureGUI(STATE, mech):
     deployButton = Button(bodyFrame, text='Deploy Project', command=deployProject)
     deployButton.grid(row=2, column=0, sticky='ew')
 
+    loggerButton = Button(bodyFrame, text='Launch Data Logger', command=runLogger)
+    loggerButton.grid(row=3, column=0, sticky='ew')
+
+    analyzerButton = Button(bodyFrame, text='Launch Data Analyzer', command=runAnalyzer)
+    analyzerButton.grid(row=4, column=0, sticky='ew')
+
     configEditPane = TextExtension(bodyFrame, textvariable=STATE.config)
     configEditPane.grid(row=0, column=1, rowspan=30, columnspan=10)
 
@@ -222,18 +234,18 @@ class GuiState:
     def __init__(self):
         self.mainGUI = tkinter.Tk()
 
-        self.project_path = StringVar()
+        self.project_path = StringVar(self.mainGUI)
         self.project_path.set(os.getcwd())
 
-        self.config_path = StringVar()
+        self.config_path = StringVar(self.mainGUI)
         self.config_path.set(os.path.join(os.getcwd(), 'robotconfig.py'))
 
-        self.project_type = StringVar()
+        self.project_type = StringVar(self.mainGUI)
         self.project_type.set('Simple')
 
-        self.config = StringVar()
+        self.config = StringVar(self.mainGUI)
 
-        self.team_number = IntVar()
+        self.team_number = IntVar(self.mainGUI)
 
 
 def main(mech):

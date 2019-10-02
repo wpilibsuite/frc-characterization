@@ -113,9 +113,10 @@ def configure_gui(STATE, RUNNER):
         enableTestButtons()
 
     def runPostedTasks():
-        while STATE.runTask():
-            pass
-        STATE.mainGUI.after(10, runPostedTasks)
+        if STATE.mainGUI.winfo_exists():
+            while STATE.runTask():
+                pass
+            STATE.mainGUI.after(10, runPostedTasks)
 
     def quasiForward():
         disableTestButtons()
@@ -288,37 +289,37 @@ def translate_control_word(value):
 
 
 class GuiState:
-    def __init__(self):
+    def __init__(self, team, dir):
         self.mainGUI = tkinter.Tk()
 
-        self.file_path = StringVar()
-        self.file_path.set(os.path.join(os.getcwd(), "characterization-data.json"))
+        self.file_path = StringVar(self.mainGUI)
+        self.file_path.set(os.path.join(dir, "characterization-data.json"))
 
-        self.timestamp_enabled = BooleanVar()
+        self.timestamp_enabled = BooleanVar(self.mainGUI)
         self.timestamp_enabled.set(True)
 
-        self.team_number = IntVar()
-        self.team_number.set(0)
+        self.team_number = IntVar(self.mainGUI)
+        self.team_number.set(team)
 
-        self.connected = StringVar()
+        self.connected = StringVar(self.mainGUI)
         self.connected.set("Not connected")
 
-        self.sf_completed = StringVar()
+        self.sf_completed = StringVar(self.mainGUI)
         self.sf_completed.set("Not Run")
 
-        self.sb_completed = StringVar()
+        self.sb_completed = StringVar(self.mainGUI)
         self.sb_completed.set("Not Run")
 
-        self.ff_completed = StringVar()
+        self.ff_completed = StringVar(self.mainGUI)
         self.ff_completed.set("Not Run")
 
-        self.fb_completed = StringVar()
+        self.fb_completed = StringVar(self.mainGUI)
         self.fb_completed.set("Not Run")
 
-        self.quasi_ramp_rate = DoubleVar()
+        self.quasi_ramp_rate = DoubleVar(self.mainGUI)
         self.quasi_ramp_rate.set(0.25)
 
-        self.dynamic_step_voltage = DoubleVar()
+        self.dynamic_step_voltage = DoubleVar(self.mainGUI)
         self.dynamic_step_voltage.set(6)
 
         self.task_queue = queue.Queue()
@@ -589,9 +590,9 @@ class TestRunner:
             STATE.postTask(finished)
 
 
-def main():
+def main(team, dir):
 
-    STATE = GuiState()
+    STATE = GuiState(team, dir)
     RUNNER = TestRunner()
 
     STATE.mainGUI.title("RobotPy Drive Characterization Data Logger")
@@ -603,7 +604,7 @@ def main():
 
 if __name__ == "__main__":
 
-    main()
+    main(0, os.getcwd())
 
     # log_datefmt = "%H:%M:%S"
     # log_format = "%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s"

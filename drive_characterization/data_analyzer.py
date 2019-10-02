@@ -27,22 +27,25 @@ import statsmodels.api as sm
 from mpl_toolkits.mplot3d import Axes3D
 
 class ProgramState:
-    def __init__(self):
+    def __init__(self, dir):
         self.mainGUI = tkinter.Tk()
 
-        self.window_size = IntVar()
+        self.project_path = StringVar(self.mainGUI)
+        self.project_path.set(dir)
+
+        self.window_size = IntVar(self.mainGUI)
         self.window_size.set(8)
 
-        self.motion_threshold = DoubleVar()
+        self.motion_threshold = DoubleVar(self.mainGUI)
         self.motion_threshold.set(0.2)
 
-        self.subset = StringVar()
+        self.subset = StringVar(self.mainGUI)
         self.subset.set("All Combined")
 
-        self.units = StringVar()
+        self.units = StringVar(self.mainGUI)
         self.units.set("Feet")
 
-        self.wheel_diam = DoubleVar()
+        self.wheel_diam = DoubleVar(self.mainGUI)
         self.wheel_diam.set(".333")
 
         self.stored_data = None
@@ -57,53 +60,53 @@ class ProgramState:
         self.step_forward_r = None
         self.step_backward_r = None
 
-        self.ks = DoubleVar()
-        self.kv = DoubleVar()
-        self.ka = DoubleVar()
-        self.kcos = DoubleVar()
-        self.r_square = DoubleVar()
+        self.ks = DoubleVar(self.mainGUI)
+        self.kv = DoubleVar(self.mainGUI)
+        self.ka = DoubleVar(self.mainGUI)
+        self.kcos = DoubleVar(self.mainGUI)
+        self.r_square = DoubleVar(self.mainGUI)
 
-        self.qp = DoubleVar()
+        self.qp = DoubleVar(self.mainGUI)
         self.qp.set(0.1)
 
-        self.qv = DoubleVar()
+        self.qv = DoubleVar(self.mainGUI)
         self.qv.set(0.2)
 
-        self.max_effort = DoubleVar()
+        self.max_effort = DoubleVar(self.mainGUI)
         self.max_effort.set(7)
 
-        self.period = DoubleVar()
+        self.period = DoubleVar(self.mainGUI)
         self.period.set(0.02)
 
-        self.max_controller_output = DoubleVar()
+        self.max_controller_output = DoubleVar(self.mainGUI)
         self.max_controller_output.set(12)
 
-        self.controller_time_normalized = BooleanVar()
+        self.controller_time_normalized = BooleanVar(self.mainGUI)
         self.controller_time_normalized.set(True)
 
-        self.gearing = DoubleVar()
+        self.gearing = DoubleVar(self.mainGUI)
         self.gearing.set(1)
 
-        self.controller_type = StringVar()
+        self.controller_type = StringVar(self.mainGUI)
         self.controller_type.set("Onboard")
 
-        self.encoder_ppr = IntVar()
+        self.encoder_ppr = IntVar(self.mainGUI)
         self.encoder_ppr.set(4096)
 
-        self.has_slave = BooleanVar()
+        self.has_slave = BooleanVar(self.mainGUI)
         self.has_slave.set(False)
 
-        self.slave_period = DoubleVar()
+        self.slave_period = DoubleVar(self.mainGUI)
         self.slave_period.set(0.01)
 
-        self.gain_units_preset = StringVar()
+        self.gain_units_preset = StringVar(self.mainGUI)
         self.gain_units_preset.set("Default")
 
-        self.loop_type = StringVar()
+        self.loop_type = StringVar(self.mainGUI)
         self.loop_type.set("Position")
 
-        self.kp = DoubleVar()
-        self.kd = DoubleVar()
+        self.kp = DoubleVar(self.mainGUI)
+        self.kd = DoubleVar(self.mainGUI)
 
 
 # Set up main window
@@ -112,23 +115,24 @@ class ProgramState:
 def configure_gui(STATE):
     def getFile():
         dataFile = tkinter.filedialog.askopenfile(
-            parent=STATE.mainGUI, mode="rb", title="Choose the data file (.JSON)"
+            parent=STATE.mainGUI, mode="rb", title="Choose the data file (.JSON)", initialdir=STATE.project_path.get()
         )
-        fileEntry.configure(state="normal")
-        fileEntry.delete(0, END)
-        fileEntry.insert(0, dataFile.name)
-        fileEntry.configure(state="readonly")
+        if dataFile:
+            fileEntry.configure(state="normal")
+            fileEntry.delete(0, END)
+            fileEntry.insert(0, dataFile.name)
+            fileEntry.configure(state="readonly")
 
-        data = json.load(dataFile)
+            data = json.load(dataFile)
 
-        # Transform the data into a numpy array to make it easier to use
-        # -> transpose it so we can deal with it in columns
-        for k in JSON_DATA_KEYS:
-            data[k] = np.array(data[k]).transpose()
+            # Transform the data into a numpy array to make it easier to use
+            # -> transpose it so we can deal with it in columns
+            for k in JSON_DATA_KEYS:
+                data[k] = np.array(data[k]).transpose()
 
-        STATE.stored_data = data
+            STATE.stored_data = data
 
-        analyzeButton.configure(state="normal")
+            analyzeButton.configure(state="normal")
 
     def runAnalysis():
 
@@ -1151,9 +1155,9 @@ def _calcGainsVel(kv, ka, qv, effort, period):
     return kp, kd
 
 
-def main():
+def main(dir):
 
-    STATE = ProgramState()
+    STATE = ProgramState(dir)
 
     STATE.mainGUI.title("RobotPy Drive Characterization Tool")
 
@@ -1162,4 +1166,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(os.getcwd())
