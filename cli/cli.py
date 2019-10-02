@@ -37,7 +37,7 @@ def analyzerArm(dir):
 
 
 def loggerDrive(dir):
-    drive_characterization.data_logger.main(0, getcwd())
+    drive_characterization.data_logger.main(0, getcwd(), drive_characterization.data_logger.TestRunner)
 
 
 def analyzerDrive(dir):
