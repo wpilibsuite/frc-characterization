@@ -13,18 +13,18 @@ import csv
 import json
 import math
 import tkinter
+from os.path import basename, dirname, exists, join, splitext
 from tkinter import *
 from tkinter import filedialog
-from os.path import basename, exists, dirname, join, splitext
-
-from utils.utils import IntEntry, FloatEntry
 
 import control as cnt
 import frccontrol as frccnt
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import statsmodels.api as sm
 from mpl_toolkits.mplot3d import Axes3D
+from utils.utils import FloatEntry, IntEntry
+
 
 class ProgramState:
     def __init__(self, dir):
