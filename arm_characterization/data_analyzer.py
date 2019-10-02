@@ -12,19 +12,19 @@ import argparse
 import csv
 import json
 import math
+import os
 import tkinter
+from os.path import basename, dirname, exists, join, splitext
 from tkinter import *
 from tkinter import filedialog
-from os.path import basename, exists, dirname, join, splitext
-
-from utils.utils import IntEntry, FloatEntry
 
 import control as cnt
 import frccontrol as frccnt
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import statsmodels.api as sm
 from mpl_toolkits.mplot3d import Axes3D
+from utils.utils import FloatEntry, IntEntry
 
 #
 # These parameters are used to indicate which column of data each parameter
@@ -35,7 +35,10 @@ columns = dict(time=0, battery=1, autospeed=2, volts=3, encoder_pos=4, encoder_v
 
 
 class ProgramState:
-    def __init__(self):
+    def __init__(self, dir):
+        self.project_path = StringVar()
+        self.project_path.set(dir)
+
         self.mainGUI = tkinter.Tk()
 
         self.stored_data = None
@@ -45,62 +48,62 @@ class ProgramState:
         self.step_forward = None
         self.step_backward = None
 
-        self.window_size = IntVar()
+        self.window_size = IntVar(STATE.mainGUI)
         self.window_size.set(8)
 
-        self.motion_threshold = DoubleVar()
+        self.motion_threshold = DoubleVar(STATE.mainGUI)
         self.motion_threshold.set(20)
 
-        self.direction = StringVar()
-        self.direction.set("Combined")
+        self.direction = StringVar(STATE.mainGUI)
+        self.direction.set('Combined')
 
-        self.units = StringVar()
-        self.units.set("Degrees")
+        self.units = StringVar(STATE.mainGUI)
+        self.units.set('Degrees')
 
-        self.ks = DoubleVar()
-        self.kv = DoubleVar()
-        self.ka = DoubleVar()
-        self.kcos = DoubleVar()
-        self.r_square = DoubleVar()
+        self.ks = DoubleVar(STATE.mainGUI)
+        self.kv = DoubleVar(STATE.mainGUI)
+        self.ka = DoubleVar(STATE.mainGUI)
+        self.kcos = DoubleVar(STATE.mainGUI)
+        self.r_square = DoubleVar(STATE.mainGUI)
 
-        self.qp = DoubleVar()
+        self.qp = DoubleVar(STATE.mainGUI)
         self.qp.set(2)
 
-        self.qv = DoubleVar()
+        self.qv = DoubleVar(STATE.mainGUI)
         self.qv.set(4)
 
-        self.max_effort = DoubleVar()
+        self.max_effort = DoubleVar(STATE.mainGUI)
         self.max_effort.set(7)
 
-        self.period = DoubleVar()
+        self.period = DoubleVar(STATE.mainGUI)
         self.period.set(0.02)
 
-        self.max_controller_output = DoubleVar()
+        self.max_controller_output = DoubleVar(STATE.mainGUI)
         self.max_controller_output.set(12)
 
-        self.controller_time_normalized = BooleanVar()
+        self.controller_time_normalized = BooleanVar(STATE.mainGUI)
         self.controller_time_normalized.set(True)
 
-        self.gearing = DoubleVar()
+        self.gearing = DoubleVar(STATE.mainGUI)
         self.gearing.set(1)
 
-        self.controller_type = StringVar()
-        self.controller_type.set("Onboard")
+        self.controller_type = StringVar(STATE.mainGUI)
+        self.controller_type.set('Onboard')
 
-        self.encoder_ppr = IntVar()
+        self.encoder_ppr = IntVar(STATE.mainGUI)
         self.encoder_ppr.set(4096)
 
-        self.has_slave = BooleanVar()
+        self.has_slave = BooleanVar(STATE.mainGUI)
         self.has_slave.set(False)
 
-        self.slave_period = DoubleVar()
+        self.slave_period = DoubleVar(STATE.mainGUI)
         self.slave_period.set(0.01)
 
-        self.gain_units_preset = StringVar()
-        self.gain_units_preset.set("Default")
+        self.gain_units_preset = StringVar(STATE.mainGUI)
+        self.gain_units_preset.set('Default')
 
-        self.kp = DoubleVar()
-        self.kd = DoubleVar()
+        self.kp = DoubleVar(STATE.mainGUI)
+        self.kd = DoubleVar(STATE.mainGUI)
 
 
 # Set up main window
@@ -109,12 +112,15 @@ class ProgramState:
 def configure_gui(STATE):
     def getFile():
         dataFile = tkinter.filedialog.askopenfile(
-            parent=STATE.mainGUI, mode="rb", title="Choose the data file (.JSON)"
+            parent=STATE.mainGUI,
+            mode='rb',
+            title='Choose the data file (.JSON)',
+            initialdir=STATE.project_path.get(),
         )
-        fileEntry.configure(state="normal")
+        fileEntry.configure(state='normal')
         fileEntry.delete(0, END)
         fileEntry.insert(0, dataFile.name)
-        fileEntry.configure(state="readonly")
+        fileEntry.configure(state='readonly')
 
         data = json.load(dataFile)
 
@@ -125,7 +131,7 @@ def configure_gui(STATE):
 
         STATE.stored_data = data
 
-        analyzeButton.configure(state="normal")
+        analyzeButton.configure(state='normal')
 
     def runAnalysis():
 
@@ -141,9 +147,9 @@ def configure_gui(STATE):
         ):
             return
 
-        if STATE.direction.get() == "Forward":
+        if STATE.direction.get() == 'Forward':
             ks, kv, ka, kcos, rsquare = calcFit(STATE.quasi_forward, STATE.step_forward)
-        elif STATE.direction.get() == "Backward":
+        elif STATE.direction.get() == 'Backward':
             ks, kv, ka, kcos, rsquare = calcFit(
                 STATE.quasi_backward, STATE.step_backward
             )
@@ -153,51 +159,51 @@ def configure_gui(STATE):
                 np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
             )
 
-        STATE.ks.set(float("%.3g" % ks))
-        STATE.kv.set(float("%.3g" % kv))
-        STATE.ka.set(float("%.3g" % ka))
-        STATE.kcos.set(float("%.3g" % kcos))
-        STATE.r_square.set(float("%.3g" % rsquare))
+        STATE.ks.set(float('%.3g' % ks))
+        STATE.kv.set(float('%.3g' % kv))
+        STATE.ka.set(float('%.3g' % ka))
+        STATE.kcos.set(float('%.3g' % kcos))
+        STATE.r_square.set(float('%.3g' % rsquare))
 
         calcGains()
 
-        timePlotsButton.configure(state="normal")
-        voltPlotsButton.configure(state="normal")
-        fancyPlotButton.configure(state="normal")
-        calcGainsButton.configure(state="normal")
+        timePlotsButton.configure(state='normal')
+        voltPlotsButton.configure(state='normal')
+        fancyPlotButton.configure(state='normal')
+        calcGainsButton.configure(state='normal')
 
     def plotTimeDomain():
-        if STATE.direction.get() == "Forward":
-            _plotTimeDomain("Forward", STATE.quasi_forward, STATE.step_forward)
-        elif STATE.direction.get() == "Backward":
-            _plotTimeDomain("Backward", STATE.quasi_backward, STATE.step_backward)
+        if STATE.direction.get() == 'Forward':
+            _plotTimeDomain('Forward', STATE.quasi_forward, STATE.step_forward)
+        elif STATE.direction.get() == 'Backward':
+            _plotTimeDomain('Backward', STATE.quasi_backward, STATE.step_backward)
         else:
             _plotTimeDomain(
-                "Combined",
+                'Combined',
                 np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
                 np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
             )
 
     def plotVoltageDomain():
-        if STATE.direction.get() == "Forward":
-            _plotVoltageDomain("Forward", STATE.quasi_forward, STATE.step_forward)
-        elif STATE.direction.get() == "Backward":
-            _plotVoltageDomain("Backward", STATE.quasi_backward, STATE.step_backward)
+        if STATE.direction.get() == 'Forward':
+            _plotVoltageDomain('Forward', STATE.quasi_forward, STATE.step_forward)
+        elif STATE.direction.get() == 'Backward':
+            _plotVoltageDomain('Backward', STATE.quasi_backward, STATE.step_backward)
         else:
             _plotVoltageDomain(
-                "Combined",
+                'Combined',
                 np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
                 np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
             )
 
     def plot3D():
-        if STATE.direction.get() == "Forward":
-            _plot3D("Forward", STATE.quasi_forward, STATE.step_forward)
-        elif STATE.direction.get() == "Backward":
-            _plot3D("Backward", STATE.quasi_backward, STATE.step_backward)
+        if STATE.direction.get() == 'Forward':
+            _plot3D('Forward', STATE.quasi_forward, STATE.step_forward)
+        elif STATE.direction.get() == 'Backward':
+            _plot3D('Backward', STATE.quasi_backward, STATE.step_backward)
         else:
             _plot3D(
-                "Combined",
+                'Combined',
                 np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
                 np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
             )
@@ -228,109 +234,107 @@ def configure_gui(STATE):
             kd = kd / STATE.period.get()
 
         # Get correct conversion factor for rotations
-        if STATE.units.get() == "Degrees":
+        if STATE.units.get() == 'Degrees':
             rotation = 360
-        elif STATE.units.get() == "Radians":
+        elif STATE.units.get() == 'Radians':
             rotation = 2 * math.pi
-        elif STATE.units.get() == "Rotations":
+        elif STATE.units.get() == 'Rotations':
             rotation = 1
 
         # Scale by gearing if using Talon
-        if STATE.controller_type.get() == "Talon":
+        if STATE.controller_type.get() == 'Talon':
             kp = kp * rotation / (STATE.encoder_ppr.get() * STATE.gearing.get())
             kd = kd * rotation / (STATE.encoder_ppr.get() * STATE.gearing.get())
 
-        STATE.kp.set(float("%.3g" % kp))
-        STATE.kd.set(float("%.3g" % kd))
+        STATE.kp.set(float('%.3g' % kp))
+        STATE.kd.set(float('%.3g' % kd))
 
     def presetGains(*args):
 
         presets = {
-            "Default": lambda: (
+            'Default': lambda: (
                 STATE.max_controller_output.set(12),
                 STATE.period.set(0.02),
                 STATE.controller_time_normalized.set(True),
-                STATE.controller_type.set("Onboard"),
+                STATE.controller_type.set('Onboard'),
             ),
-            "WPILib (new)": lambda: (
+            'WPILib (new)': lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.02),
                 STATE.controller_time_normalized.set(True),
-                STATE.controller_type.set("Onboard"),
+                STATE.controller_type.set('Onboard'),
             ),
-            "WPILib (old)": lambda: (
+            'WPILib (old)': lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.05),
                 STATE.controller_time_normalized.set(False),
-                STATE.controller_type.set("Onboard"),
+                STATE.controller_type.set('Onboard'),
             ),
-            "Talon (new)": lambda: (
+            'Talon (new)': lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(True),
-                STATE.controller_type.set("Talon"),
+                STATE.controller_type.set('Talon'),
             ),
-            "Talon (old)": lambda: (
+            'Talon (old)': lambda: (
                 STATE.max_controller_output.set(1023),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
-                STATE.controller_type.set("Talon"),
+                STATE.controller_type.set('Talon'),
             ),
-            "Spark MAX": lambda: (
+            'Spark MAX': lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
-                STATE.controller_type.set("Spark"),
+                STATE.controller_type.set('Spark'),
             ),
         }
 
-        presets.get(STATE.gain_units_preset.get(), "Default")()
+        presets.get(STATE.gain_units_preset.get(), 'Default')()
 
     def enableOffboard(*args):
-        if STATE.controller_type.get() == "Onboard":
-            gearingEntry.configure(state="disabled")
-            pprEntry.configure(state="disabled")
-            hasSlave.configure(state="disabled")
-            slavePeriodEntry.configure(state="disabled")
-        elif STATE.controller_type.get() == "Talon":
-            gearingEntry.configure(state="normal")
-            pprEntry.configure(state="normal")
-            hasSlave.configure(state="normal")
+        if STATE.controller_type.get() == 'Onboard':
+            gearingEntry.configure(state='disabled')
+            pprEntry.configure(state='disabled')
+            hasSlave.configure(state='disabled')
+            slavePeriodEntry.configure(state='disabled')
+        elif STATE.controller_type.get() == 'Talon':
+            gearingEntry.configure(state='normal')
+            pprEntry.configure(state='normal')
+            hasSlave.configure(state='normal')
             if STATE.has_slave.get():
-                slavePeriodEntry.configure(state="normal")
+                slavePeriodEntry.configure(state='normal')
             else:
-                slavePeriodEntry.configure(state="disabled")
+                slavePeriodEntry.configure(state='disabled')
         else:
-            gearingEntry.configure(state="disabled")
-            pprEntry.configure(state="disabled")
-            hasSlave.configure(state="normal")
+            gearingEntry.configure(state='disabled')
+            pprEntry.configure(state='disabled')
+            hasSlave.configure(state='normal')
             if STATE.has_slave.get():
-                slavePeriodEntry.configure(state="normal")
+                slavePeriodEntry.configure(state='normal')
             else:
-                slavePeriodEntry.configure(state="disabled")
+                slavePeriodEntry.configure(state='disabled')
 
     # TOP OF WINDOW (FILE SELECTION)
 
     topFrame = Frame(STATE.mainGUI)
     topFrame.grid(row=0, column=0, columnspan=4)
 
-    Button(topFrame, text="Select Data File", command=getFile).grid(
-        row=0, column=0
-    )
+    Button(topFrame, text='Select Data File', command=getFile).grid(row=0, column=0)
 
     fileEntry = Entry(topFrame, width=90)
     fileEntry.grid(row=0, column=1, columnspan=3)
-    fileEntry.configure(state="readonly")
+    fileEntry.configure(state='readonly')
 
-    Label(topFrame, text="Units:", width=10).grid(row=0, column=4)
+    Label(topFrame, text='Units:', width=10).grid(row=0, column=4)
 
-    unitChoices = {"Degrees", "Radians", "Rotations"}
+    unitChoices = {'Degrees', 'Radians', 'Rotations'}
     unitsMenu = OptionMenu(topFrame, STATE.units, *sorted(unitChoices))
     unitsMenu.configure(width=10)
-    unitsMenu.grid(row=0, column=5, sticky="ew")
+    unitsMenu.grid(row=0, column=5, sticky='ew')
 
-    Label(topFrame, text="Direction:", width=10).grid(row=0, column=6)
-    directions = {"Combined", "Forward", "Backward"}
+    Label(topFrame, text='Direction:', width=10).grid(row=0, column=6)
+    directions = {'Combined', 'Forward', 'Backward'}
 
     dirMenu = OptionMenu(topFrame, STATE.direction, *sorted(directions))
     dirMenu.configure(width=10)
@@ -341,196 +345,196 @@ def configure_gui(STATE):
 
     # FEEDFORWARD ANALYSIS FRAME
 
-    ffFrame = Frame(STATE.mainGUI, bd=2, relief="groove")
-    ffFrame.grid(row=1, column=0, columnspan=3, sticky="ns")
+    ffFrame = Frame(STATE.mainGUI, bd=2, relief='groove')
+    ffFrame.grid(row=1, column=0, columnspan=3, sticky='ns')
 
-    Label(ffFrame, text="Feedforward Analysis").grid(row=0, column=0, columnspan=5)
+    Label(ffFrame, text='Feedforward Analysis').grid(row=0, column=0, columnspan=5)
 
     analyzeButton = Button(
-        ffFrame, text="Analyze Data", command=runAnalysis, state="disabled"
+        ffFrame, text='Analyze Data', command=runAnalysis, state='disabled'
     )
-    analyzeButton.grid(row=1, column=0, sticky="ew")
+    analyzeButton.grid(row=1, column=0, sticky='ew')
 
     timePlotsButton = Button(
         ffFrame,
-        text="Time-Domain Diagnostics",
+        text='Time-Domain Diagnostics',
         command=plotTimeDomain,
-        state="disabled",
+        state='disabled',
     )
-    timePlotsButton.grid(row=2, column=0, sticky="ew")
+    timePlotsButton.grid(row=2, column=0, sticky='ew')
 
     voltPlotsButton = Button(
         ffFrame,
-        text="Voltage-Domain Diagnostics",
+        text='Voltage-Domain Diagnostics',
         command=plotVoltageDomain,
-        state="disabled",
+        state='disabled',
     )
-    voltPlotsButton.grid(row=3, column=0, sticky="ew")
+    voltPlotsButton.grid(row=3, column=0, sticky='ew')
 
     fancyPlotButton = Button(
-        ffFrame, text="3D Diagnostics", command=plot3D, state="disabled"
+        ffFrame, text='3D Diagnostics', command=plot3D, state='disabled'
     )
-    fancyPlotButton.grid(row=4, column=0, sticky="ew")
+    fancyPlotButton.grid(row=4, column=0, sticky='ew')
 
-    Label(ffFrame, text="Accel Window Size:", anchor="e").grid(
-        row=1, column=1, sticky="ew"
+    Label(ffFrame, text='Accel Window Size:', anchor='e').grid(
+        row=1, column=1, sticky='ew'
     )
     windowEntry = IntEntry(ffFrame, textvariable=STATE.window_size, width=5)
     windowEntry.grid(row=1, column=2)
 
-    Label(ffFrame, text="Motion Threshold (units/s):", anchor="e").grid(
-        row=2, column=1, sticky="ew"
+    Label(ffFrame, text='Motion Threshold (units/s):', anchor='e').grid(
+        row=2, column=1, sticky='ew'
     )
     thresholdEntry = FloatEntry(ffFrame, textvariable=STATE.motion_threshold, width=5)
     thresholdEntry.grid(row=2, column=2)
 
-    Label(ffFrame, text="kS:", anchor="e").grid(row=1, column=3, sticky="ew")
+    Label(ffFrame, text='kS:', anchor='e').grid(row=1, column=3, sticky='ew')
     kSEntry = FloatEntry(ffFrame, textvariable=STATE.ks, width=10)
     kSEntry.grid(row=1, column=4)
-    kSEntry.configure(state="readonly")
+    kSEntry.configure(state='readonly')
 
-    Label(ffFrame, text="kV:", anchor="e").grid(row=2, column=3, sticky="ew")
+    Label(ffFrame, text='kV:', anchor='e').grid(row=2, column=3, sticky='ew')
     kVEntry = FloatEntry(ffFrame, textvariable=STATE.kv, width=10)
     kVEntry.grid(row=2, column=4)
-    kVEntry.configure(state="readonly")
+    kVEntry.configure(state='readonly')
 
-    Label(ffFrame, text="kA:", anchor="e").grid(row=3, column=3, sticky="ew")
+    Label(ffFrame, text='kA:', anchor='e').grid(row=3, column=3, sticky='ew')
     kAEntry = FloatEntry(ffFrame, textvariable=STATE.ka, width=10)
     kAEntry.grid(row=3, column=4)
-    kAEntry.configure(state="readonly")
+    kAEntry.configure(state='readonly')
 
-    Label(ffFrame, text="kCos:", anchor="e").grid(row=4, column=3, sticky="ew")
+    Label(ffFrame, text='kCos:', anchor='e').grid(row=4, column=3, sticky='ew')
     kCosEntry = FloatEntry(ffFrame, textvariable=STATE.kcos, width=10)
     kCosEntry.grid(row=4, column=4)
-    kCosEntry.configure(state="readonly")
+    kCosEntry.configure(state='readonly')
 
-    Label(ffFrame, text="r-squared:", anchor="e").grid(row=5, column=3, sticky="ew")
+    Label(ffFrame, text='r-squared:', anchor='e').grid(row=5, column=3, sticky='ew')
     rSquareEntry = FloatEntry(ffFrame, textvariable=STATE.r_square, width=10)
     rSquareEntry.grid(row=5, column=4)
-    rSquareEntry.configure(state="readonly")
+    rSquareEntry.configure(state='readonly')
 
     for child in ffFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
 
     # FEEDBACK ANALYSIS FRAME
 
-    fbFrame = Frame(STATE.mainGUI, bd=2, relief="groove")
+    fbFrame = Frame(STATE.mainGUI, bd=2, relief='groove')
     fbFrame.grid(row=1, column=3, columnspan=5)
 
-    Label(fbFrame, text="Feedback Analysis").grid(row=0, column=0, columnspan=5)
+    Label(fbFrame, text='Feedback Analysis').grid(row=0, column=0, columnspan=5)
 
-    Label(fbFrame, text="Gain Settings Preset:", anchor="e").grid(
-        row=1, column=0, sticky="ew"
+    Label(fbFrame, text='Gain Settings Preset:', anchor='e').grid(
+        row=1, column=0, sticky='ew'
     )
     presetChoices = {
-        "Default",
-        "WPILib (new)",
-        "WPILib (old)",
-        "Talon (new)",
-        "Talon (old)",
-        "Spark MAX",
+        'Default',
+        'WPILib (new)',
+        'WPILib (old)',
+        'Talon (new)',
+        'Talon (old)',
+        'Spark MAX',
     }
     presetMenu = OptionMenu(fbFrame, STATE.gain_units_preset, *sorted(presetChoices))
     presetMenu.grid(row=1, column=1)
     presetMenu.config(width=12)
-    STATE.gain_units_preset.trace_add("write", presetGains)
+    STATE.gain_units_preset.trace_add('write', presetGains)
 
-    Label(fbFrame, text="Controller Period (s):", anchor="e").grid(
-        row=2, column=0, sticky="ew"
+    Label(fbFrame, text='Controller Period (s):', anchor='e').grid(
+        row=2, column=0, sticky='ew'
     )
     periodEntry = FloatEntry(fbFrame, textvariable=STATE.period, width=10)
     periodEntry.grid(row=2, column=1)
 
-    Label(fbFrame, text="Max Controller Output:", anchor="e").grid(
-        row=3, column=0, sticky="ew"
+    Label(fbFrame, text='Max Controller Output:', anchor='e').grid(
+        row=3, column=0, sticky='ew'
     )
     controllerMaxEntry = FloatEntry(
         fbFrame, textvariable=STATE.max_controller_output, width=10
     )
     controllerMaxEntry.grid(row=3, column=1)
 
-    Label(fbFrame, text="Time-Normalized Controller:", anchor="e").grid(
-        row=4, column=0, sticky="ew"
+    Label(fbFrame, text='Time-Normalized Controller:', anchor='e').grid(
+        row=4, column=0, sticky='ew'
     )
     normalizedButton = Checkbutton(fbFrame, variable=STATE.controller_time_normalized)
     normalizedButton.grid(row=4, column=1)
 
-    Label(fbFrame, text="Controller Type:", anchor="e").grid(
-        row=5, column=0, sticky="ew"
+    Label(fbFrame, text='Controller Type:', anchor='e').grid(
+        row=5, column=0, sticky='ew'
     )
-    controllerTypes = {"Onboard", "Talon", "Spark"}
+    controllerTypes = {'Onboard', 'Talon', 'Spark'}
     controllerTypeMenu = OptionMenu(
         fbFrame, STATE.controller_type, *sorted(controllerTypes)
     )
     controllerTypeMenu.grid(row=5, column=1)
-    STATE.controller_type.trace_add("write", enableOffboard)
+    STATE.controller_type.trace_add('write', enableOffboard)
 
-    Label(fbFrame, text="Post-Encoder Gearing:", anchor="e").grid(
-        row=6, column=0, sticky="ew"
+    Label(fbFrame, text='Post-Encoder Gearing:', anchor='e').grid(
+        row=6, column=0, sticky='ew'
     )
     gearingEntry = Entry(fbFrame, textvariable=STATE.gearing, width=10)
-    gearingEntry.configure(state="disabled")
+    gearingEntry.configure(state='disabled')
     gearingEntry.grid(row=6, column=1)
 
-    Label(fbFrame, text="Encoder PPR:", anchor="e").grid(row=7, column=0, sticky="ew")
+    Label(fbFrame, text='Encoder PPR:', anchor='e').grid(row=7, column=0, sticky='ew')
     pprEntry = IntEntry(fbFrame, textvariable=STATE.encoder_ppr, width=10)
-    pprEntry.configure(state="disabled")
+    pprEntry.configure(state='disabled')
     pprEntry.grid(row=7, column=1)
 
-    Label(fbFrame, text="Has Slave:", anchor="e").grid(row=8, column=0, sticky="ew")
+    Label(fbFrame, text='Has Slave:', anchor='e').grid(row=8, column=0, sticky='ew')
     hasSlave = Checkbutton(fbFrame, variable=STATE.has_slave)
     hasSlave.grid(row=8, column=1)
-    hasSlave.configure(state="disabled")
-    STATE.has_slave.trace_add("write", enableOffboard)
+    hasSlave.configure(state='disabled')
+    STATE.has_slave.trace_add('write', enableOffboard)
 
-    Label(fbFrame, text="Slave Update Period (s):", anchor="e").grid(
-        row=9, column=0, sticky="ew"
+    Label(fbFrame, text='Slave Update Period (s):', anchor='e').grid(
+        row=9, column=0, sticky='ew'
     )
     slavePeriodEntry = FloatEntry(fbFrame, textvariable=STATE.slave_period, width=10)
     slavePeriodEntry.grid(row=9, column=1)
-    slavePeriodEntry.configure(state="disabled")
+    slavePeriodEntry.configure(state='disabled')
 
-    Label(fbFrame, text="Max Acceptable Position Error (units):", anchor="e").grid(
-        row=1, column=2, columnspan=2, sticky="ew"
+    Label(fbFrame, text='Max Acceptable Position Error (units):', anchor='e').grid(
+        row=1, column=2, columnspan=2, sticky='ew'
     )
     qPEntry = FloatEntry(fbFrame, textvariable=STATE.qp, width=10)
     qPEntry.grid(row=1, column=4)
 
-    Label(fbFrame, text="Max Acceptable Velocity Error (units/s):", anchor="e").grid(
-        row=2, column=2, columnspan=2, sticky="ew"
+    Label(fbFrame, text='Max Acceptable Velocity Error (units/s):', anchor='e').grid(
+        row=2, column=2, columnspan=2, sticky='ew'
     )
     qVEntry = FloatEntry(fbFrame, textvariable=STATE.qv, width=10)
     qVEntry.grid(row=2, column=4)
 
-    Label(fbFrame, text="Max Acceptable Control Effort (V):", anchor="e").grid(
-        row=3, column=2, columnspan=2, sticky="ew"
+    Label(fbFrame, text='Max Acceptable Control Effort (V):', anchor='e').grid(
+        row=3, column=2, columnspan=2, sticky='ew'
     )
     effortEntry = FloatEntry(fbFrame, textvariable=STATE.max_effort, width=10)
     effortEntry.grid(row=3, column=4)
 
-    Label(fbFrame, text="kV:", anchor="e").grid(row=5, column=2, sticky="ew")
+    Label(fbFrame, text='kV:', anchor='e').grid(row=5, column=2, sticky='ew')
     kVFBEntry = FloatEntry(fbFrame, textvariable=STATE.kv, width=10)
     kVFBEntry.grid(row=5, column=3)
-    Label(fbFrame, text="kA:", anchor="e").grid(row=6, column=2, sticky="ew")
+    Label(fbFrame, text='kA:', anchor='e').grid(row=6, column=2, sticky='ew')
     kAFBEntry = FloatEntry(fbFrame, textvariable=STATE.ka, width=10)
     kAFBEntry.grid(row=6, column=3)
 
     calcGainsButton = Button(
         fbFrame,
-        text="Calculate Optimal Controller Gains",
+        text='Calculate Optimal Controller Gains',
         command=calcGains,
-        state="disabled",
+        state='disabled',
     )
     calcGainsButton.grid(row=7, column=2, columnspan=3)
 
-    Label(fbFrame, text="kP:", anchor="e").grid(row=8, column=2, sticky="ew")
+    Label(fbFrame, text='kP:', anchor='e').grid(row=8, column=2, sticky='ew')
     kPEntry = FloatEntry(
-        fbFrame, textvariable=STATE.kp, width=10, state="readonly"
+        fbFrame, textvariable=STATE.kp, width=10, state='readonly'
     ).grid(row=8, column=3)
 
-    Label(fbFrame, text="kD:", anchor="e").grid(row=9, column=2, sticky="ew")
+    Label(fbFrame, text='kD:', anchor='e').grid(row=9, column=2, sticky='ew')
     kDEntry = FloatEntry(
-        fbFrame, textvariable=STATE.kd, width=10, state="readonly"
+        fbFrame, textvariable=STATE.kd, width=10, state='readonly'
     ).grid(row=9, column=3)
 
     for child in fbFrame.winfo_children():
@@ -542,12 +546,12 @@ def configure_gui(STATE):
 #
 
 # These are the indices of data stored in the json file
-TIME_COL = columns["time"]
-BATTERY_COL = columns["battery"]
-AUTOSPEED_COL = columns["autospeed"]
-VOLTS_COL = columns["volts"]
-ENCODER_P_COL = columns["encoder_pos"]
-ENCODER_V_COL = columns["encoder_vel"]
+TIME_COL = columns['time']
+BATTERY_COL = columns['battery']
+AUTOSPEED_COL = columns['autospeed']
+VOLTS_COL = columns['volts']
+ENCODER_P_COL = columns['encoder_pos']
+ENCODER_V_COL = columns['encoder_vel']
 
 # The are the indices of data returned from prepare_data function
 PREPARED_TM_COL = 0
@@ -559,23 +563,23 @@ PREPARED_COS_COL = 5
 
 PREPARED_MAX_COL = PREPARED_ACC_COL
 
-JSON_DATA_KEYS = ["slow-forward", "slow-backward", "fast-forward", "fast-backward"]
+JSON_DATA_KEYS = ['slow-forward', 'slow-backward', 'fast-forward', 'fast-backward']
 
 # From 449's R script (note: R is 1-indexed)
 
 
 def smoothDerivative(tm, value, n):
-    """
+    '''
         :param tm: time column
         :param value: Value to take the derivative of
         :param n: smoothing parameter
-    """
+    '''
     dlen = len(value)
     dt = tm[n:dlen] - tm[: (dlen - n)]
     x = (value[(n):dlen] - value[: (dlen - n)]) / dt
 
     # pad to original length by adding zeros on either side
-    return np.pad(x, (int(np.ceil(n / 2.0)), int(np.floor(n / 2.0))), mode="constant")
+    return np.pad(x, (int(np.ceil(n / 2.0)), int(np.floor(n / 2.0))), mode='constant')
 
 
 def trim_quasi_testdata(data):
@@ -587,10 +591,10 @@ def trim_quasi_testdata(data):
     temp = data.transpose()[truth].transpose()
     if temp[PREPARED_TM_COL].size == 0:
         tkinter.messagebox.showinfo(
-            "Error!",
-            "No data in quasistatic test is above motion threshold. "
-            + "Try running with a smaller motion threshold "
-            + "and make sure your encoder is reporting correctly!",
+            'Error!',
+            'No data in quasistatic test is above motion threshold. '
+            + 'Try running with a smaller motion threshold '
+            + 'and make sure your encoder is reporting correctly!',
         )
         return None
     else:
@@ -604,16 +608,16 @@ def trim_step_testdata(data):
 
 
 def compute_accel(data, window):
-    """
+    '''
         Returned data columns correspond to PREPARED_*
-    """
+    '''
 
     # deal with incomplete data
     if len(data[TIME_COL]) < window * 2:
         tkinter.messagebox.showinfo(
-            "Error!",
-            "Not enough data points to compute acceleration. "
-            + "Try running with a smaller window setting or a smaller threshold.",
+            'Error!',
+            'Not enough data points to compute acceleration. '
+            + 'Try running with a smaller window setting or a smaller threshold.',
         )
         return None
 
@@ -638,8 +642,8 @@ def compute_accel(data, window):
 
 
 def prepare_data(data, window):
-    """
-        Firstly, data should be "trimmed" to exclude any data points at which the
+    '''
+        Firstly, data should be 'trimmed' to exclude any data points at which the
         robot was not being commanded to do anything.
 
         Secondly, robot acceleration should be calculated from robot velocity and time.
@@ -649,7 +653,7 @@ def prepare_data(data, window):
         Thirdly, data from the quasi-static test should be trimmed to exclude the
         initial period in which the robot is not moving due to static friction
         Fourthly, data from the step-voltage acceleration tests must be trimmed to
-        remove the initial "ramp-up" period that exists due to motor inductance; this
+        remove the initial 'ramp-up' period that exists due to motor inductance; this
         can be done by simply removing all data points before maximum acceleration is
         reached.
 
@@ -667,15 +671,15 @@ def prepare_data(data, window):
         Each data pool will then yield three parameters -
         intercept, Kv (the regression coefficient of velocity), and Ka (the regression
         coefficient of acceleration).
-    """
+    '''
 
     # Ensure voltage points in same direction as velocity
     for x in JSON_DATA_KEYS:
         data[x][VOLTS_COL] = np.copysign(data[x][VOLTS_COL], data[x][ENCODER_V_COL])
 
     # trim quasi data before computing acceleration
-    sf_trim = trim_quasi_testdata(data["slow-forward"])
-    sb_trim = trim_quasi_testdata(data["slow-backward"])
+    sf_trim = trim_quasi_testdata(data['slow-forward'])
+    sb_trim = trim_quasi_testdata(data['slow-backward'])
 
     if sf_trim is None or sb_trim is None:
         return None, None, None, None
@@ -687,8 +691,8 @@ def prepare_data(data, window):
         return None, None, None, None
 
     # trim step data after computing acceleration
-    ff = compute_accel(data["fast-forward"], window)
-    fb = compute_accel(data["fast-backward"], window)
+    ff = compute_accel(data['fast-forward'], window)
+    fb = compute_accel(data['fast-backward'], window)
 
     if ff is None or fb is None:
         return None, None, None, None
@@ -703,7 +707,7 @@ def prepare_data(data, window):
 
 
 def ols(x1, x2, x3, y):
-    """multivariate linear regression using ordinary least squares"""
+    '''multivariate linear regression using ordinary least squares'''
     x = np.array((np.sign(x1), x1, x2, x3)).T
     model = sm.OLS(y, x)
     return model.fit()
@@ -718,35 +722,35 @@ def _plotTimeDomain(direction, qu, step):
 
     # Time-domain plots.
     # These should show if anything went horribly wrong during the tests.
-    # Useful for diagnosing the data trim; quasistatic test should look purely linear with no leading "tail"
+    # Useful for diagnosing the data trim; quasistatic test should look purely linear with no leading 'tail'
 
-    plt.figure(direction + " Time-Domain Plots")
+    plt.figure(direction + ' Time-Domain Plots')
 
     # quasistatic vel and accel vs time
     ax1 = plt.subplot(221)
-    ax1.set_xlabel("Time")
-    ax1.set_ylabel("Velocity")
-    ax1.set_title("Quasistatic velocity vs time")
-    plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_VEL_COL], marker=".", c="#000000")
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Velocity')
+    ax1.set_title('Quasistatic velocity vs time')
+    plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_VEL_COL], marker='.', c='#000000')
 
     ax = plt.subplot(222, sharey=ax1)
-    ax.set_xlabel("Time")
-    ax.set_ylabel("Velocity")
-    ax.set_title("Dynamic velocity vs time")
-    plt.scatter(step[PREPARED_TM_COL], step[PREPARED_VEL_COL], marker=".", c="#000000")
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Velocity')
+    ax.set_title('Dynamic velocity vs time')
+    plt.scatter(step[PREPARED_TM_COL], step[PREPARED_VEL_COL], marker='.', c='#000000')
 
     # dynamic vel and accel vs time
     ax2 = plt.subplot(223)
-    ax2.set_xlabel("Time")
-    ax2.set_ylabel("Acceleration")
-    ax2.set_title("Quasistatic acceleration vs time")
-    plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_ACC_COL], marker=".", c="#000000")
+    ax2.set_xlabel('Time')
+    ax2.set_ylabel('Acceleration')
+    ax2.set_title('Quasistatic acceleration vs time')
+    plt.scatter(qu[PREPARED_TM_COL], qu[PREPARED_ACC_COL], marker='.', c='#000000')
 
     ax = plt.subplot(224, sharey=ax2)
-    ax.set_xlabel("Time")
-    ax.set_ylabel("Acceleration")
-    ax.set_title("Dynamic acceleration vs time")
-    plt.scatter(step[PREPARED_TM_COL], step[PREPARED_ACC_COL], marker=".", c="#000000")
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Acceleration')
+    ax.set_title('Dynamic acceleration vs time')
+    plt.scatter(step[PREPARED_TM_COL], step[PREPARED_ACC_COL], marker='.', c='#000000')
 
     # Fix overlapping axis labels
     plt.tight_layout(pad=0.5)
@@ -758,7 +762,7 @@ def _plotVoltageDomain(direction, qu, step):
 
     # Voltage-domain plots
     # These should show linearity of velocity/acceleration data with voltage
-    # X-axis is not raw voltage, but rather "portion of voltage corresponding to vel/acc"
+    # X-axis is not raw voltage, but rather 'portion of voltage corresponding to vel/acc'
     # Both plots should be straight lines through the origin
     # Fit lines will be straight lines through the origin by construction; data should match fit
 
@@ -774,21 +778,21 @@ def _plotVoltageDomain(direction, qu, step):
     kcos = STATE.kcos.get()
     r_square = STATE.r_square.get()
 
-    plt.figure(direction + " Voltage-Domain Plots")
+    plt.figure(direction + ' Voltage-Domain Plots')
 
     # quasistatic vel vs. vel-causing voltage
     ax = plt.subplot(211)
-    ax.set_xlabel("Velocity-Portion Voltage")
-    ax.set_ylabel("Velocity")
-    ax.set_title("Quasistatic velocity vs velocity-portion voltage")
+    ax.set_xlabel('Velocity-Portion Voltage')
+    ax.set_ylabel('Velocity')
+    ax.set_title('Quasistatic velocity vs velocity-portion voltage')
     plt.scatter(
         qu[PREPARED_V_COL]
         - ks * np.sign(qu[PREPARED_VEL_COL])
         - ka * qu[PREPARED_ACC_COL]
         - kcos * qu[PREPARED_COS_COL],
         qu[PREPARED_VEL_COL],
-        marker=".",
-        c="#000000",
+        marker='.',
+        c='#000000',
     )
 
     # show fit line from multiple regression
@@ -797,17 +801,17 @@ def _plotVoltageDomain(direction, qu, step):
 
     # dynamic accel vs. accel-causing voltage
     ax = plt.subplot(212)
-    ax.set_xlabel("Acceleration-Portion Voltage")
-    ax.set_ylabel("Acceleration")
-    ax.set_title("Dynamic acceleration vs acceleration-portion voltage")
+    ax.set_xlabel('Acceleration-Portion Voltage')
+    ax.set_ylabel('Acceleration')
+    ax.set_title('Dynamic acceleration vs acceleration-portion voltage')
     plt.scatter(
         step[PREPARED_V_COL]
         - ks * np.sign(step[PREPARED_VEL_COL])
         - kv * step[PREPARED_VEL_COL]
         - kcos * step[PREPARED_COS_COL],
         step[PREPARED_ACC_COL],
-        marker=".",
-        c="#000000",
+        marker='.',
+        c='#000000',
     )
 
     # show fit line from multiple regression
@@ -817,21 +821,21 @@ def _plotVoltageDomain(direction, qu, step):
     # Fix overlapping axis labels
     plt.tight_layout(pad=0.5)
 
-    plt.figure(direction + " Voltage-Domain Cosine Plot")
+    plt.figure(direction + ' Voltage-Domain Cosine Plot')
 
     # quasistatic position vs. gravity (cosine-term) voltage
     ax = plt.subplot(111)
-    ax.set_xlabel("Gravity (cosine)-Portion Voltage")
-    ax.set_ylabel("Angle")
-    ax.set_title("Quasistatic angle vs gravity-portion voltage")
+    ax.set_xlabel('Gravity (cosine)-Portion Voltage')
+    ax.set_ylabel('Angle')
+    ax.set_title('Quasistatic angle vs gravity-portion voltage')
     plt.scatter(
         qu[PREPARED_V_COL]
         - ks * np.sign(qu[PREPARED_VEL_COL])
         - kv * qu[PREPARED_VEL_COL]
         - ka * qu[PREPARED_ACC_COL],
         qu[PREPARED_POS_COL],
-        marker=".",
-        c="#000000",
+        marker='.',
+        c='#000000',
     )
 
     # show fit line from multiple regression
@@ -860,15 +864,15 @@ def _plot3D(direction, qu, step):
 
     # Interactive 3d plot of voltage over entire vel-accel plane
     # Really cool, not really any more diagnostically-useful than prior plots but worth seeing
-    plt.figure(direction + " 3D Vel-Accel Plane Plot")
+    plt.figure(direction + ' 3D Vel-Accel Plane Plot')
 
-    ax = plt.subplot(111, projection="3d")
+    ax = plt.subplot(111, projection='3d')
 
     # 3D scatterplot
-    ax.set_xlabel("Velocity")
-    ax.set_ylabel("Acceleration")
-    ax.set_zlabel("Voltage")
-    ax.set_title("Cosine-adjusted Voltage vs velocity and acceleration")
+    ax.set_xlabel('Velocity')
+    ax.set_ylabel('Acceleration')
+    ax.set_zlabel('Voltage')
+    ax.set_title('Cosine-adjusted Voltage vs velocity and acceleration')
     ax.scatter(vel, accel, volts - kcos * cos)
 
     # Show best fit plane
@@ -908,7 +912,7 @@ def _calcGains(kv, ka, qp, qv, effort, period):
     # Assign Q and R matrices according to Bryson's rule [1]. The elements
     # of q and r are tunable by the user.
     #
-    # [1] "Bryson's rule" in
+    # [1] 'Bryson's rule' in
     #     https://file.tavsys.net/control/state-space-guide.pdf
     q = [qp, qv]  # units and units/s acceptable errors
     r = [effort]  # V acceptable actuation effort
@@ -922,15 +926,15 @@ def _calcGains(kv, ka, qp, qv, effort, period):
     return kp, kd
 
 
-def main():
+def main(dir):
 
-    STATE = ProgramState()
+    STATE = ProgramState(dir)
 
-    STATE.mainGUI.title("RobotPy Arm Characterization Tool")
+    STATE.mainGUI.title('RobotPy Arm Characterization Tool')
 
     configure_gui(STATE)
     STATE.mainGUI.mainloop()
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    main(os.getcwd())
