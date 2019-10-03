@@ -2,7 +2,7 @@ import importlib.resources as resources
 import os
 import shutil
 import tkinter
-from subprocess import PIPE, Popen
+from subprocess import PIPE, Popen, STDOUT
 from tkinter import *
 from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
@@ -104,31 +104,41 @@ def configureGUI(STATE, mech):
             cmd = "deploy"
 
         if os.name == "nt":
-            process = Popen(
-                [
-                    os.path.join(
-                        STATE.project_path.get(),
-                        "characterization-project",
-                        "gradlew.bat",
-                    ),
-                    cmd,
-                    "--console=plain",
-                ],
-                stdout=PIPE,
-                cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
-            )
+            try:
+                process = Popen(
+                    [
+                        os.path.join(
+                            STATE.project_path.get(),
+                            "characterization-project",
+                            "gradlew.bat",
+                        ),
+                        cmd,
+                        "--console=plain",
+                    ],
+                    stdout=PIPE,
+                    stderr=STDOUT,
+                    cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
+                )
+            except Exception as e:
+                tkinter.messagebox.showerror('Error!', 'Could not call gradlew deploy.\n' + 'Details:\n' + repr(e))
+                return
         else:
-            process = Popen(
-                [
-                    os.path.join(
-                        STATE.project_path.get(), "characterization-project", "gradlew"
-                    ),
-                    cmd,
-                    "--console=plain",
-                ],
-                stdout=PIPE,
-                cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
-            )
+            try:
+                process = Popen(
+                    [
+                        os.path.join(
+                            STATE.project_path.get(), "characterization-project", "gradlew"
+                        ),
+                        cmd,
+                        "--console=plain",
+                    ],
+                    stdout=PIPE,
+                    stderr=STDOUT,
+                    cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
+                )
+            except Exception as e:
+                tkinter.messagebox.showerror('Error!', 'Could not call gradlew deploy.\n' + 'Details:\n' + repr(e))
+                return
 
         window = stdoutWindow()
         STATE.mainGUI.after(10, lambda: updateStdout(process, window))
