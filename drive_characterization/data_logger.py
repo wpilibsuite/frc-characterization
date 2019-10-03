@@ -37,7 +37,26 @@ from networktables import NetworkTables
 from networktables import __version__ as ntversion
 from networktables.util import ntproperty
 
+logger = logging.getLogger("logger")
 
+# FMSControlData bitfields
+ENABLED_FIELD = 1 << 0
+AUTO_FIELD = 1 << 1
+TEST_FIELD = 1 << 2
+EMERGENCY_STOP_FIELD = 1 << 3
+FMS_ATTACHED_FIELD = 1 << 4
+DS_ATTACHED_FIELD = 1 << 5
+
+def translate_control_word(value):
+    value = int(value)
+    if value & ENABLED_FIELD == 0:
+        return "disabled"
+    if value & AUTO_FIELD:
+        return "auto"
+    if value & TEST_FIELD:
+        return "test"
+    else:
+        return "teleop"
 class TestRunner:
 
     # Change this key to whatever NT key you want to log
