@@ -20,20 +20,20 @@
       - [Launch the data logger](#launch-the-data-logger)
       - [Connect to robot](#connect-to-robot)
       - [Run tests](#run-tests)
-  - [Analyzing data](#analyzing-data)
-    - [Load your data file](#load-your-data-file)
-    - [Run feedforward analysis](#run-feedforward-analysis)
-    - [View diagnostics](#view-diagnostics)
-      - [Time-domain diagnostics](#time-domain-diagnostics)
-      - [Voltage-domain diagnostics](#voltage-domain-diagnostics)
-      - [3D diagnostics](#3d-diagnostics)
-    - [Feedback Analysis](#feedback-analysis)
-      - [Set units](#set-units)
-      - [Enter controller parameters](#enter-controller-parameters)
-      - [Enter optimality constraints](#enter-optimality-constraints)
-      - [Select loop type (drive only)](#select-loop-type-drive-only)
-      - [Enter known kV/kA](#enter-known-kvka)
-      - [Calculate gains](#calculate-gains)
+    - [Analyzing data](#analyzing-data)
+      - [Load your data file](#load-your-data-file)
+      - [Run feedforward analysis](#run-feedforward-analysis)
+      - [View diagnostics](#view-diagnostics)
+        - [Time-domain diagnostics](#time-domain-diagnostics)
+        - [Voltage-domain diagnostics](#voltage-domain-diagnostics)
+        - [3D diagnostics](#3d-diagnostics)
+      - [Feedback Analysis](#feedback-analysis)
+        - [Set units](#set-units)
+        - [Enter controller parameters](#enter-controller-parameters)
+        - [Enter optimality constraints](#enter-optimality-constraints)
+        - [Select loop type (drive only)](#select-loop-type-drive-only)
+        - [Enter known kV/kA](#enter-known-kvka)
+        - [Calculate gains](#calculate-gains)
   - [Contributing new changes](#contributing-new-changes)
   - [License](#license)
   - [Authors](#authors)
@@ -207,13 +207,13 @@ This will save the data as a JSON file with the specified location/name.  A time
 
 ![Add timestamp](images/timestamp.png)
 
-## Analyzing data
+### Analyzing data
 
 Once we have data from a characterization run, we can analyze it.  To launch the data analyzer, click on the `Launch Data Analyzer` button:
 
 ![Launch data analyzer](images/launchanalyzer.png)
 
-### Load your data file
+#### Load your data file
 
 Now it's time to load the data file we saved from the logger tool.  Click on `Select Data File`:
 
@@ -221,7 +221,7 @@ Now it's time to load the data file we saved from the logger tool.  Click on `Se
 
 In the resulting file dialog, select the JSON file you want to analyze.  If the file appears to be malformed, an error will be shown.
 
-### Run feedforward analysis
+#### Run feedforward analysis
 
 Once a data file has been selected, the `Analyze Data` button becomes available in the `Feedforwad Analysis` frame.  Click it.
 
@@ -241,7 +241,7 @@ The coefficients correspond to the characterization equation for each of the mec
 * Arm: ![voltage balance equation](https://latex.codecogs.com/gif.latex?V_{applied}=kS&plus;kCos\cdot\cos{\theta}&plus;kV\cdot\dot{\theta}&plus;kA\cdot\ddot{\theta})
 * Elevator: ![voltage balance equation](https://latex.codecogs.com/gif.latex?V_{applied}=kG&plus;kFr\cdot&space;sgn(\dot{d})&plus;kV\cdot\dot{d}&plus;kA\cdot\ddot{d})
 
-### View diagnostics
+#### View diagnostics
 
 The first diagnostic to look at is the r-squared - it should be somewhere north of ~.9.  If it is significantly lower than this, there is likely a problem with your characterization data.
 
@@ -249,7 +249,7 @@ To investigate further, you can generate a number of diagnostic plots with the b
 
 ![Diagnostic plot buttons](images/plotbuttons.png)
 
-#### Time-domain diagnostics
+##### Time-domain diagnostics
 
 The `Time-Domain Diagnostics` plots display velocity and acceleration versus time over the course of the analyzed tests.  For a typical drive characterization, these should look something like this (other mechanisms will be highly similar):
 
@@ -269,7 +269,7 @@ indicates that the `Motion Threshold` setting is too low, and thus data points f
 
 To solve this, increase the setting and re-analyze the data.
 
-#### Voltage-domain diagnostics
+##### Voltage-domain diagnostics
 
 The `Voltage-Domain Diagnostics` button plots velocity and acceleration versus voltage.  Velocity is ploted for the quasistatic test, and acceleration is plotted for the dynamic test.  For a typical drive characterization, the plots should resemble this (again, other mechanisms will be similar):
 
@@ -285,7 +285,7 @@ Note that the x-axes corresponds to `velocity-portion voltage` and `acceleration
 
 As before, an overly-small threshold setting may be seen as a flat "leading tail" on the quasistatic plot.
 
-#### 3D diagnostics
+##### 3D diagnostics
 
 The `3D Diagnostics` button will generate a 3d plot of voltage over the entire velocity-acceleration plane (this may be an adjusted voltage to remove the nonlinearity in mechanisms with nonlinear equations, such as arms):
 
@@ -295,7 +295,7 @@ This plot is interactive, and may be rotated by clicking-and-dragging.  The quas
 
 The discontinuity corresponds to `kS`, which always opposes the direction of motion and thus changes direction as the plot crosses the 0 velocity mark.
 
-### Feedback Analysis
+#### Feedback Analysis
 
 Once the feedforward coefficients have been computed, the controls on the `Feedback Analysis` pane become available:
 
@@ -305,7 +305,7 @@ These can be used to calculate optimal gains for a PD or P controller for your m
 
 Note that these gains are, in effect, "educated guesses" - they are not guaranteed to be perfect, and should be viewed as a "starting point" for further tuning.
 
-#### Set units
+##### Set units
 
 Before using the `Feedback Analysis` pane, it is *crucial* that you set the `Units` settings to match the units of your data:
 
@@ -315,7 +315,7 @@ Additionally, if your choice of units requires a physical measurement (i.e. it i
 
 ![Wheel diameter setting](images/diameter.png)
 
-#### Enter controller parameters
+##### Enter controller parameters
 
 The calculated feedforward gains are *dimensioned quantities*.  Unfortunately, not much attention is often paid to the units of PID gains in FRC controls, and so the various typical options for PID controller implementations differ in their unit conventions (which are often not made clear to the user).
 
@@ -333,7 +333,7 @@ To specify the correct settings for your PID controller, use the following optio
 * `Has Slave`: Whether there is a motor controller slaved to the controller running the control loop, if the control loop is being run on a peripheral device.  This changes the effective loop period.
 * `Slave Update Period`: The rate at which the slave (if present) is updated.  By default, this is 100Hz (ever .01s) for Talons and Sparks, but can be changed.
 
-#### Enter optimality constraints
+##### Enter optimality constraints
 
 Finally, the user must specify some constraints for what will be considered an "optimal" controller:
 
@@ -343,19 +343,19 @@ As a rule, smaller values for the `Max Acceptable Error` and larger values for t
 
 The `Max Acceptable Control Effort` should never exceed 12V, as that corresponds to full battery voltage, and ideally should be somewhat lower than this.
 
-#### Select loop type (drive only)
+##### Select loop type (drive only)
 
 It is typical to control drives with both position and velocity PIDs, depending on application.  Either can be selected using the drop-down `Loop Type` menu:
 
 ![Loop type](images/looptype.png)
 
-#### Enter known kV/kA
+##### Enter known kV/kA
 
 If one wishes to use the `Feedback Analysis` pane without running a full analysis on a set of data, or otherwise view the effect of modifying the `kV` and `kA` values, this can be done here:
 
 ![Modify kV/kA](images/modkvka.png)
 
-#### Calculate gains
+##### Calculate gains
 
 Finally, press the `Calculate Optimal Controller Gains` to run the LQR algorithm and determine the gains:
 
