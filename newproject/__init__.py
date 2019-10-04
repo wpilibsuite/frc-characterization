@@ -14,7 +14,7 @@ from utils.utils import FloatEntry, IntEntry, TextExtension
 def configureGUI(STATE, mech):
     def getProjectLocation():
         file_path = filedialog.askdirectory(
-            title="Choose the project location", initialdir=os.getcwd()
+            title="Choose the project location", initialdir=STATE.project_path.get()
         )
         projLocationEntry.configure(state="normal")
         projLocationEntry.delete(0, END)
