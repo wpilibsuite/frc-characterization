@@ -162,7 +162,8 @@ def configureGUI(STATE, mech):
             elif process.poll() != 0:
                 tkinter.messagebox.showerror(
                     "Error!",
-                    "Deployment failed!\n" + "Check the console for more details."
+                    "Deployment failed!\n" + "Check the console for more details.",
+                    parent=window
                 )
 
     def runLogger():
