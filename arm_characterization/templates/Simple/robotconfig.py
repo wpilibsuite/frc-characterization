@@ -26,9 +26,9 @@
   # This value should be the pulses per revolution *of the arm*, and so
   # should take into account gearing between the encoder and the arm
   'encoderPPR': 512,
-  # Ports for the left-side encoder
+  # Ports for the encoder
   'encoderPorts': (0, 1),
-  # Whether the left encoder is inverted
+  # Whether the encoder is inverted
   'encoderInverted': False,
   # Offset of your encoder zero from horizontal
   'offset': 0

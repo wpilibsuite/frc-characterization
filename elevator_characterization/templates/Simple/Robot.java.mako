@@ -9,6 +9,9 @@ package dc;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Encoder;
@@ -45,6 +48,8 @@ public class Robot extends TimedRobot {
   double priorAutospeed = 0;
   Number[] numberArray = new Number[6];
 
+  SpeedController elevatorMotor;
+
   @Override
   public void robotInit() {
 
@@ -78,7 +83,7 @@ public class Robot extends TimedRobot {
     % if encoderinv:
     encoder.setReverseDirection(true);
     % endif
-    encoderPosition = encoder::getDistance();
+    encoderPosition = encoder::getDistance;
     encoderRate = encoder::getRate;
 
     // Set the update rate instead of using flush because of a ntcore bug

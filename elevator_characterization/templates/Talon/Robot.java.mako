@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -88,8 +89,7 @@ public class Robot extends TimedRobot {
     elevatorMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX,
                                           10);
     encoderPosition = ()
-        -> elevatorMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant +
-               OFFSET;
+        -> elevatorMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
     encoderRate =
         () -> elevatorMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
 
