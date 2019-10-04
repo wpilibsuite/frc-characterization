@@ -1,5 +1,45 @@
 # Robot Characterization Toolsuite
 
+<!-- TOC -->
+
+- [Robot Characterization Toolsuite](#robot-characterization-toolsuite)
+  - [Included Characterization Tools](#included-characterization-tools)
+  - [Prerequisites (PC)](#prerequisites-pc)
+  - [Installing and launching the toolsuite](#installing-and-launching-the-toolsuite)
+  - [Using the toolsuite](#using-the-toolsuite)
+    - [Generating a project](#generating-a-project)
+      - [Select project location](#select-project-location)
+      - [Select project type](#select-project-type)
+      - [Configure project parameters](#configure-project-parameters)
+      - [Enter neam number](#enter-neam-number)
+      - [Generate project](#generate-project)
+    - [Deploying a project](#deploying-a-project)
+      - [Option 1: Use the `Deploy Project` button](#option-1-use-the-deploy-project-button)
+      - [Option 2: Deploy manually](#option-2-deploy-manually)
+    - [Running the characterization routine](#running-the-characterization-routine)
+      - [Launch the data logger](#launch-the-data-logger)
+      - [Connect to robot](#connect-to-robot)
+      - [Run tests](#run-tests)
+  - [Analyzing data](#analyzing-data)
+    - [Load your data file](#load-your-data-file)
+    - [Run feedforward analysis](#run-feedforward-analysis)
+    - [View diagnostics](#view-diagnostics)
+      - [Time-domain diagnostics](#time-domain-diagnostics)
+      - [Voltage-domain diagnostics](#voltage-domain-diagnostics)
+      - [3D diagnostics](#3d-diagnostics)
+    - [Feedback Analysis](#feedback-analysis)
+      - [Set units](#set-units)
+      - [Enter controller parameters](#enter-controller-parameters)
+      - [Enter optimality constraints](#enter-optimality-constraints)
+      - [Select loop type (drive only)](#select-loop-type-drive-only)
+      - [Enter known kV/kA](#enter-known-kvka)
+      - [Calculate gains](#calculate-gains)
+  - [Contributing new changes](#contributing-new-changes)
+  - [License](#license)
+  - [Authors](#authors)
+
+<!-- /TOC -->
+
 This is a toolsuite for characterization of FRC robot mechanisms.  The characterization tools consist of a python application that runs on the user's PC, and matching robot code that runs on the user's robot.  The PC application will send control signals to the robot over network tables, while the robot sends data back to the application.  The application then processes the data and determines  characterization parameters for the user's robot mechanism, as well as producing diagnostic plots.  Data can be saved (in JSON format) for future use, if desired.
 
 ## Included Characterization Tools
