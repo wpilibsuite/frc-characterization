@@ -318,7 +318,7 @@ class GuiState:
 def main(team, dir, runner):
 
     STATE = GuiState(team, dir)
-    RUNNER = runner(GuiState)
+    RUNNER = runner(STATE)
 
     STATE.mainGUI.title("RobotPy Characterization Data Logger")
 

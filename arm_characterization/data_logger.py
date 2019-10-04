@@ -245,6 +245,7 @@ class TestRunner:
                     + 'disable it before it runs out of space.\n'
                     + 'Note: The robot will continue to move until you disable it - '
                     + 'It is your responsibility to ensure it does not hit anything!',
+                    parent=self.STATE.mainGUI
                 )
             )
 
@@ -259,6 +260,7 @@ class TestRunner:
                         lambda: tkinter.messagebox.showerror(
                             'Error!',
                             'NT disconnected',
+                            parent=self.STATE.mainGUI
                         )
                     )
                     return
@@ -267,6 +269,7 @@ class TestRunner:
                         lambda: tkinter.messagebox.showerror(
                             'Error!',
                             'Robot exited autonomous mode before data could be sent?',
+                            parent=self.STATE.mainGUI
                         )
                     )
                     return
@@ -278,6 +281,7 @@ class TestRunner:
                     lambda: tkinter.messagebox.showerror(
                         'Error!',
                         'NT disconnected',
+                        parent=self.STATE.mainGUI
                     )
                 )
                 return
@@ -288,6 +292,7 @@ class TestRunner:
                     lambda: tkinter.messagebox.showwarning(
                         'Warning!',
                         'Last run produced an unusually small amount of data',
+                        parent=self.STATE.mainGUI
                     )
                 )
             else:
@@ -301,6 +306,7 @@ class TestRunner:
                         + '\n'
                         + 'If seems wrong, you should change the encoder calibration'
                         + 'in the robot program or fix your encoders!',
+                        parent=self.STATE.mainGUI
                     )
                 )
 
