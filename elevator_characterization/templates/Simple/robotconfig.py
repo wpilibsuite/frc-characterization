@@ -16,20 +16,14 @@
   # Inversions for the motors
   'motorsInverted': (False,),
 
-  # Unit of analysis
-  # Options:
-  # 'Degrees'
-  # 'Radians'
-  # 'Rotations'
-  'units': 'Degrees',
+  # Pulley diameter (in units of your choice - will dictate units of analysis)
+  'pulleyDiameter': .333,
 
-  # This value should be the pulses per revolution *of the arm*, and so
-  # should take into account gearing between the encoder and the arm
+  # This value should be the pulses per revolution *of the pulley*, and so
+  # should take into account gearing between the encoder and the pulley
   'encoderPPR': 512,
   # Ports for the left-side encoder
   'encoderPorts': (0, 1),
   # Whether the left encoder is inverted
   'encoderInverted': False,
-  # Offset of your encoder zero from horizontal
-  'offset': 0
 }

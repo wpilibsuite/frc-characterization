@@ -20,8 +20,8 @@
   # 'Rotations'
   'units': 'Degrees',
 
-  # This value should be the pulses per revolution *of the arm*, and so
-  # should take into account gearing between the encoder and the arm
+  # This value should be the pulses per revolution *of the wheels*, and so
+  # should take into account gearing between the encoder and the wheels
   'encoderPPR': 512,
   # Whether the left encoder is inverted
   'encoderInverted': False,

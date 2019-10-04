@@ -53,7 +53,7 @@ public class Robot extends TimedRobot {
 
     ${controllers[0]} armMotor1 = new ${controllers[0]}(${ports[0]});
     % if inverted[0]:
-    armMotor.setInverted(false);
+    armMotor1.setInverted(false);
     % endif
 
     SpeedController[] armMotors = new SpeedController[${len(ports) - 1}];
@@ -68,7 +68,7 @@ public class Robot extends TimedRobot {
 
     //
     // Configure encoder related functions -- getDistance and getrate should return
-    // degrees and degrees/sec
+    // units and units/sec
     //
 
     % if units == 'Degrees':
