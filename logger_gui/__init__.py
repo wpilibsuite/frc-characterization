@@ -59,7 +59,7 @@ def configure_gui(STATE, RUNNER):
     def save():
         if STATE.timestamp_enabled.get():
             name, ext = os.path.splitext(STATE.file_path.get())
-            filename = name + time.strftime("%Y%m%d-%H%M-%S") + ext
+            filename = name + time.strftime("%Y%m%d-%H%M") + ext
         with open(filename, "w") as fp:
             json.dump(RUNNER.stored_data, fp, indent=4, separators=(",", ": "))
 
