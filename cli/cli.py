@@ -1,4 +1,5 @@
 import argparse
+
 # import pkg_resources
 import importlib.resources as resources
 import os
@@ -29,7 +30,9 @@ def newProject(dir, mech):
 
 
 def loggerArm(dir):
-    arm_characterization.data_logger.main(0, getcwd(), arm_characterization.data_logger.TestRunner)
+    arm_characterization.data_logger.main(
+        0, getcwd(), arm_characterization.data_logger.TestRunner
+    )
 
 
 def analyzerArm(dir):
@@ -37,7 +40,9 @@ def analyzerArm(dir):
 
 
 def loggerDrive(dir):
-    drive_characterization.data_logger.main(0, getcwd(), drive_characterization.data_logger.TestRunner)
+    drive_characterization.data_logger.main(
+        0, getcwd(), drive_characterization.data_logger.TestRunner
+    )
 
 
 def analyzerDrive(dir):
@@ -45,20 +50,14 @@ def analyzerDrive(dir):
 
 
 def loggerElevator(dir):
-    elevator_characterization.data_logger.main(0)
+    elevator_characterization.data_logger.main(
+        0, getcwd(), elevator_characterization.data_logger.TestRunner
+    )
 
 
 def analyzerElevator(dir):
-    elevator_characterization.data_analyzer.main()
+    elevator_characterization.data_analyzer.main(getcwd())
 
-
-# def elevatorDataLogger():
-#     from elevator_characterization.data_logger import main
-#     main()
-
-# def elevatorDataAnalyzer():
-#     from elevator_characterization.data_analyzer import main
-#     main()
 
 tool_dict = {
     "drive": {

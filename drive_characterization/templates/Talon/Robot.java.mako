@@ -115,7 +115,7 @@ public class Robot extends TimedRobot {
 
     //
     // Configure encoder related functions -- getDistance and getrate should
-    // return ft and ft/s
+    // return units and units/s
     //
 
     double encoderConstant =

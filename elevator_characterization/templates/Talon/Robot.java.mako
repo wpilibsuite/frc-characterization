@@ -15,7 +15,6 @@ import java.util.function.Supplier;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -29,16 +28,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
-  // The offset of encoder zero from horizontal, in degrees.
-  // It is CRUCIAL that this be set correctly, or the characterization will not
-  // work!
-  static private double OFFSET = ${offset};
+  // The diameter of the pulley driving the elevator, in feet
+  static private double PULLEY_DIAMETER = ${diam};
   static private double ENCODER_PULSE_PER_REV = ${ppr};
   static private int PIDIDX = 0;
 
   Joystick stick;
 
-  ${controllers[0]} armMaster;
+  ${controllers[0]} elevatorMaster;
 
   Supplier<Double> encoderPosition;
   Supplier<Double> encoderRate;
@@ -56,28 +53,28 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    armMaster = new ${controllers[0]}(${ports[0]});
+    elevatorMaster = new ${controllers[0]}(${ports[0]});
     % if inverted[0]:
-    armMaster.setInverted(true);
+    elevatorMaster.setInverted(true);
     % else:
-    armMaster.setInverted(false);
+    elevatorMaster.setInverted(false);
     % endif
     % if encoderinv:
-    armMaster.setSensorPhase(true);
+    elevatorMaster.setSensorPhase(true);
     % else:
-    armMaster.setSensorPhase(false);
+    elevatorMaster.setSensorPhase(false);
     % endif
-    armMaster.setNeutralMode(NeutralMode.Brake);
+    elevatorMaster.setNeutralMode(NeutralMode.Brake);
 
     % for port in ports[1:]:
-    ${controllers[loop.index+1]} armSlave${loop.index} = new ${controllers[loop.index+1]}(${port});
+    ${controllers[loop.index+1]} elevatorSlave${loop.index} = new ${controllers[loop.index+1]}(${port});
     % if inverted[loop.index+1]:
-    armSlave${loop.index}.setInverted(true);
+    elevatorSlave${loop.index}.setInverted(true);
     % else:
-    armSlave${loop.index}.setInverted(false);
+    elevatorSlave${loop.index}.setInverted(false);
     % endif
-    armSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
-    armSlave${loop.index}.follow(armMaster);
+    elevatorSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
+    elevatorSlave${loop.index}.follow(elevatorMaster);
     % endfor
 
     //
@@ -85,26 +82,19 @@ public class Robot extends TimedRobot {
     // return units and units/sec
     //
 
-    % if units == 'Degrees':
-    double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * 360.;
-    % elif units == 'Radians':
-    double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * 2. * Math.PI;
-    % elif units == 'Rotations':
-    double encoderConstant = (1 / ENCODER_PULSE_PER_REV);
-    % else:
-    double encoderConstant = 1;
-    % endif
+    double encoderConstant =
+        (1 / ENCODER_PULSE_PER_REV) * PULLEY_DIAMETER * Math.PI;
 
-    armMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX,
+    elevatorMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX,
                                           10);
     encoderPosition = ()
-        -> armMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant +
+        -> elevatorMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant +
                OFFSET;
     encoderRate =
-        () -> armMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
+        () -> elevatorMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
 
     // Reset encoders
-    armMaster.setSelectedSensorPosition(0);
+    elevatorMaster.setSelectedSensorPosition(0);
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
@@ -114,7 +104,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    armMaster.set(0);
+    elevatorMaster.set(0);
   }
 
   @Override
@@ -134,7 +124,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    armMaster.set(-stick.getY());
+    elevatorMaster.set(-stick.getY());
   }
 
   @Override
@@ -161,14 +151,14 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double motorVolts = armMaster.getMotorOutputVoltage();
+    double motorVolts = elevatorMaster.getMotorOutputVoltage();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
 
     // command motors to do things
-    armMaster.set(autospeed);
+    elevatorMaster.set(autospeed);
 
     // send telemetry data array back to NT
     numberArray[0] = now;
