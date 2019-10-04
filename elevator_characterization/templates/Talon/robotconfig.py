@@ -20,11 +20,12 @@
   # 'Rotations'
   'units': 'Degrees',
 
+  # Pulley diameter (in units of your choice - will dictate units of analysis)
+  'pulleyDiameter': .333,
+
   # This value should be the pulses per revolution *of the wheels*, and so
   # should take into account gearing between the encoder and the wheels
   'encoderPPR': 512,
-  # Whether the left encoder is inverted
+  # Whether the encoder is inverted
   'encoderInverted': False,
-  # Offset of your encoder zero from horizontal
-  'offset': 0
 }
