@@ -26,6 +26,7 @@ import os
 import queue
 import threading
 import time
+import tkinter
 
 import logger_gui
 from arm_characterization.data_analyzer import AUTOSPEED_COL, ENCODER_P_COL
@@ -38,7 +39,7 @@ if tuple(map(int, ntversion.split('.')[:3])) < (2018, 1, 2):
     print('Requires pynetworktables >= 2018.1.3, %s is installed' % ntversion)
     exit(1)
 
-logger = logging.getLogger("logger")
+logger = logging.getLogger('logger')
 
 # FMSControlData bitfields
 ENABLED_FIELD = 1 << 0
@@ -51,13 +52,13 @@ DS_ATTACHED_FIELD = 1 << 5
 def translate_control_word(value):
     value = int(value)
     if value & ENABLED_FIELD == 0:
-        return "disabled"
+        return 'disabled'
     if value & AUTO_FIELD:
-        return "auto"
+        return 'auto'
     if value & TEST_FIELD:
-        return "test"
+        return 'test'
     else:
-        return "teleop"
+        return 'teleop'
 
 
 class TestRunner:

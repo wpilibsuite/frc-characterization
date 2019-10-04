@@ -3,7 +3,7 @@
   # Options:
   # 'Spark'
   # 'Victor'
-  # 'Victor_SP'
+  # 'VictorSP'
   # 'PWMTalonSRX'
   # 'PWMVictorSPX'
   # 'WPI_TalonSRX'

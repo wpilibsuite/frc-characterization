@@ -12,19 +12,19 @@ import argparse
 import csv
 import json
 import math
+import os
 import tkinter
+from os.path import basename, dirname, exists, join, splitext
 from tkinter import *
 from tkinter import filedialog
-from os.path import basename, exists, dirname, join, splitext
-
-from utils.utils import IntEntry, FloatEntry
 
 import control as cnt
 import frccontrol as frccnt
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import statsmodels.api as sm
 from mpl_toolkits.mplot3d import Axes3D
+from utils.utils import FloatEntry, IntEntry
 
 #
 # These parameters are used to indicate which column of data each parameter
@@ -35,7 +35,7 @@ columns = dict(time=0, battery=1, autospeed=2, volts=3, encoder_pos=4, encoder_v
 
 
 class ProgramState:
-    def __init__(self):
+    def __init__(self, dir):
         self.mainGUI = tkinter.Tk()
 
         self.stored_data = None
@@ -45,65 +45,68 @@ class ProgramState:
         self.step_forward = None
         self.step_backward = None
 
-        self.window_size = IntVar()
+        self.window_size = IntVar(self.mainGUI)
         self.window_size.set(8)
 
-        self.motion_threshold = DoubleVar()
+        self.motion_threshold = DoubleVar(self.mainGUI)
         self.motion_threshold.set(20)
 
-        self.direction = StringVar()
+        self.direction = StringVar(self.mainGUI)
         self.direction.set("Combined")
 
-        self.units = StringVar()
+        self.units = StringVar(self.mainGUI)
         self.units.set("Degrees")
 
-        self.pulley_diam = DoubleVar()
+        self.pulley_diam = DoubleVar(self.mainGUI)
         self.pulley_diam.set(0.333)
 
-        self.kg = DoubleVar()
-        self.kfr = DoubleVar()
-        self.kv = DoubleVar()
-        self.ka = DoubleVar()
-        self.r_square = DoubleVar()
+        self.kg = DoubleVar(self.mainGUI)
+        self.kfr = DoubleVar(self.mainGUI)
+        self.kv = DoubleVar(self.mainGUI)
+        self.ka = DoubleVar(self.mainGUI)
+        self.r_square = DoubleVar(self.mainGUI)
 
-        self.qp = DoubleVar()
+        self.qp = DoubleVar(self.mainGUI)
         self.qp.set(2)
 
-        self.qv = DoubleVar()
+        self.qv = DoubleVar(self.mainGUI)
         self.qv.set(4)
 
-        self.max_effort = DoubleVar()
+        self.max_effort = DoubleVar(self.mainGUI)
         self.max_effort.set(7)
 
-        self.period = DoubleVar()
+        self.period = DoubleVar(self.mainGUI)
         self.period.set(0.02)
 
-        self.max_controller_output = DoubleVar()
+        self.max_controller_output = DoubleVar(self.mainGUI)
         self.max_controller_output.set(12)
 
-        self.controller_time_normalized = BooleanVar()
+        self.controller_time_normalized = BooleanVar(self.mainGUI)
         self.controller_time_normalized.set(True)
 
-        self.gearing = DoubleVar()
+        self.gearing = DoubleVar(self.mainGUI)
         self.gearing.set(1)
 
-        self.controller_type = StringVar()
+        self.controller_type = StringVar(self.mainGUI)
         self.controller_type.set("Onboard")
 
-        self.encoder_ppr = IntVar()
+        self.encoder_ppr = IntVar(self.mainGUI)
         self.encoder_ppr.set(4096)
 
-        self.has_slave = BooleanVar()
+        self.has_slave = BooleanVar(self.mainGUI)
         self.has_slave.set(False)
 
-        self.slave_period = DoubleVar()
+        self.slave_period = DoubleVar(self.mainGUI)
         self.slave_period.set(0.01)
 
-        self.gain_units_preset = StringVar()
+        self.gain_units_preset = StringVar(self.mainGUI)
         self.gain_units_preset.set("Default")
 
-        self.kp = DoubleVar()
-        self.kd = DoubleVar()
+        self.kp = DoubleVar(self.mainGUI)
+        self.kd = DoubleVar(self.mainGUI)
+
+        self.project_path = StringVar(self.mainGUI)
+        self.project_path.set(dir)
 
 
 # Set up main window
@@ -112,7 +115,10 @@ class ProgramState:
 def configure_gui(STATE):
     def getFile():
         dataFile = tkinter.filedialog.askopenfile(
-            parent=STATE.mainGUI, mode="rb", title="Choose the data file (.JSON)"
+            parent=STATE.mainGUI,
+            mode="rb",
+            title="Choose the data file (.JSON)",
+            defaultdir=STATE.project_path.get(),
         )
         fileEntry.configure(state="normal")
         fileEntry.delete(0, END)
@@ -133,7 +139,7 @@ def configure_gui(STATE):
     def runAnalysis():
 
         STATE.quasi_forward, STATE.quasi_backward, STATE.step_forward, STATE.step_backward = prepare_data(
-            STATE.stored_data, window=STATE.window_size.get()
+            STATE.stored_data, window=STATE.window_size.get(), STATE=STATE
         )
 
         if (
@@ -183,26 +189,32 @@ def configure_gui(STATE):
 
     def plotVoltageDomain():
         if STATE.direction.get() == "Forward":
-            _plotVoltageDomain("Forward", STATE.quasi_forward, STATE.step_forward)
+            _plotVoltageDomain(
+                "Forward", STATE.quasi_forward, STATE.step_forward, STATE
+            )
         elif STATE.direction.get() == "Backward":
-            _plotVoltageDomain("Backward", STATE.quasi_backward, STATE.step_backward)
+            _plotVoltageDomain(
+                "Backward", STATE.quasi_backward, STATE.step_backward, STATE
+            )
         else:
             _plotVoltageDomain(
                 "Combined",
                 np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
                 np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
+                STATE,
             )
 
     def plot3D():
         if STATE.direction.get() == "Forward":
-            _plot3D("Forward", STATE.quasi_forward, STATE.step_forward)
+            _plot3D("Forward", STATE.quasi_forward, STATE.step_forward, STATE)
         elif STATE.direction.get() == "Backward":
-            _plot3D("Backward", STATE.quasi_backward, STATE.step_backward)
+            _plot3D("Backward", STATE.quasi_backward, STATE.step_backward, STATE)
         else:
             _plot3D(
                 "Combined",
                 np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
                 np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
+                STATE,
             )
 
     def calcGains():
@@ -601,7 +613,7 @@ def smoothDerivative(tm, value, n):
     return np.pad(x, (int(np.ceil(n / 2.0)), int(np.floor(n / 2.0))), mode="constant")
 
 
-def trim_quasi_testdata(data):
+def trim_quasi_testdata(data, STATE):
     adata = np.abs(data)
     truth = np.all(
         [adata[ENCODER_V_COL] > STATE.motion_threshold.get(), adata[VOLTS_COL] > 0],
@@ -650,9 +662,9 @@ def compute_accel(data, window):
     return dat
 
 
-def prepare_data(data, window):
+def prepare_data(data, window, STATE):
     """
-        Firstly, data should be "trimmed" to exclude any data points at which the
+        Firstly, data should be 'trimmed' to exclude any data points at which the
         robot was not being commanded to do anything.
 
         Secondly, robot acceleration should be calculated from robot velocity and time.
@@ -662,7 +674,7 @@ def prepare_data(data, window):
         Thirdly, data from the quasi-static test should be trimmed to exclude the
         initial period in which the robot is not moving due to static friction
         Fourthly, data from the step-voltage acceleration tests must be trimmed to
-        remove the initial "ramp-up" period that exists due to motor inductance; this
+        remove the initial 'ramp-up' period that exists due to motor inductance; this
         can be done by simply removing all data points before maximum acceleration is
         reached.
 
@@ -687,8 +699,8 @@ def prepare_data(data, window):
         data[x][VOLTS_COL] = np.copysign(data[x][VOLTS_COL], data[x][ENCODER_V_COL])
 
     # trim quasi data before computing acceleration
-    sf_trim = trim_quasi_testdata(data["slow-forward"])
-    sb_trim = trim_quasi_testdata(data["slow-backward"])
+    sf_trim = trim_quasi_testdata(data["slow-forward"], STATE)
+    sb_trim = trim_quasi_testdata(data["slow-backward"], STATE)
 
     if sf_trim is None or sb_trim is None:
         return None, None, None, None
@@ -730,7 +742,7 @@ def _plotTimeDomain(direction, qu, step):
 
     # Time-domain plots.
     # These should show if anything went horribly wrong during the tests.
-    # Useful for diagnosing the data trim; quasistatic test should look purely linear with no leading "tail"
+    # Useful for diagnosing the data trim; quasistatic test should look purely linear with no leading 'tail'
 
     plt.figure(direction + " Time-Domain Plots")
 
@@ -766,11 +778,11 @@ def _plotTimeDomain(direction, qu, step):
     plt.show()
 
 
-def _plotVoltageDomain(direction, qu, step):
+def _plotVoltageDomain(direction, qu, step, STATE):
 
     # Voltage-domain plots
     # These should show linearity of velocity/acceleration data with voltage
-    # X-axis is not raw voltage, but rather "portion of voltage corresponding to vel/acc"
+    # X-axis is not raw voltage, but rather 'portion of voltage corresponding to vel/acc'
     # Both plots should be straight lines through the origin
     # Fit lines will be straight lines through the origin by construction; data should match fit
 
@@ -852,7 +864,7 @@ def _plotVoltageDomain(direction, qu, step):
     plt.show()
 
 
-def _plot3D(direction, qu, step):
+def _plot3D(direction, qu, step, STATE):
 
     vel = np.concatenate((qu[PREPARED_VEL_COL], step[PREPARED_VEL_COL]))
     accel = np.concatenate((qu[PREPARED_ACC_COL], step[PREPARED_ACC_COL]))
@@ -912,7 +924,7 @@ def _calcGains(kv, ka, qp, qv, effort, period):
     # Assign Q and R matrices according to Bryson's rule [1]. The elements
     # of q and r are tunable by the user.
     #
-    # [1] "Bryson's rule" in
+    # [1] 'Bryson's rule' in
     #     https://file.tavsys.net/control/state-space-guide.pdf
     q = [qp, qv]  # units and units/s acceptable errors
     r = [effort]  # V acceptable actuation effort
@@ -926,9 +938,9 @@ def _calcGains(kv, ka, qp, qv, effort, period):
     return kp, kd
 
 
-def main():
+def main(dir):
 
-    STATE = ProgramState()
+    STATE = ProgramState(dir)
 
     STATE.mainGUI.title("RobotPy Elevator Characterization Tool")
 
@@ -937,4 +949,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(os.getcwd())
