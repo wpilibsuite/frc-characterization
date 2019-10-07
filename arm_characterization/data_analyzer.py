@@ -121,17 +121,33 @@ def configure_gui(STATE):
         fileEntry.delete(0, END)
         fileEntry.insert(0, dataFile.name)
         fileEntry.configure(state="readonly")
+        try:
+            data = json.load(dataFile)
 
-        data = json.load(dataFile)
+            try:
+                # Transform the data into a numpy array to make it easier to use
+                # -> transpose it so we can deal with it in columns
+                for k in JSON_DATA_KEYS:
+                    data[k] = np.array(data[k]).transpose()
 
-        # Transform the data into a numpy array to make it easier to use
-        # -> transpose it so we can deal with it in columns
-        for k in JSON_DATA_KEYS:
-            data[k] = np.array(data[k]).transpose()
+                STATE.stored_data = data
 
-        STATE.stored_data = data
-
-        analyzeButton.configure(state="normal")
+                analyzeButton.configure(state="normal")
+            except Exception as e:
+                tkinter.messagebox.showerror(
+                    "Error!",
+                    "The structure of the data JSON was not recognized.\n"
+                    + "Details\n"
+                    + repr(e),
+                )
+                return
+        except Exception as e:
+            tkinter.messagebox.showerror(
+                "Error!",
+                "The JSON file could not be loaded.\n" + "Details:\n" + repr(e),
+                parent=STATE.mainGUI,
+            )
+            return
 
     def runAnalysis():
 
