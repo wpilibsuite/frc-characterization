@@ -54,7 +54,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    SmartDashboard.putData(new SimEnabler());
+    if (!isReal()) SmartDashboard.putData(new SimEnabler());
 
     stick = new Joystick(0);
 
