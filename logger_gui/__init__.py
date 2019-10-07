@@ -64,7 +64,8 @@ def configure_gui(STATE, RUNNER):
             json.dump(RUNNER.stored_data, fp, indent=4, separators=(",", ": "))
 
     def connect():
-        STATE.mainGUI.after_cancel(STATE.connect_handle)
+        if STATE.connect_handle:
+            STATE.mainGUI.after_cancel(STATE.connect_handle)
 
         if STATE.team_number.get() != 0:
             NetworkTables.startClientTeam(STATE.team_number.get())
