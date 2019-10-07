@@ -9,6 +9,7 @@ from tkinter.scrolledtext import ScrolledText
 
 import drive_characterization
 from utils.utils import FloatEntry, IntEntry, TextExtension
+import robot as res
 
 
 def configureGUI(STATE, mech):
@@ -62,9 +63,9 @@ def configureGUI(STATE, mech):
     def genProject():
         dst = os.path.join(STATE.project_path.get(), "characterization-project")
         try:
-            with resources.path(mech, "robot") as path:
+            with resources.path(res, "project") as path:
                 shutil.copytree(
-                    src=os.path.join(path, "project-" + STATE.project_type.get()),
+                    src=path,
                     dst=dst,
                 )
                 with open(
