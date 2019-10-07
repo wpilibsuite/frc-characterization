@@ -64,6 +64,8 @@ def configure_gui(STATE, RUNNER):
             json.dump(RUNNER.stored_data, fp, indent=4, separators=(",", ": "))
 
     def connect():
+        STATE.mainGUI.after_cancel(STATE.connect_handle)
+
         if STATE.team_number.get() != 0:
             NetworkTables.startClientTeam(STATE.team_number.get())
         else:
@@ -83,7 +85,7 @@ def configure_gui(STATE, RUNNER):
             STATE.connected.set("Connected")
             enableTestButtons()
         else:
-            STATE.mainGUI.after(10, waitForConnection)
+            STATE.connect_handle = STATE.mainGUI.after(10, waitForConnection)
 
     def disableTestButtons():
         quasiForwardButton.configure(state="disabled")
@@ -297,6 +299,7 @@ class GuiState:
         self.task_queue = queue.Queue()
 
         self.task_handle = None
+        self.connect_handle = None
 
         def onClose():
             self.mainGUI.after_cancel(self.task_handle)

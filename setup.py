@@ -32,6 +32,6 @@ setuptools.setup(
         "console-menu",
         "mako",
     ],
-    python_requires=">=3.4",
+    python_requires=">=3.7",
     include_package_data=True
 )
