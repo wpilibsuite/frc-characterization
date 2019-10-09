@@ -89,7 +89,7 @@ public class Robot extends TimedRobot {
     % if linverted[loop.index+1] ^ turn:
     leftSlave${loop.index}.setInverted(true);
     % else:
-    leftSlave.setInverted(false);
+    leftSlave${loop.index}.setInverted(false);
     % endif
     leftSlave${loop.index}.follow(leftMaster);
     leftSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
@@ -100,7 +100,7 @@ public class Robot extends TimedRobot {
     % if rinverted[loop.index+1] ^ turn:
     rightSlave${loop.index}.setInverted(true);
     % else:
-    rightSlave.setInverted(false);
+    rightSlave${loop.index}.setInverted(false);
     % endif
     rightSlave${loop.index}.follow(rightMaster);
     rightSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
