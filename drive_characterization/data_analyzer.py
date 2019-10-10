@@ -17,6 +17,7 @@ import tkinter
 from os.path import basename, dirname, exists, join, splitext
 from tkinter import *
 from tkinter import filedialog
+from tkinter import messagebox
 
 import control as cnt
 import frccontrol as frccnt
@@ -138,7 +139,7 @@ def configure_gui(STATE):
 
                 analyzeButton.configure(state="normal")
             except Exception as e:
-                tkinter.messagebox.showerror(
+                messagebox.showerror(
                     "Error!",
                     "The structure of the data JSON was not recognized.\n"
                     + "Details\n"
@@ -146,7 +147,7 @@ def configure_gui(STATE):
                 )
                 return
         except Exception as e:
-            tkinter.messagebox.showerror(
+            messagebox.showerror(
                 "Error!",
                 "The JSON file could not be loaded.\n" + "Details:\n" + repr(e),
                 parent=STATE.mainGUI,
@@ -866,7 +867,7 @@ def compute_accel(data, window):
 
     # deal with incomplete data
     if len(data[TIME_COL]) < window * 2:
-        tkinter.messagebox.showinfo(
+        messagebox.showinfo(
             "Error!",
             "Not enough data points to compute acceleration. "
             + "Try running with a smaller window setting or a smaller threshold.",

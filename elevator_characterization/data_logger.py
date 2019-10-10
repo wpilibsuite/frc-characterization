@@ -27,9 +27,11 @@ import queue
 import threading
 import time
 import tkinter
+from tkinter import messagebox
 
 import logger_gui
-from elevator_characterization.data_analyzer import AUTOSPEED_COL, ENCODER_P_COL
+from elevator_characterization.data_analyzer import (AUTOSPEED_COL,
+                                                     ENCODER_P_COL)
 from networktables import NetworkTables
 from networktables import __version__ as ntversion
 from networktables.util import ntproperty
@@ -240,7 +242,7 @@ class TestRunner:
             # print('')
 
             self.STATE.postTask(
-                lambda: tkinter.messagebox.showinfo(
+                lambda: messagebox.showinfo(
                     'Running ' + name,
                     'Please enable the robot in autonomous mode, and then '
                     + 'disable it before it runs out of space.\n'
@@ -258,7 +260,7 @@ class TestRunner:
             if data is not None:
                 if data in ('connected', 'disconnected'):
                     self.STATE.postTask(
-                        lambda: tkinter.messagebox.showerror(
+                        lambda: messagebox.showerror(
                             'Error!', 'NT disconnected.',
                             parent=self.STATE.mainGUI
                         )
@@ -266,7 +268,7 @@ class TestRunner:
                     return
                 else:
                     self.STATE.postTask(
-                        lambda: tkinter.messagebox.showerror(
+                        lambda: messagebox.showerror(
                             'Error!',
                             'Robot exited autonomous mode before data could be sent?',
                             parent=self.STATE.mainGUI
@@ -278,7 +280,7 @@ class TestRunner:
             data = self.ramp_voltage_in_auto(initial_speed, ramp)
             if data in ('connected', 'disconnected'):
                 self.STATE.postTask(
-                    lambda: tkinter.messagebox.showerror('Error!', 'NT disconnected.'),
+                    lambda: messagebox.showerror('Error!', 'NT disconnected.'),
                     parent=self.STATE.mainGUI
                 )
                 return
@@ -286,7 +288,7 @@ class TestRunner:
             # output sanity check
             if len(data) < 3:
                 self.STATE.postTask(
-                    lambda: tkinter.messagebox.showwarning(
+                    lambda: messagebox.showwarning(
                         'Warning!',
                         'Last run produced an unusually small amount of data',
                         parent=self.STATE.mainGUI
@@ -296,7 +298,7 @@ class TestRunner:
                 distance = data[-1][ENCODER_P_COL] - data[0][ENCODER_P_COL]
 
                 self.STATE.postTask(
-                    lambda: tkinter.messagebox.showinfo(
+                    lambda: messagebox.showinfo(
                         name + ' Complete',
                         'The robot reported traveling the following distance:\n'
                         + '%.3f units' % distance

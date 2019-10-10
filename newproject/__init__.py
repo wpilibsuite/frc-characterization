@@ -4,8 +4,8 @@ import shutil
 import tkinter
 from subprocess import PIPE, Popen, STDOUT
 from tkinter import *
+from tkinter import messagebox
 from tkinter import filedialog
-import tkinter.messagebox
 from tkinter.scrolledtext import ScrolledText
 
 import drive_characterization
@@ -58,7 +58,7 @@ def configureGUI(STATE, mech):
             with open(STATE.config_path.get(), "r") as config:
                 STATE.config.set(config.read())
         except:
-            tkinter.messagebox.showerror("Error!", "Could not open/read config file.")
+            messagebox.showerror("Error!", "Could not open/read config file.")
             return
 
     def genProject():
@@ -84,14 +84,14 @@ def configureGUI(STATE, mech):
                         )
                     )
         except FileExistsError:
-            if tkinter.messagebox.askyesno(
+            if messagebox.askyesno(
                 "Warning!",
                 "Project directory already exists!  Do you want to overwrite it?",
             ):
                 shutil.rmtree(dst)
                 genProject()
         except Exception as e:
-            tkinter.messagebox.showerror(
+            messagebox.showerror(
                 "Error!",
                 "Unable to generate project - config may be bad.\n"
                 + 'Details:\n'
@@ -122,7 +122,7 @@ def configureGUI(STATE, mech):
                     cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
                 )
             except Exception as e:
-                tkinter.messagebox.showerror('Error!', 'Could not call gradlew deploy.\n' + 'Details:\n' + repr(e))
+                messagebox.showerror('Error!', 'Could not call gradlew deploy.\n' + 'Details:\n' + repr(e))
                 return
         else:
             try:
@@ -139,7 +139,7 @@ def configureGUI(STATE, mech):
                     cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
                 )
             except Exception as e:
-                tkinter.messagebox.showerror('Error!', 'Could not call gradlew deploy.\n' + 'Details:\n' + repr(e))
+                messagebox.showerror('Error!', 'Could not call gradlew deploy.\n' + 'Details:\n' + repr(e))
                 return
 
         window = stdoutWindow()
@@ -162,7 +162,7 @@ def configureGUI(STATE, mech):
             if process.poll() is None:
                 STATE.mainGUI.after(10, lambda: updateStdout(process, window))
             elif process.poll() != 0:
-                tkinter.messagebox.showerror(
+                messagebox.showerror(
                     "Error!",
                     "Deployment failed!\n" + "Check the console for more details.",
                     parent=window
