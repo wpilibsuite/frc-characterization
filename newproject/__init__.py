@@ -5,6 +5,7 @@ import tkinter
 from subprocess import PIPE, Popen, STDOUT
 from tkinter import *
 from tkinter import filedialog
+import tkinter.messagebox
 from tkinter.scrolledtext import ScrolledText
 
 import drive_characterization
