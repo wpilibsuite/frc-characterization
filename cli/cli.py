@@ -1,5 +1,4 @@
 import argparse
-
 # import pkg_resources
 import importlib.resources as resources
 import os
@@ -15,9 +14,9 @@ import drive_characterization.data_analyzer
 import drive_characterization.data_logger
 import elevator_characterization.data_analyzer
 import elevator_characterization.data_logger
-from consolemenu import SelectionMenu
-
+import logger_gui
 import newproject
+from consolemenu import SelectionMenu
 
 langs = ("java", "cpp", "python")
 
@@ -25,14 +24,11 @@ controllers = ("spark", "talonsrx")
 
 
 def newProject(dir, mech):
-
     newproject.main(mech)
 
 
 def loggerArm(dir):
-    arm_characterization.data_logger.main(
-        0, getcwd(), arm_characterization.data_logger.TestRunner
-    )
+    logger_gui.main(0, getcwd(), arm_characterization.data_logger.TestRunner)
 
 
 def analyzerArm(dir):
@@ -40,9 +36,7 @@ def analyzerArm(dir):
 
 
 def loggerDrive(dir):
-    drive_characterization.data_logger.main(
-        0, getcwd(), drive_characterization.data_logger.TestRunner
-    )
+    logger_gui.main(0, getcwd(), drive_characterization.data_logger.TestRunner)
 
 
 def analyzerDrive(dir):
@@ -50,9 +44,7 @@ def analyzerDrive(dir):
 
 
 def loggerElevator(dir):
-    elevator_characterization.data_logger.main(
-        0, getcwd(), elevator_characterization.data_logger.TestRunner
-    )
+    logger_gui.main(0, getcwd(), elevator_characterization.data_logger.TestRunner)
 
 
 def analyzerElevator(dir):
