@@ -190,7 +190,7 @@ class TestRunner:
         )
 
         self.discard_data = False
-        self.autospeed = initial_speed
+        self.autospeed = initial_speed/12
         NetworkTables.flush()
 
         try:
@@ -201,7 +201,7 @@ class TestRunner:
                     return qdata
 
                 time.sleep(0.050)
-                self.autospeed = self.autospeed / 12 + (ramp * 0.05) / 12
+                self.autospeed = self.autospeed + (ramp * 0.05) / 12
 
                 NetworkTables.flush()
         finally:
