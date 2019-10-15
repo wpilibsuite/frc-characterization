@@ -138,7 +138,7 @@ def configure_gui(STATE, RUNNER):
             args=(
                 "slow-backward",
                 0,
-                STATE.quasi_ramp_rate.get(),
+                -STATE.quasi_ramp_rate.get(),
                 lambda: finishTest(STATE.sb_completed),
             ),
         ).start()
@@ -163,7 +163,7 @@ def configure_gui(STATE, RUNNER):
             target=RUNNER.runTest,
             args=(
                 "fast-backward",
-                STATE.dynamic_step_voltage.get(),
+                -STATE.dynamic_step_voltage.get(),
                 0,
                 lambda: finishTest(STATE.fb_completed),
             ),
