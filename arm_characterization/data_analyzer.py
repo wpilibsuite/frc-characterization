@@ -37,10 +37,10 @@ columns = dict(time=0, battery=1, autospeed=2, volts=3, encoder_pos=4, encoder_v
 
 class ProgramState:
     def __init__(self, dir):
-        self.project_path = StringVar()
-        self.project_path.set(dir)
-
         self.mainGUI = tkinter.Tk()
+
+        self.project_path = StringVar(self.mainGUI)
+        self.project_path.set(dir)
 
         self.stored_data = None
 
