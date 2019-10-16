@@ -1,12 +1,6 @@
-#!/usr/bin/env python3
-#
-# This analyzes the data collected by the data_logger.py script. It is ran
-# automatically after the data_logger.py script is ran, but you can also
-# invoke it separately and give it JSON data to analyze.
-#
-# The analysis and data cleanup is carried out in accordance with the
-# specification at https://www.chiefdelphi.com/forums/showthread.php?t=161539
-#
+# This GUI analyzes the data collected by the data logger.  Support is
+# provided for both feedforward and feedback analysis, as well as diagnostic
+# plotting.
 
 import argparse
 import csv
@@ -281,25 +275,25 @@ def configure_gui(STATE):
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Onboard"),
             ),
-            "WPILib (new)": lambda: (
+            "WPILib (2020-)": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.02),
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Onboard"),
             ),
-            "WPILib (old)": lambda: (
+            "WPILib (Pre-2020)": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.05),
                 STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set("Onboard"),
             ),
-            "Talon (new)": lambda: (
+            "Talon (2020-)": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Talon"),
             ),
-            "Talon (old)": lambda: (
+            "Talon (Pre-2020)": lambda: (
                 STATE.max_controller_output.set(1023),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
@@ -451,10 +445,10 @@ def configure_gui(STATE):
     )
     presetChoices = {
         "Default",
-        "WPILib (new)",
-        "WPILib (old)",
-        "Talon (new)",
-        "Talon (old)",
+        "WPILib (2020-)",
+        "WPILib (Pre-2020)",
+        "Talon (2020-)",
+        "Talon (Pre-2020)",
         "Spark MAX",
     }
     presetMenu = OptionMenu(fbFrame, STATE.gain_units_preset, *sorted(presetChoices))
@@ -630,7 +624,7 @@ def trim_step_testdata(data):
     return data[:, max_accel_idx + 1 :]
 
 
-def compute_accel(data, window):
+def compute_accel(data, window, STATE):
     """
         Returned data columns correspond to PREPARED_*
     """
@@ -648,7 +642,12 @@ def compute_accel(data, window):
     acc = smoothDerivative(data[TIME_COL], data[ENCODER_V_COL], window)
 
     # Compute cosine of angle
-    cos = np.array([math.cos(math.radians(x)) for x in data[ENCODER_P_COL]])
+    if STATE.units.get() == 'Degrees':
+        cos = np.array([math.cos(math.radians(x)) for x in data[ENCODER_P_COL]])
+    elif STATE.units.get() == 'Radians':
+        cos = np.array([math.cos(x) for x in data[ENCODER_P_COL]])
+    elif STATE.units.get() == 'Rotations':
+        cos = np.array([math.cos(x * 2 * math.pi) for x in data[ENCODER_P_COL]])
 
     dat = np.vstack(
         (
@@ -707,15 +706,15 @@ def prepare_data(data, window, STATE):
     if sf_trim is None or sb_trim is None:
         return None, None, None, None
 
-    sf = compute_accel(sf_trim, window)
-    sb = compute_accel(sb_trim, window)
+    sf = compute_accel(sf_trim, window, STATE)
+    sb = compute_accel(sb_trim, window, STATE)
 
     if sf is None or sb is None:
         return None, None, None, None
 
     # trim step data after computing acceleration
-    ff = compute_accel(data["fast-forward"], window)
-    fb = compute_accel(data["fast-backward"], window)
+    ff = compute_accel(data["fast-forward"], window, STATE)
+    fb = compute_accel(data["fast-backward"], window, STATE)
 
     if ff is None or fb is None:
         return None, None, None, None

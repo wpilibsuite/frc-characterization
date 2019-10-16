@@ -1,12 +1,6 @@
-#!/usr/bin/env python3
-#
-# This analyzes the data collected by the data_logger.py script. It is ran
-# automatically after the data_logger.py script is ran, but you can also
-# invoke it separately and give it JSON data to analyze.
-#
-# The analysis and data cleanup is carried out in accordance with the
-# specification at https://www.chiefdelphi.com/forums/showthread.php?t=161539
-#
+# This GUI analyzes the data collected by the data logger.  Support is
+# provided for both feedforward and feedback analysis, as well as diagnostic
+# plotting.
 
 import argparse
 import csv
@@ -286,25 +280,25 @@ def configure_gui(STATE):
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Onboard"),
             ),
-            "WPILib (new)": lambda: (
+            "WPILib (2020-)": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.02),
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Onboard"),
             ),
-            "WPILib (old)": lambda: (
+            "WPILib (Pre-2020)": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.05),
                 STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set("Onboard"),
             ),
-            "Talon (new)": lambda: (
+            "Talon (2020-)": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Talon"),
             ),
-            "Talon (old)": lambda: (
+            "Talon (Pre-2020)": lambda: (
                 STATE.max_controller_output.set(1023),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
@@ -474,10 +468,10 @@ def configure_gui(STATE):
     )
     presetChoices = {
         "Default",
-        "WPILib (new)",
-        "WPILib (old)",
-        "Talon (new)",
-        "Talon (old)",
+        "WPILib (2020-)",
+        "WPILib (Pre-2020)",
+        "Talon (2020-)",
+        "Talon (Pre-2020)",
         "Spark MAX",
     }
     presetMenu = OptionMenu(fbFrame, STATE.gain_units_preset, *sorted(presetChoices))
