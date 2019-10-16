@@ -1,54 +1,119 @@
-#!/usr/bin/env python3
-# PYTHON_ARGCOMPLETE_OK
+# The CLI entry point for the characterization toolsuite.
 
-import sys
-if sys.version_info < (3, 0):
-    print("You need to have Python 3 installed to run this script")
-    exit(1)
+import argparse
+import importlib.resources as resources
+import os
+import shutil
+from os import getcwd
+from sys import argv
+from tkinter import filedialog
 
-import argparse, argcomplete
+import argcomplete
+import arm_characterization.data_analyzer
+import arm_characterization.data_logger
+import drive_characterization.data_analyzer
+import drive_characterization.data_logger
+import elevator_characterization.data_analyzer
+import elevator_characterization.data_logger
+import logger_gui
+import newproject
+from consolemenu import SelectionMenu
 
-# Setting these functions up individually and importing conditionally is faster than importing everything at once
-def armDataLogger():
-    from arm_characterization.data_logger import main
-    main()
+langs = ("java", "cpp", "python")
 
-def armDataAnalyzer():
-    from arm_characterization.data_analyzer import main
-    main()
+controllers = ("spark", "talonsrx")
 
-def driveDataLogger():
-    from drive_characterization.data_logger import main
-    main()
 
-def driveDataAnalyzer():
-    from drive_characterization.data_analyzer import main
-    main()
+def newProject(dir, mech):
+    newproject.main(mech)
 
-def elevatorDataLogger():
-    from elevator_characterization.data_logger import main
-    main()
 
-def elevatorDataAnalyzer():
-    from elevator_characterization.data_analyzer import main
-    main()
+def loggerArm(dir):
+    logger_gui.main(0, getcwd(), arm_characterization.data_logger.TestRunner)
+
+
+def analyzerArm(dir):
+    arm_characterization.data_analyzer.main(getcwd())
+
+
+def loggerDrive(dir):
+    logger_gui.main(0, getcwd(), drive_characterization.data_logger.TestRunner)
+
+
+def analyzerDrive(dir):
+    drive_characterization.data_analyzer.main(getcwd())
+
+
+def loggerElevator(dir):
+    logger_gui.main(0, getcwd(), elevator_characterization.data_logger.TestRunner)
+
+
+def analyzerElevator(dir):
+    elevator_characterization.data_analyzer.main(getcwd())
+
 
 tool_dict = {
-    "logger": {"arm": armDataLogger, "drive": driveDataLogger, "elevator": elevatorDataLogger},
-    "analyzer": {"arm": armDataAnalyzer, "drive": driveDataAnalyzer, "elevator": elevatorDataAnalyzer},
+    "drive": {
+        "new": lambda dir: newProject(dir, drive_characterization),
+        "logger": loggerDrive,
+        "analyzer": analyzerDrive,
+    },
+    "arm": {
+        "new": lambda dir: newProject(dir, arm_characterization),
+        "logger": loggerArm,
+        "analyzer": analyzerArm,
+    },
+    "elevator": {
+        "new": lambda dir: newProject(dir, elevator_characterization),
+        "logger": loggerElevator,
+        "analyzer": analyzerElevator,
+    },
 }
+
 
 def main():
 
-    parser = argparse.ArgumentParser(description="RobotPy characterization tools CLI")
-    parser.add_argument("tool_type", choices=list(tool_dict.keys()),
-        help="Tool type to use")
-    parser.add_argument("mech_type", choices=list(list(tool_dict.values())[0].keys()),
-        help="Mechanism type to with that tool")
-    argcomplete.autocomplete(parser)
-    args = parser.parse_args()
+    if len(argv) < 2:
+        menu = SelectionMenu(
+            list(tool_dict.keys()), "What type of mechanism are you characterizing?"
+        )
+        menu.show()
+        menu.join()
+        mech_type = list(tool_dict.keys())[menu.selected_option]
 
-    tool_dict[args.tool_type][args.mech_type]()
+        menu = SelectionMenu(
+            list(list(tool_dict.values())[0].keys()), "What tool do you want to use?"
+        )
+        menu.show()
+        menu.join()
+        tool_type = list(list(tool_dict.values())[0].keys())[menu.selected_option]
+
+        tool_dict[mech_type][tool_type](None)
+    else:
+        parser = argparse.ArgumentParser(
+            description="RobotPy characterization tools CLI"
+        )
+        parser.add_argument(
+            "mech_type",
+            choices=list(tool_dict.keys()),
+            help="Mechanism type being characterized",
+        )
+        parser.add_argument(
+            "tool_type",
+            choices=list(list(tool_dict.values())[0].keys()),
+            help="Create new project, start data recorder/logger, or start data analyzer",
+        )
+        parser.add_argument(
+            "project_directory",
+            help="Location for the project directory (if creating a new project)",
+            nargs="?",
+            default=None,
+        )
+        argcomplete.autocomplete(parser)
+
+        args = parser.parse_args()
+        tool_dict[args.mech_type][args.tool_type](args.project_directory)
+
 
 if __name__ == "__main__":
 
