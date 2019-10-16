@@ -1,5 +1,6 @@
+# The CLI entry point for the characterization toolsuite.
+
 import argparse
-# import pkg_resources
 import importlib.resources as resources
 import os
 import shutil

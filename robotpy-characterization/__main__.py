@@ -1,3 +1,6 @@
+# Shim to run the CLI entry point as an ordinary python module for those
+# who are having trouble adding python scripts to PATH.
+
 import cli.cli as cli
 
 def main():

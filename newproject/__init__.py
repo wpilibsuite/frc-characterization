@@ -1,3 +1,12 @@
+# The "new project" GUI - this serves as the "home window" from which an entire
+# characterization project can be run.
+#
+# Offers in-window editing of config files for robot-side code generation.
+#
+# Note that the project-specific python package is injected - this is a slightly
+# odd pattern, but allows none of this code to be duplicated so long as the
+# individual project packages all have the same structure.
+
 import importlib.resources as resources
 import os
 import shutil

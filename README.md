@@ -69,7 +69,7 @@ The toolsuite, and all of its dependencies, should be automatically downloaded a
 
 Once the toolsuite has been installed, launch a new drive characterization project to ensure that it works:
 
-'robotpy-characterization drive new'
+`robotpy-characterization drive new`
 
 The new project GUI should open momentarily.  To launch other characterization projects, simply replace `drive` with the desired characterization type.
 

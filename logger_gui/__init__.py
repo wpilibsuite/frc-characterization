@@ -1,24 +1,5 @@
-#!/usr/bin/env python3
-#
-# Adapted from the pynetworktables json_logger example program
-#
-# While this is designed to work with the robot.py example in this directory,
-# because the transport uses NetworkTables you can use it with a robot program
-# written in any FRC language.
-#
-# The expected NT interface is as follows:
-#
-# - /robot/autospeed : This program sends this to the robot. In autonomous mode,
-#                      the robot should attempt to drive at this speed
-#
-# - /robot/telemetry : The robot sends this. It is a number array that contains:
-#                      - time, battery, autospeed,
-#                        lmotor_volts, rmotor_volts,
-#                        l_encoder_count, r_encoder_count,
-#                        l_encoder_velocity, r_encoder_velocity
-#
-# Change the following constant if your robot wheels are slipping during the
-# the fast test, or if the robot is not moving
+# The GUI for running the data logger for each project.  As the GUI does not vary by project,
+# the logger runner is simply injected into this GUI.
 
 import json
 import logging
