@@ -11,7 +11,7 @@
       - [Select project location](#select-project-location)
       - [Select project type](#select-project-type)
       - [Configure project parameters](#configure-project-parameters)
-      - [Enter neam number](#enter-neam-number)
+      - [Enter team number](#enter-team-number)
       - [Generate project](#generate-project)
     - [Deploying a project](#deploying-a-project)
       - [Option 1: Use the `Deploy Project` button](#option-1-use-the-deploy-project-button)
@@ -120,7 +120,7 @@ Accordingly, you can also load an existing config file (config files are project
 
 ![Load config](https://github.com/robotpy/robot-characterization/raw/logging_gui/images/loadconfig.png)
 
-#### Enter neam number
+#### Enter team number
 
 Be sure to enter your team number in the team number field:
 
