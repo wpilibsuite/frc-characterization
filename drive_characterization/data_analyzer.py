@@ -1129,10 +1129,25 @@ def calcFit(qu, step):
 
 def _calcGainsPos(kv, ka, qp, qv, effort, period):
 
-    A = np.array([[0, 1], [0, -kv / ka]])
-    B = np.array([[0], [1 / ka]])
-    C = np.array([[1, 0]])
-    D = np.array([[0]])
+    # If acceleration requires no effort, velocity becomes an input for position
+    # control. We choose an appropriate model in this case to avoid numerical
+    # instabilities in LQR.
+    if ka > 1e-7:
+        A = np.array([[0, 1], [0, -kv / ka]])
+        B = np.array([[0], [1 / ka]])
+        C = np.array([[1, 0]])
+        D = np.array([[0]])
+
+        q = [qp, qv]  # units and units/s acceptable errors
+        r = [effort]  # V acceptable actuation effort
+    else:
+        A = np.array([[0]])
+        B = np.array([[1]])
+        C = np.array([[1]])
+        D = np.array([[0]])
+
+        q = [qp]  # units acceptable error
+        r = [qv]  # units/s acceptable error
     sys = cnt.ss(A, B, C, D)
     dsys = sys.sample(period)
 
@@ -1141,19 +1156,31 @@ def _calcGainsPos(kv, ka, qp, qv, effort, period):
     #
     # [1] 'Bryson's rule' in
     #     https://file.tavsys.net/control/state-space-guide.pdf
-    q = [qp, qv]  # units and units/s acceptable errors
-    r = [effort]  # V acceptable actuation effort
     Q = np.diag(1.0 / np.square(q))
     R = np.diag(1.0 / np.square(r))
     K = frccnt.lqr(dsys, Q, R)
 
-    kp = K[0, 0]
-    kd = K[0, 1]
+    # With the alternate model, `kp = kv * K[0, 0]` is used because the gain
+    # produced by LQR is for velocity. We can use the feedforward equation
+    # `u = kv * v` to convert velocity to voltage. `kd = 0` because velocity
+    # was an input; we don't need feedback control to command it.
+    if ka > 1e-7:
+        kp = K[0, 0]
+        kd = K[0, 1]
+    else:
+        kp = kv * K[0, 0]
+        kd = 0
 
     return kp, kd
 
 
 def _calcGainsVel(kv, ka, qv, effort, period):
+
+    # If acceleration for velocity control requires no effort, the feedback
+    # control gains approach zero. We special-case it here because numerical
+    # instabilities arise in LQR otherwise.
+    if ka < 1e-7:
+        return 0, 0
 
     A = np.array([[-kv / ka]])
     B = np.array([[1 / ka]])
