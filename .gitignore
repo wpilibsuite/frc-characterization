@@ -231,6 +231,3 @@ compile_commands.json
 
 # Generated characterization project
 characterization-project/
-
-# PyPI distribution
-dist/
