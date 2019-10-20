@@ -8,6 +8,7 @@ bin
 .vscode
 .mypy_cache
 
+.idea
 .gradle
 .vscode
 .wpilib
