@@ -10,7 +10,7 @@ steps:
 
 # Install python distributions like wheel, twine etc
 - script: pip install wheel
-  displayName: 'Install wheel'
+  displayName: 'Install wheel'
 
 - script: pip install twine
   displayName: 'Install twine'
@@ -20,10 +20,10 @@ steps:
   displayName: 'Build package'
    
 - task: TwineAuthenticate@1
-  displayName: 'Twine Authenticate'
-  inputs:
-    # In this case, name of the service connection is "pypitest".
-    pythonUploadServiceConnection: frc-characterization
+  displayName: 'Twine Authenticate'
+  inputs:
+    # In this case, name of the service connection is "pypitest".
+    pythonUploadServiceConnection: frc-characterization
   
 # Use command line script to 'twine upload', use -r to pass the repository name and --config-file to pass the environment variable set by the authenticate task.
 - script: python -m twine upload -r "frc-characterization" --config-file $(PYPIRC_PATH) dist/*.whl
