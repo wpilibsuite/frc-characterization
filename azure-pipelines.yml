@@ -24,7 +24,9 @@ steps:
   inputs:
     # In this case, name of the service connection is "pypitest".
     pythonUploadServiceConnection: frc-characterization
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 # Use command line script to 'twine upload', use -r to pass the repository name and --config-file to pass the environment variable set by the authenticate task.
 - script: python -m twine upload -r "frc-characterization" --config-file $(PYPIRC_PATH) dist/*.whl
   displayName: 'Upload package'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
