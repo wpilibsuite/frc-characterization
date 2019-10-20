@@ -1,30 +1,32 @@
 pool:
   vmImage: 'ubuntu-latest'
 
-
-
 steps:
-  - task: UsePythonVersion@0
-    displayName: "Use Python 3.7"
-    inputs:
-      versionSpec: '3.7'
-      architecture: 'x64'
+- task: UsePythonVersion@0
+  displayName: "Use Python 3.7"
+  inputs:
+    versionSpec: '3.7'
+    architecture: 'x64'
 
-  # Install python distributions like wheel, twine etc
-  - script: |
-     pip install wheel
-     pip install twine
-    
-  # Build the python distribution from source
-  - script: |
-     python setup.py bdist_wheel
-     
-  - task: TwineAuthenticate@1
-    displayName: 'Twine Authenticate'
-    inputs:
-      # In this case, name of the service connection is "pypitest".
-      pythonUploadServiceConnection: frc-characterization
-    
-  # Use command line script to 'twine upload', use -r to pass the repository name and --config-file to pass the environment variable set by the authenticate task.
-  - script: |
-     python -m twine upload -r "frc-characterization" --config-file $(PYPIRC_PATH) dist/*.whl
+# Install python distributions like wheel, twine etc
+- script: pip install wheel
+  displayName: 'Install wheel'
+
+- script: pip install twine
+  displayName: 'Install twine'
+
+# Build the python distribution from source
+- script: python setup.py bdist_wheel
+  displayName: 'Build package'
+
+- task: TwineAuthenticate@1
+  displayName: 'Twine Authenticate'
+  inputs:
+    # In this case, name of the service connection is "pypitest".
+    pythonUploadServiceConnection: frc-characterization
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+# Use command line script to 'twine upload', use -r to pass the repository name and --config-file to pass the environment variable set by the authenticate task.
+- script: python -m twine upload -r "frc-characterization" --config-file $(PYPIRC_PATH) dist/*.whl
+  displayName: 'Upload package'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
