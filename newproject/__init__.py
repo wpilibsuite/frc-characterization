@@ -207,8 +207,8 @@ def configureGUI(STATE, mech):
         row=0, column=11, sticky="ew"
     )
 
-    projectChoices = {"Simple", "Talon"}
-    projTypeMenu = OptionMenu(topFrame, STATE.project_type, *sorted(projectChoices))
+    projectChoices = ["Simple", "Talon", "SparkMax", "Neo"]
+    projTypeMenu = OptionMenu(topFrame, STATE.project_type, *projectChoices)
     projTypeMenu.configure(width=10)
     projTypeMenu.grid(row=0, column=12, sticky="ew")
     STATE.project_type.trace_add("write", updateTemplatePath)

@@ -198,22 +198,6 @@ class TestRunner:
             self.discard_data = True
             self.autospeed = 0
 
-    def run(self):
-
-        #
-        # We have data! Do something with it now
-        #
-        # Write it to disk first, in case the processing fails for some reason
-        # -> Using JSON for simplicity, maybe add csv at a later date
-
-        now = time.strftime('%Y%m%d-%H%M-%S')
-        fname = '%s-data.json' % now
-
-        print()
-        print('Data collection complete! saving to %s...' % fname)
-        with open(fname, 'w') as fp:
-            json.dump(stored_data, fp, indent=4, separators=(',', ': '))
-
     def runTest(self, name, initial_speed, ramp, finished):
         try:
             # Initialize the robot commanded speed to 0

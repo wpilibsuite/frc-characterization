@@ -12,10 +12,9 @@ package dc;
 
 import java.util.function.Supplier;
 
-import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -30,14 +29,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends TimedRobot {
 
   static private double WHEEL_DIAMETER = ${diam};
-  static private double ENCODER_PULSE_PER_REV = ${ppr};
+  static private double GEARING = ${gearing};
   static private int PIDIDX = 0;
 
   Joystick stick;
   DifferentialDrive drive;
 
-  ${lcontrollers[0]} leftMaster;
-  ${rcontrollers[0]} rightMaster;
+  CANSparkMax leftMaster;
+  CANSparkMax rightMaster;
 
   Supplier<Double> leftEncoderPosition;
   Supplier<Double> leftEncoderRate;
@@ -58,52 +57,40 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    leftMaster = new ${lcontrollers[0]}(${lports[0]});
+    leftMaster = new CANSparkMax(${lports[0]}, MotorType.kBrushless);
     % if linverted[0] ^ turn:
     leftMaster.setInverted(true);
     % else:
     leftMaster.setInverted(false);
     % endif
-    % if lencoderinv:
-    leftMaster.setSensorPhase(true);
-    % else:
-    leftMaster.setSensorPhase(false);
-    % endif
-    leftMaster.setNeutralMode(NeutralMode.Brake);
+    leftMaster.setIdleMode(IdleMode.kBrake);
 
-    rightMaster = new ${rcontrollers[0]}(${rports[0]});
+    rightMaster = new CANSparkMax(${rports[0]}, MotorType.kBrushless);
     % if linverted[0]:
     rightMaster.setInverted(true);
     % else:
     rightMaster.setInverted(false);
     % endif
-    % if rencoderinv:
-    rightMaster.setSensorPhase(true);
-    % else:
-    rightMaster.setSensorPhase(false);
-    % endif
-    rightMaster.setNeutralMode(NeutralMode.Brake);
+    rightMaster.setIdleMode(IdleMode.kBrake);
 
     % for port in lports[1:]:
-    ${lcontrollers[loop.index+1]} leftSlave${loop.index} = new ${lcontrollers[loop.index+1]}(${port});
+    CANSparkMax leftSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
     % if linverted[loop.index+1] ^ turn:
-    leftSlave${loop.index}.setInverted(true);
+    leftSlave${loop.index}.follow(leftMaster, true);
     % else:
-    leftSlave${loop.index}.setInverted(false);
-    % endif
     leftSlave${loop.index}.follow(leftMaster);
-    leftSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
+    % endif
+    leftSlave${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
 
     % for port in rports[1:]:
-    ${rcontrollers[loop.index+1]} rightSlave${loop.index} = new ${rcontrollers[loop.index+1]}(${port});
+    CANSparkMax rightSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
     % if rinverted[loop.index+1]:
-    rightSlave${loop.index}.setInverted(true);
+    rightSlave${loop.index}.follow(rightMaster, true);
     % else:
-    rightSlave${loop.index}.setInverted(false);
-    % endif
     rightSlave${loop.index}.follow(rightMaster);
-    rightSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
+    % endif
+    rightSlave${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
 
     //
@@ -120,32 +107,21 @@ public class Robot extends TimedRobot {
     //
 
     double encoderConstant =
-        (1 / ENCODER_PULSE_PER_REV) * WHEEL_DIAMETER * Math.PI;
+        (1 / GEARING) * WHEEL_DIAMETER * Math.PI;
 
-    leftMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
-                                                PIDIDX, 10);
     leftEncoderPosition = ()
-        -> leftMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
+        -> leftMaster.getEncoder().getPosition() * encoderConstant;
     leftEncoderRate = ()
-        -> leftMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
-               10;
+        -> leftMaster.getEncoder().getVelocity() * encoderConstant / 60.;
 
-    % if rencoderinv is not None:
-    rightMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
-                                                 PIDIDX, 10);
     rightEncoderPosition = ()
-        -> rightMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
+        -> rightMaster.getEncoder().getPosition() * encoderConstant;
     rightEncoderRate = ()
-        -> rightMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
-               10;
-    % else:
-    rightEncoderPosition = leftEncoderPosition;
-    rightEncoderRate = leftEncoderRate;
-    % endif
+        -> rightMaster.getEncoder().getVelocity() * encoderConstant / 60.;
 
     // Reset encoders
-    leftMaster.setSelectedSensorPosition(0);
-    rightMaster.setSelectedSensorPosition(0);
+    leftMaster.getEncoder().setPosition(0);
+    rightMaster.getEncoder().setPosition(0);
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
@@ -207,8 +183,8 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double leftMotorVolts = leftMaster.getMotorOutputVoltage();
-    double rightMotorVolts = rightMaster.getMotorOutputVoltage();
+    double leftMotorVolts = leftMaster.getBusVoltage() * leftMaster.getAppliedOutput();
+    double rightMotorVolts = rightMaster.getBusVoltage() * rightMaster.getAppliedOutput();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
