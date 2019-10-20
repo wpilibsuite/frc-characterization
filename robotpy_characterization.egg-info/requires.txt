@@ -1,0 +1,8 @@
+control
+frccontrol
+matplotlib
+pynetworktables>=2018.1.2
+statsmodels
+argcomplete
+console-menu
+mako

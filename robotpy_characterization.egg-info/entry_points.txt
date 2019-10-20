@@ -1,0 +1,3 @@
+[console_scripts]
+robotpy-characterization = cli.cli:main
+
