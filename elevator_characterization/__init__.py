@@ -16,7 +16,7 @@ def genRobotCode(projectType, config):
                     controllers=config['controllerTypes'],
                     encoderports=config['encoderPorts'],
                     encoderinv=config['encoderInverted'],
-            )
+                )
     elif projectType == 'Talon':
         with resources.path(__name__, 'templates') as path:
             with open(os.path.join(path, 'Talon', 'Robot.java.mako'), 'r') as template:
@@ -27,7 +27,7 @@ def genRobotCode(projectType, config):
                     inverted=config['motorsInverted'],
                     controllers=config['controllerTypes'],
                     encoderinv=config['encoderInverted'],
-            )
+                )
     elif projectType == 'SparkMax':
         with resources.path(__name__, 'templates') as path:
             with open(os.path.join(path, 'SparkMax', 'Robot.java.mako'), 'r') as template:
@@ -38,7 +38,7 @@ def genRobotCode(projectType, config):
                     inverted=config['motorsInverted'],
                     encoderinv=config['encoderInverted'],
                     gearing=config['gearing'],
-            )
+                )
     elif projectType == 'Neo':
         with resources.path(__name__, 'templates') as path:
             with open(os.path.join(path, 'Neo', 'Robot.java.mako'), 'r') as template:
@@ -47,7 +47,7 @@ def genRobotCode(projectType, config):
                     ports=config['motorPorts'],
                     inverted=config['motorsInverted'],
                     gearing=config['gearing'],
-            )
+                )
 
 def genBuildGradle(projectType, team):
     with resources.path(__name__, 'templates') as path:
