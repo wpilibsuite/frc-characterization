@@ -207,7 +207,7 @@ def configureGUI(STATE, mech):
         row=0, column=11, sticky="ew"
     )
 
-    projectChoices = {"Simple", "Talon"}
+    projectChoices = {"Simple", "Talon", "SparkMAX"}
     projTypeMenu = OptionMenu(topFrame, STATE.project_type, *sorted(projectChoices))
     projTypeMenu.configure(width=10)
     projTypeMenu.grid(row=0, column=12, sticky="ew")

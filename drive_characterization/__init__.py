@@ -22,7 +22,7 @@ def genRobotCode(projectType, config):
                     rencoderports=config['rightEncoderPorts'],
                     lencoderinv=config['leftEncoderInverted'],
                     rencoderinv=config['rightEncoderInverted'],
-            )
+                )
     elif projectType == 'Talon':
         with resources.path(__name__, 'templates') as path:
             with open(os.path.join(path, 'Talon', 'Robot.java.mako'), 'r') as template:
@@ -38,7 +38,17 @@ def genRobotCode(projectType, config):
                     turn=config['turn'],
                     lencoderinv=config['leftEncoderInverted'],
                     rencoderinv=config['rightEncoderInverted'],
-            )
+                )
+    elif projectType == 'SparkMAX':
+        with resources.path(__name__, 'templates') as path:
+            with open(os.path.join(path, 'SparkMAX', 'Robot.java.mako'), 'r') as template:
+                return Template(template.read()).render(
+                    diam=config['wheelDiameter'],
+                    gearing=config['gearing'],
+                    lports=config['leftMotorPorts'],
+                    rports=config['rightMotorPorts'],
+                    turn=config['turn'],
+                )
 
 def genBuildGradle(projectType, team):
     with resources.path(__name__, 'templates') as path:
