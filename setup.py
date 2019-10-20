@@ -6,8 +6,8 @@ with open(path.join(this_directory, 'README_pypi.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setuptools.setup(
-    name='robotpy-characterization',
-    version='0.1.16',
+    name='frc-characterization',
+    version='0.0.2',
     author='Eli Barnett, Dustin Spicuzza',
     author_email='emichaelbarnett@gmail.com, dustin@virtualroadside.com',
     description='RobotPy Characterization Library',
