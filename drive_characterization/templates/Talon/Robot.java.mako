@@ -36,8 +36,8 @@ public class Robot extends TimedRobot {
   Joystick stick;
   DifferentialDrive drive;
 
-  WPI_TalonSRX leftMaster;
-  WPI_TalonSRX rightMaster;
+  ${lcontrollers[0]} leftMaster;
+  ${rcontrollers[0]} rightMaster;
 
   Supplier<Double> leftEncoderPosition;
   Supplier<Double> leftEncoderRate;
@@ -58,7 +58,7 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    ${lcontrollers[0]} leftMaster = new ${lcontrollers[0]}(${lports[0]});
+    leftMaster = new ${lcontrollers[0]}(${lports[0]});
     % if linverted[0] ^ turn:
     leftMaster.setInverted(true);
     % else:
@@ -71,7 +71,7 @@ public class Robot extends TimedRobot {
     % endif
     leftMaster.setNeutralMode(NeutralMode.Brake);
 
-    ${rcontrollers[0]} rightMaster = new ${rcontrollers[0]}(${rports[0]});
+    rightMaster = new ${rcontrollers[0]}(${rports[0]});
     % if linverted[0]:
     rightMaster.setInverted(true);
     % else:

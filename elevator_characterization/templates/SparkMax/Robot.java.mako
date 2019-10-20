@@ -30,21 +30,20 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
+  // The offset of encoder zero from horizontal, in degrees.
+  // It is CRUCIAL that this be set correctly, or the characterization will not
+  // work!
   static private int ENCODER_PPR = ${ppr};
-  static private double WHEEL_DIAMETER = ${diam};
+  static private double PULLEY_DIAMETER = ${diam};
   static private double GEARING = ${gearing};
   static private int PIDIDX = 0;
 
   Joystick stick;
-  DifferentialDrive drive;
 
-  CANSparkMax leftMaster;
-  CANSparkMax rightMaster;
+  CANSparkMax elevatorMaster;
 
-  Supplier<Double> leftEncoderPosition;
-  Supplier<Double> leftEncoderRate;
-  Supplier<Double> rightEncoderPosition;
-  Supplier<Double> rightEncoderRate;
+  Supplier<Double> encoderPosition;
+  Supplier<Double> encoderRate;
 
   NetworkTableEntry autoSpeedEntry =
       NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
@@ -52,7 +51,7 @@ public class Robot extends TimedRobot {
       NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
 
   double priorAutospeed = 0;
-  Number[] numberArray = new Number[9];
+  Number[] numberArray = new Number[6];
 
   @Override
   public void robotInit() {
@@ -60,82 +59,45 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    leftMaster = new CANSparkMax(${lports[0]}, MotorType.kBrushed);
-    % if linverted[0] ^ turn:
-    leftMaster.setInverted(true);
+    elevatorMaster = new CANSparkMax(${ports[0]}, MotorType.kBrushed);
+    % if inverted[0]:
+    elevatorMaster.setInverted(true);
     % else:
-    leftMaster.setInverted(false);
+    elevatorMaster.setInverted(false);
     % endif
-    leftMaster.setIdleMode(IdleMode.kBrake);
+    elevatorMaster.setIdleMode(IdleMode.kBrake);
 
-    rightMaster = new CANSparkMax(${rports[0]}, MotorType.kBrushed);
-    % if linverted[0]:
-    rightMaster.setInverted(true);
+    % for port in ports[1:]:
+    CANSparkMax elevatorSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
+    % if inverted[loop.index+1]:
+    elevatorSlave${loop.index}.setInverted(true);
     % else:
-    rightMaster.setInverted(false);
+    elevatorSlave${loop.index}.setInverted(false);
     % endif
-    rightMaster.setIdleMode(IdleMode.kBrake);
-
-    % for port in lports[1:]:
-    CANSparkMax leftSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
-    % if linverted[loop.index+1] ^ turn:
-    leftSlave${loop.index}.follow(leftMaster, true);
-    % else:
-    leftSlave${loop.index}.follow(leftMaster);
-    % endif
-    leftSlave${loop.index}.setIdleMode(IdleMode.kBrake);
+    elevatorSlave${loop.index}.setIdleMode(IdleMode.kBrake);
+    elevatorSlave${loop.index}.follow(elevatorMaster);
     % endfor
-
-    % for port in rports[1:]:
-    CANSparkMax rightSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
-    % if rinverted[loop.index+1]:
-    rightSlave${loop.index}.follow(rightMaster, true);
-    % else:
-    rightSlave${loop.index}.follow(rightMaster);
-    % endif
-    rightSlave${loop.index}.setIdleMode(IdleMode.kBrake);
-    % endfor
-
-    //
-    // Configure drivetrain movement
-    //
-
-    drive = new DifferentialDrive(leftMaster, rightMaster);
-
-    drive.setDeadband(0);
 
     //
     // Configure encoder related functions -- getDistance and getrate should
-    // return units and units/s
+    // return units and units/sec
     //
 
-    double encoderConstant =
-        (1 / GEARING) * WHEEL_DIAMETER * Math.PI;
+    double encoderConstant = (1 / GEARING) * PULLEY_DIAMETER * Math.PI;
 
-    CANEncoder leftEncoder = leftMaster.getEncoder(EncoderType.kQuadrature, ENCODER_PPR);
-    CANEncoder rightEncoder = rightMaster.getEncoder(EncoderType.kQuadrature, ENCODER_PPR);
+    CANEncoder encoder = elevatorMaster.getEncoder(EncoderType.kQuadrature, ENCODER_PPR);
 
-    % if lencoderinv:
-    leftEncoder.setInverted(true);
+    % if encoderinv:
+    encoder.setInverted(true);
     % endif
 
-    %if rencoderinv:
-    rightEncoder.setInverted(true);
-    % endif
-
-    leftEncoderPosition = ()
-        -> leftEncoder.getPosition() * encoderConstant;
-    leftEncoderRate = ()
-        -> leftEncoder.getVelocity() * encoderConstant / 60.;
-
-    rightEncoderPosition = ()
-        -> rightEncoder.getPosition() * encoderConstant;
-    rightEncoderRate = ()
-        -> leftEncoder.getVelocity() * encoderConstant / 60.;
+    encoderPosition = 
+        () -> encoder.getPosition() * encoderConstant;
+    encoderRate =
+        () -> encoder.getVelocity() * encoderConstant / 60.;
 
     // Reset encoders
-    leftMaster.getEncoder().setPosition(0);
-    rightMaster.getEncoder().setPosition(0);
+    encoder.setPosition(0);
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
@@ -145,7 +107,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    drive.tankDrive(0, 0);
+    elevatorMaster.set(0);
   }
 
   @Override
@@ -154,10 +116,8 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     // feedback for users, but not used by the control program
-    SmartDashboard.putNumber("l_encoder_pos", leftEncoderPosition.get());
-    SmartDashboard.putNumber("l_encoder_rate", leftEncoderRate.get());
-    SmartDashboard.putNumber("r_encoder_pos", rightEncoderPosition.get());
-    SmartDashboard.putNumber("r_encoder_rate", rightEncoderRate.get());
+    SmartDashboard.putNumber("encoder_pos", encoderPosition.get());
+    SmartDashboard.putNumber("encoder_rate", encoderRate.get());
   }
 
   @Override
@@ -167,7 +127,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    drive.arcadeDrive(-stick.getY(), stick.getX());
+    elevatorMaster.set(-stick.getY());
   }
 
   @Override
@@ -189,35 +149,27 @@ public class Robot extends TimedRobot {
     // Retrieve values to send back before telling the motors to do something
     double now = Timer.getFPGATimestamp();
 
-    double leftPosition = leftEncoderPosition.get();
-    double leftRate = leftEncoderRate.get();
-
-    double rightPosition = rightEncoderPosition.get();
-    double rightRate = rightEncoderRate.get();
+    double position = encoderPosition.get();
+    double rate = encoderRate.get();
 
     double battery = RobotController.getBatteryVoltage();
 
-    double leftMotorVolts = leftMaster.getBusVoltage() * leftMaster.getAppliedOutput();
-    double rightMotorVolts = rightMaster.getBusVoltage() * rightMaster.getAppliedOutput();
+    double motorVolts = elevatorMaster.getBusVoltage() * elevatorMaster.getAppliedOutput();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
 
     // command motors to do things
-    drive.tankDrive(autospeed, autospeed, false);
+    elevatorMaster.set(autospeed);
 
     // send telemetry data array back to NT
     numberArray[0] = now;
     numberArray[1] = battery;
     numberArray[2] = autospeed;
-    numberArray[3] = leftMotorVolts;
-    numberArray[4] = rightMotorVolts;
-    numberArray[5] = leftPosition;
-    numberArray[6] = rightPosition;
-    numberArray[7] = leftRate;
-    numberArray[8] = rightRate;
-
+    numberArray[3] = motorVolts;
+    numberArray[4] = position;
+    numberArray[5] = rate;
     telemetryEntry.setNumberArray(numberArray);
   }
 }

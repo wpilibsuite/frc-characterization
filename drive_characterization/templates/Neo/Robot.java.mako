@@ -15,8 +15,6 @@ import java.util.function.Supplier;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import com.revrobotics.CANEncoder;
-import com.revrobotics.EncoderType;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -30,7 +28,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
-  static private int ENCODER_PPR = ${ppr};
   static private double WHEEL_DIAMETER = ${diam};
   static private double GEARING = ${gearing};
   static private int PIDIDX = 0;
@@ -60,7 +57,7 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    leftMaster = new CANSparkMax(${lports[0]}, MotorType.kBrushed);
+    leftMaster = new CANSparkMax(${lports[0]}, MotorType.kBrushless);
     % if linverted[0] ^ turn:
     leftMaster.setInverted(true);
     % else:
@@ -68,7 +65,7 @@ public class Robot extends TimedRobot {
     % endif
     leftMaster.setIdleMode(IdleMode.kBrake);
 
-    rightMaster = new CANSparkMax(${rports[0]}, MotorType.kBrushed);
+    rightMaster = new CANSparkMax(${rports[0]}, MotorType.kBrushless);
     % if linverted[0]:
     rightMaster.setInverted(true);
     % else:
@@ -77,7 +74,7 @@ public class Robot extends TimedRobot {
     rightMaster.setIdleMode(IdleMode.kBrake);
 
     % for port in lports[1:]:
-    CANSparkMax leftSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
+    CANSparkMax leftSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
     % if linverted[loop.index+1] ^ turn:
     leftSlave${loop.index}.follow(leftMaster, true);
     % else:
@@ -87,7 +84,7 @@ public class Robot extends TimedRobot {
     % endfor
 
     % for port in rports[1:]:
-    CANSparkMax rightSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
+    CANSparkMax rightSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
     % if rinverted[loop.index+1]:
     rightSlave${loop.index}.follow(rightMaster, true);
     % else:
@@ -112,26 +109,15 @@ public class Robot extends TimedRobot {
     double encoderConstant =
         (1 / GEARING) * WHEEL_DIAMETER * Math.PI;
 
-    CANEncoder leftEncoder = leftMaster.getEncoder(EncoderType.kQuadrature, ENCODER_PPR);
-    CANEncoder rightEncoder = rightMaster.getEncoder(EncoderType.kQuadrature, ENCODER_PPR);
-
-    % if lencoderinv:
-    leftEncoder.setInverted(true);
-    % endif
-
-    %if rencoderinv:
-    rightEncoder.setInverted(true);
-    % endif
-
     leftEncoderPosition = ()
-        -> leftEncoder.getPosition() * encoderConstant;
+        -> leftMaster.getEncoder().getPosition() * encoderConstant;
     leftEncoderRate = ()
-        -> leftEncoder.getVelocity() * encoderConstant / 60.;
+        -> leftMaster.getEncoder().getVelocity() * encoderConstant / 60.;
 
     rightEncoderPosition = ()
-        -> rightEncoder.getPosition() * encoderConstant;
+        -> rightMaster.getEncoder().getPosition() * encoderConstant;
     rightEncoderRate = ()
-        -> leftEncoder.getVelocity() * encoderConstant / 60.;
+        -> rightMaster.getEncoder().getVelocity() * encoderConstant / 60.;
 
     // Reset encoders
     leftMaster.getEncoder().setPosition(0);
