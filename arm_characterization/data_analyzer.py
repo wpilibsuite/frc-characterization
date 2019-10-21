@@ -952,7 +952,7 @@ def main(dir):
 
     STATE = ProgramState(dir)
 
-    STATE.mainGUI.title("RobotPy Arm Characterization Tool")
+    STATE.mainGUI.title("FRC Arm Characterization Tool")
 
     configure_gui(STATE)
     STATE.mainGUI.mainloop()

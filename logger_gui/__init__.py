@@ -305,7 +305,7 @@ def main(team, dir, runner):
     STATE = GuiState(team, dir)
     RUNNER = runner(STATE)
 
-    STATE.mainGUI.title("RobotPy Characterization Data Logger")
+    STATE.mainGUI.title("FRC Characterization Data Logger")
 
     configure_gui(STATE, RUNNER)
 

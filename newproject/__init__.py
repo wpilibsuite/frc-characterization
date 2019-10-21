@@ -279,7 +279,7 @@ def main(mech):
     STATE = GuiState()
 
     configureGUI(STATE, mech)
-    STATE.mainGUI.title("RobotPy Characterization New Project Tool")
+    STATE.mainGUI.title("FRC Characterization New Project Tool")
 
     STATE.mainGUI.mainloop()
 
