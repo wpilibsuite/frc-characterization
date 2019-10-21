@@ -64,7 +64,7 @@ setuptools.setup(
         'newproject',
         'robot'
     ],
-    entry_points={'console_scripts': ['robotpy-characterization = cli.cli:main']},
+    entry_points={'console_scripts': ['frc-characterization = cli.cli:main']},
     url='https://github.com/robotpy/robot-characterization',
     classifiers=[
         'Programming Language :: Python :: 3',
