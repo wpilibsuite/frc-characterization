@@ -7,7 +7,7 @@ with open(path.join(this_directory, 'README_pypi.md'), encoding='utf-8') as f:
 
 setuptools.setup(
     name='frc-characterization',
-    version='0.0.3',
+    version='0.0.4',
     author='Eli Barnett, Dustin Spicuzza',
     author_email='emichaelbarnett@gmail.com, dustin@virtualroadside.com',
     description='RobotPy Characterization Library',
@@ -23,7 +23,7 @@ setuptools.setup(
         'newproject',
         'robot'
     ],
-    entry_points={'console_scripts': ['robotpy-characterization = cli.cli:main']},
+    entry_points={'console_scripts': ['frc-characterization = cli.cli:main']},
     url='https://github.com/robotpy/robot-characterization',
     classifiers=[
         'Programming Language :: Python :: 3',
