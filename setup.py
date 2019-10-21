@@ -10,7 +10,7 @@ setuptools.setup(
     version='0.0.4',
     author='Eli Barnett, Dustin Spicuzza',
     author_email='emichaelbarnett@gmail.com, dustin@virtualroadside.com',
-    description='RobotPy Characterization Library',
+    description='FRC Characterization Library',
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=[
@@ -24,7 +24,7 @@ setuptools.setup(
         'robot'
     ],
     entry_points={'console_scripts': ['frc-characterization = cli.cli:main']},
-    url='https://github.com/robotpy/robot-characterization',
+    url='https://github.com/wpilibsuite/robot-characterization',
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: Apache Software License',

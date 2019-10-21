@@ -1183,7 +1183,7 @@ def main(dir):
 
     STATE = ProgramState(dir)
 
-    STATE.mainGUI.title("RobotPy Drive Characterization Tool")
+    STATE.mainGUI.title("FRC Drive Characterization Tool")
 
     configure_gui(STATE)
     STATE.mainGUI.mainloop()
