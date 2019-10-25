@@ -63,7 +63,7 @@ To use the Robotpy Characterization Toolsuite, you must have Python (3.6 or high
 
 To install the Robotpy Characterization Toolsuite, open a console and enter the following command:
 
-`pip install robotpy-characterization`
+`pip install frc-characterization`
 
 The toolsuite, and all of its dependencies, should be automatically downloaded and installed.  If you are using a windows machine and the command `pip` is not recognized, ensure that [your python scripts folder has been added to the PATH](https://datatofish.com/add-python-to-windows-path/).
 
