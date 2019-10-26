@@ -17,7 +17,7 @@ if exists(git_dir):
             # Includes previous year's commits in case one was merged after the
             # year incremented. Otherwise, the version wouldn't increment.
             "--after=\"master@{" + str(date.today().year - 1) + "-01-01}\"",
-            "master"
+            "HEAD"
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT)
