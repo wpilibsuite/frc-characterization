@@ -13,6 +13,6 @@ bin
 .wpilib
 build
 
-robotpy_characterization.egg-info
+frc_characterization.egg-info
 dist
 __pycache__

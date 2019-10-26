@@ -91,7 +91,7 @@ def main():
         tool_dict[mech_type][tool_type](None)
     else:
         parser = argparse.ArgumentParser(
-            description="RobotPy characterization tools CLI"
+            description="FRC characterization tools CLI"
         )
         parser.add_argument(
             "mech_type",
