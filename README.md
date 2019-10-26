@@ -54,14 +54,14 @@ Feature requests for additional characterization tools are welcome.  Also note t
 
 ## Prerequisites (PC)
 
-To use the Robotpy Characterization Toolsuite, you must have Python (3.6 or higher) installed on your computer, as well as the standard WPILib tools for uploading a robot project:
+To use the FRC Characterization Toolsuite, you must have Python (3.6 or higher) installed on your computer, as well as the standard WPILib tools for uploading a robot project:
 
 * https://www.python.org/downloads/
 * https://wpilib.screenstepslive.com/s/4485
 
 ## Installing and launching the toolsuite
 
-To install the Robotpy Characterization Toolsuite, open a console and enter the following command:
+To install the FRC Characterization Toolsuite, open a console and enter the following command:
 
 `pip install frc-characterization`
 
@@ -69,13 +69,13 @@ The toolsuite, and all of its dependencies, should be automatically downloaded a
 
 Once the toolsuite has been installed, launch a new drive characterization project to ensure that it works:
 
-`robotpy-characterization drive new`
+`frc-characterization drive new`
 
 The new project GUI should open momentarily.  To launch other characterization projects, simply replace `drive` with the desired characterization type.
 
 While the new project GUI has buttons for launching both the logging tool and the analyzer tool, these can also be launched directly from the CLI by replacing `new` with `logger` or `analyzer`.
 
-For more information on CLI usage, enter `robotpy-characterization -h`.
+For more information on CLI usage, enter `frc-characterization -h`.
 
 ## Using the toolsuite
 
@@ -367,7 +367,7 @@ This is intended to be a project that all members of the FIRST community can
 quickly and easily contribute to. If you find a bug, or have an idea that you
 think others can use:
 
-1. [Fork this git repository](https://github.com/robotpy/robot-characterization/fork) to your github account
+1. [Fork this git repository](https://github.com/allwpilib/robot-characterization/fork) to your github account
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push -u origin my-new-feature`)
