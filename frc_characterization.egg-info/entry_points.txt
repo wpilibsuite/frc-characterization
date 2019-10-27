@@ -1,3 +1,0 @@
-[console_scripts]
-frc-characterization = cli.cli:main
-
