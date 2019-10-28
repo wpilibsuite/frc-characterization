@@ -18,7 +18,7 @@ from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
 
 import frc_characterization.drive_characterization
-from frc_characterization.utils.utils import IntEntry, TextExtension
+from frc_characterization.utils import IntEntry, TextExtension
 import frc_characterization.robot as res
 
 

@@ -65,7 +65,7 @@ setuptools.setup(
         'frc_characterization.robot',
         'frc_characterization.utils'
     ],
-    entry_points={'console_scripts': ['frc-characterization = frc_characterization.cli.cli:main']},
+    entry_points={'console_scripts': ['frc-characterization = frc_characterization.cli:main']},
     url='https://github.com/wpilibsuite/robot-characterization',
     classifiers=[
         'Programming Language :: Python :: 3',

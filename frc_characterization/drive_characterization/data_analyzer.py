@@ -15,7 +15,7 @@ import frccontrol as frccnt
 import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.api as sm
-from frc_characterization.utils.utils import FloatEntry, IntEntry
+from frc_characterization.utils import FloatEntry, IntEntry
 
 
 class ProgramState:

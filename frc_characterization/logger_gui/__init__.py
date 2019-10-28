@@ -10,7 +10,7 @@ import tkinter
 from tkinter import *
 
 from networktables import NetworkTables
-from frc_characterization.utils.utils import FloatEntry, IntEntry
+from frc_characterization.utils import FloatEntry, IntEntry
 
 # GUI SETUP
 
