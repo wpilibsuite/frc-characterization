@@ -23,7 +23,7 @@ import threading
 import time
 from tkinter import messagebox
 
-import frc_characterization.logger_gui as logger_gui
+from frc_characterization import logger_gui
 from frc_characterization.elevator_characterization.data_analyzer import (AUTOSPEED_COL,
                                                      ENCODER_P_COL)
 from networktables import NetworkTables
