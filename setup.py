@@ -55,16 +55,17 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=[
-        'arm_characterization',
-        'drive_characterization',
-        'elevator_characterization',
-        'logger_gui',
-        'cli',
-        'utils',
-        'newproject',
-        'robot'
+        'frc_characterization',
+        'frc_characterization.arm_characterization',
+        'frc_characterization.drive_characterization',
+        'frc_characterization.elevator_characterization',
+        'frc_characterization.cli',
+        'frc_characterization.logger_gui',
+        'frc_characterization.newproject',
+        'frc_characterization.robot',
+        'frc_characterization.utils'
     ],
-    entry_points={'console_scripts': ['frc-characterization = cli.cli:main']},
+    entry_points={'console_scripts': ['frc-characterization = frc_characterization.cli:main']},
     url='https://github.com/wpilibsuite/robot-characterization',
     classifiers=[
         'Programming Language :: Python :: 3',
