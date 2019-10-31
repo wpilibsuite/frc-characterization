@@ -5,18 +5,18 @@
   # 'WPI_VictorSPX'
   # Note: The first motor on each side should always be a TalonSRX, as the
   # VictorSPX does not support encoder connections
-  'rightControllerTypes': ('WPI_TalonSRX', 'WPI_TalonSRX'),
-  'leftControllerTypes': ('WPI_TalonSRX', 'WPI_TalonSRX'),
+  'rightControllerTypes': ['WPI_TalonSRX', 'WPI_TalonSRX'],
+  'leftControllerTypes': ['WPI_TalonSRX', 'WPI_TalonSRX'],
 
   # Ports for the left-side motors
-  'leftMotorPorts': (0, 1),
+  'leftMotorPorts': [0, 1],
   # Ports for the right-side motors
-  'rightMotorPorts': (2, 3),
+  'rightMotorPorts': [2, 3],
 
   # Inversions for the left-side motors
-  'leftMotorsInverted': (False, False),
+  'leftMotorsInverted': [False, False],
   # Inversions for the right side motors
-  'rightMotorsInverted': (False, False),
+  'rightMotorsInverted': [False, False],
 
   # Wheel diameter (in units of your choice - will dictate units of analysis)
   'wheelDiameter': .333,

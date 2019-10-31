@@ -8,18 +8,18 @@
   # 'PWMVictorSPX'
   # 'WPI_TalonSRX'
   # 'WPI_VictorSPX'
-  'rightControllerTypes': ('Spark', 'Spark'),
-  'leftControllerTypes': ('Spark', 'Spark'),
+  'rightControllerTypes': ['Spark', 'Spark'],
+  'leftControllerTypes': ['Spark', 'Spark'],
 
   # Ports for the left-side motors
-  'leftMotorPorts': (0, 1),
+  'leftMotorPorts': [0, 1],
   # Ports for the right-side motors
-  'rightMotorPorts': (2, 3),
+  'rightMotorPorts': [2, 3],
 
   # Inversions for the left-side motors
-  'leftMotorsInverted': (False, False),
+  'leftMotorsInverted': [False, False],
   # Inversions for the right side motors
-  'rightMotorsInverted': (False, False),
+  'rightMotorsInverted': [False, False],
 
   # Wheel diameter (in units of your choice - will dictate units of analysis)
   'wheelDiameter': .333,
@@ -30,9 +30,9 @@
   # should take into account gearing between the encoder and the wheels
   'encoderPPR': 512,
   # Ports for the left-side encoder
-  'leftEncoderPorts': (0, 1),
+  'leftEncoderPorts': [0, 1],
   # Ports for the right-side encoder
-  'rightEncoderPorts': (2, 3),
+  'rightEncoderPorts': [2, 3],
   # Whether the left encoder is inverted
   'leftEncoderInverted': False,
   # Whether the right encoder is inverted:

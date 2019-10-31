@@ -8,13 +8,13 @@
   # 'PWMVictorSPX'
   # 'WPI_TalonSRX'
   # 'WPI_VictorSPX'
-  'controllerTypes': ('Spark',),
+  'controllerTypes': ['Spark',],
   
   # Ports for the motors
-  'motorPorts': (0,),
+  'motorPorts': [0],
 
   # Inversions for the motors
-  'motorsInverted': (False,),
+  'motorsInverted': [False,],
 
   # Unit of analysis
   # Options:

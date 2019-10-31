@@ -5,13 +5,13 @@
   # 'WPI_VictorSPX'
   # Note: The first motor should always be a TalonSRX, as the VictorSPX
   # does not support encoder connections.
-  'controllerTypes': ('WPI_TalonSRX',),
+  'controllerTypes': ['WPI_TalonSRX',],
   
   # Ports for the motors
-  'motorPorts': (0,),
+  'motorPorts': [0,],
 
   # Inversions for the motors
-  'motorsInverted': (False,),
+  'motorsInverted': [False,],
 
   # Unit of analysis
   # Options:
