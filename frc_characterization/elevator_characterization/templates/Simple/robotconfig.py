@@ -5,13 +5,13 @@
   # 'WPI_VictorSPX'
   # Note: The first motor should always be a TalonSRX, as the VictorSPX
   # does not support encoder connections.
-  'controllerTypes': ('Spark',),
+  'controllerTypes': ['Spark',],
   
   # Ports for the motors
-  'motorPorts': (0,),
+  'motorPorts': [0,],
 
   # Inversions for the motors
-  'motorsInverted': (False,),
+  'motorsInverted': [False,],
 
   # Pulley diameter (in units of your choice - will dictate units of analysis)
   'pulleyDiameter': .333,
@@ -20,7 +20,7 @@
   # should take into account gearing between the encoder and the pulley
   'encoderPPR': 512,
   # Ports for the encoder
-  'encoderPorts': (0, 1),
+  'encoderPorts': [0, 1],
   # Whether the encoder is inverted
   'encoderInverted': False,
 }

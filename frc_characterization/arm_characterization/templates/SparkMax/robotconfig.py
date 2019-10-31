@@ -1,12 +1,12 @@
 {  
   # Ports for the motors
-  'motorPorts': (0,),
+  'motorPorts': [0,],
 
   # NOTE: Inversions of the slaves (i.e. any motor *after* the first on
   # each side of the drive) are *with respect to their master*.  This is
   # different from the other poject types!
   # Inversions for the motors
-  'motorsInverted': (False,),
+  'motorsInverted': [False,],
 
   # Unit of analysis
   # Options:
