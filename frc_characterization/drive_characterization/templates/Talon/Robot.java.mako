@@ -72,7 +72,7 @@ public class Robot extends TimedRobot {
     leftMaster.setNeutralMode(NeutralMode.Brake);
 
     rightMaster = new ${rcontrollers[0]}(${rports[0]});
-    % if linverted[0]:
+    % if rinverted[0]:
     rightMaster.setInverted(true);
     % else:
     rightMaster.setInverted(false);
