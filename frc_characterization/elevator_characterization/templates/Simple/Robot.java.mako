@@ -33,7 +33,7 @@ public class Robot extends TimedRobot {
 
   // The diameter of the pulley driving the elevator, in feet
   static private double PULLEY_DIAMETER = ${diam};
-  static private double ENCODER_PULSE_PER_REV = ${ppr};
+  static private double ENCODER_PULSE_PER_REV = ${ppr} / 4.;
 
   Joystick stick;
 

@@ -32,7 +32,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends TimedRobot {
 
   static private double WHEEL_DIAMETER = ${diam};
-  static private double ENCODER_PULSE_PER_REV = ${ppr};
+  static private double ENCODER_PULSE_PER_REV = ${ppr} / 4.;
 
   Joystick stick;
   DifferentialDrive drive;
