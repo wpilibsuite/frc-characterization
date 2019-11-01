@@ -34,7 +34,7 @@ public class Robot extends TimedRobot {
   // The offset of encoder zero from horizontal, in degrees.
   // It is CRUCIAL that this be set correctly, or the characterization will not work!
   static private double OFFSET = ${offset};
-  static private double ENCODER_PULSE_PER_REV = ${ppr};
+  static private double ENCODER_PULSE_PER_REV = ${ppr} / 4.;
 
   Joystick stick;
 
