@@ -115,6 +115,14 @@ def configureGUI(STATE, mech):
         else:
             cmd = "deploy"
 
+        no_jdk_warning = lambda: (
+            messagebox.showwarning(
+                "Warning!",
+                "You do not appear to have a " + str(datetime.now().year) + " wpilib JDK installed. " +
+                "If your installed JDK is the wrong version then the deploy will fail."
+            )
+        )
+
         if os.name == "nt":
             process_args = [
                 os.path.join(
@@ -133,7 +141,9 @@ def configureGUI(STATE, mech):
             )
             if os.path.exists(jdk_path):
                 process_args.append("-Dorg.gradle.java.home=" + jdk_path)
-    
+            else:
+                no_jdk_warning()
+
             try:
                 process = Popen(
                     process_args,
@@ -162,6 +172,8 @@ def configureGUI(STATE, mech):
             )
             if os.path.exists(jdk_path):
                 process_args.append("-Dorg.gradle.java.home=" + jdk_path)
+            else:
+                no_jdk_warning()
 
             try:
                 process = Popen(
