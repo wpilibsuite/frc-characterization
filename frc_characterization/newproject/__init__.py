@@ -157,7 +157,7 @@ def configureGUI(STATE, mech):
             # C:/Users/Public/wpilib/YEAR/jdk is correct *as of* wpilib 2020
             # Prior to 2020 the path was C:/Users/Public/frcYEAR/jdk
             jdk_base_path = os.path.join(
-                os.getenv("PROFILESFOLDER"), "Public", "wpilib"
+                os.path.abspath(os.path.join(os.path.expanduser("~"), "..")), "Public", "wpilib"
             )
             append_latest_jdk(process_args, jdk_base_path)
 
