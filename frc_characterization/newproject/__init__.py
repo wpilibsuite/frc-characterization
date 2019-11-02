@@ -11,6 +11,7 @@ import importlib.resources as resources
 import os
 import shutil
 import tkinter
+from datetime import datetime
 from subprocess import PIPE, Popen, STDOUT
 from tkinter import *
 from tkinter import messagebox
@@ -115,17 +116,27 @@ def configureGUI(STATE, mech):
             cmd = "deploy"
 
         if os.name == "nt":
+            process_args = [
+                os.path.join(
+                    STATE.project_path.get(),
+                    "characterization-project",
+                    "gradlew.bat",
+                ),
+                cmd,
+                "--console=plain",
+            ]
+
+            # This path is correct *as of* wpilib 2020
+            # Prior to 2020 the path was C:/Users/Public/frcYEAR/jdk
+            jdk_path = os.path.join(
+                "C:", os.sep, "Users", "Public", "wpilib", str(datetime.now().year), "jdk"
+            )
+            if os.path.exists(jdk_path):
+                process_args.append("-Dorg.gradle.java.home=" + jdk_path)
+    
             try:
                 process = Popen(
-                    [
-                        os.path.join(
-                            STATE.project_path.get(),
-                            "characterization-project",
-                            "gradlew.bat",
-                        ),
-                        cmd,
-                        "--console=plain",
-                    ],
+                    process_args,
                     stdout=PIPE,
                     stderr=STDOUT,
                     cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
@@ -134,15 +145,27 @@ def configureGUI(STATE, mech):
                 messagebox.showerror('Error!', 'Could not call gradlew deploy.\n' + 'Details:\n' + repr(e))
                 return
         else:
+            process_args = [
+                os.path.join(
+                    STATE.project_path.get(),
+                    "characterization-project",
+                    "gradlew"
+                ),
+                cmd,
+                "--console=plain",
+            ]
+            
+            # This path is correct *as of* wpilib 2020
+            # Prior to 2020 the path was ~/frcYEAR/jdk
+            jdk_path = os.path.join(
+                os.path.expanduser("~"), "wpilib", str(datetime.now().year), "jdk"
+            )
+            if os.path.exists(jdk_path):
+                process_args.append("-Dorg.gradle.java.home=" + jdk_path)
+
             try:
                 process = Popen(
-                    [
-                        os.path.join(
-                            STATE.project_path.get(), "characterization-project", "gradlew"
-                        ),
-                        cmd,
-                        "--console=plain",
-                    ],
+                    process_args,
                     stdout=PIPE,
                     stderr=STDOUT,
                     cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
