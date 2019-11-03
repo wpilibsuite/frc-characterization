@@ -97,7 +97,7 @@ class TestRunner:
                         enableTestButtons()
                     )
                 )
-            ), self.STATE.trw_completed, "Wheel voltage (V):", self.STATE.rotation_voltage)
+            ).start(), self.STATE.trw_completed, "Wheel voltage (V):", self.STATE.rotation_voltage)
         ]
 
     def connectionListener(self, connected, info):

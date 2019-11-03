@@ -15,24 +15,22 @@ from frc_characterization.utils import FloatEntry, IntEntry
 # GUI SETUP
 
 class Test:
-    def __init__(self, button_text, run_test_arg_supplier, status_text_val, option_label=None, option_val=None):
+    def __init__(self, button_text, on_click, status_text_val, option_label=None, option_val=None):
         self._button_text = button_text
-        self._run_test_arg_supplier = run_test_arg_supplier
+        self._on_click = on_click
         self._status_text_val = status_text_val
         self._option_label = option_label
         self._option_val = option_val
 
         self._run_button = None
         self._status_entry = None
-    
+
     def addToGUI(self, frame, row, disable_all_buttons, mainGUI):
         self._run_button = Button(
             frame, text=self._button_text, command=lambda: (
                 disable_all_buttons(),
                 self._status_text_val.set("Running..."),
-                threading.Thread(
-                    target
-                )
+                self._on_click()
             ), state="disabled"
         )
         self._run_button.grid(
@@ -51,11 +49,11 @@ class Test:
             FloatEntry(frame, textvariable=self._option_val).grid(
                 row=row, column=3, sticky="ew"
             )
-    
+
     def disable(self):
         if self._run_button != None:
             self._run_button.configure(state="disabled")
-    
+
     def enable(self):
         if self._run_button != None:
             self._run_button.configure(state="normal")
