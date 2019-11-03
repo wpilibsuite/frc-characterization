@@ -14,8 +14,58 @@ from frc_characterization.utils import FloatEntry, IntEntry
 
 # GUI SETUP
 
+class Test:
+    def __init__(self, button_text, run_test_arg_supplier, status_text_val, option_label=None, option_val=None):
+        self._button_text = button_text
+        self._run_test_arg_supplier = run_test_arg_supplier
+        self._status_text_val = status_text_val
+        self._option_label = option_label
+        self._option_val = option_val
+
+        self._run_button = None
+        self._status_entry = None
+    
+    def addToGUI(self, frame, row, disable_all_buttons, mainGUI):
+        self._run_button = Button(
+            frame, text=self._button_text, command=lambda: (
+                disable_all_buttons(),
+                self._status_text_val.set("Running..."),
+                threading.Thread(
+                    target
+                )
+            ), state="disabled"
+        )
+        self._run_button.grid(
+            row=row, column=0, sticky="ew"
+        )
+
+        status = Entry(frame, textvariable=self._status_text_val)
+        status.configure(state="readonly")
+        status.grid(row=row, column=1)
+
+        if self._option_label != None and self._option_val != None:
+            Label(frame, text=self._option_label, anchor="e").grid(
+                row=row, column=2, sticky="ew"
+            )
+
+            FloatEntry(frame, textvariable=self._option_val).grid(
+                row=row, column=3, sticky="ew"
+            )
+    
+    def disable(self):
+        if self._run_button != None:
+            self._run_button.configure(state="disabled")
+    
+    def enable(self):
+        if self._run_button != None:
+            self._run_button.configure(state="normal")
+
+    def isCompleted(self):
+        return self._status_text_val.get() == "Completed"
 
 def configure_gui(STATE, RUNNER):
+    tests = []
+
     def getFile():
         file_path = tkinter.filedialog.asksaveasfilename(
             parent=STATE.mainGUI,
@@ -62,23 +112,16 @@ def configure_gui(STATE, RUNNER):
             STATE.connect_handle = STATE.mainGUI.after(10, waitForConnection)
 
     def disableTestButtons():
-        quasiForwardButton.configure(state="disabled")
-        quasiBackwardButton.configure(state="disabled")
-        dynamicForwardButton.configure(state="disabled")
-        dynamicBackwardButton.configure(state="disabled")
+        for step in tests:
+            step.disable()
         saveButton.configure(state="disabled")
 
     def enableTestButtons():
-        quasiForwardButton.configure(state="normal")
-        quasiBackwardButton.configure(state="normal")
-        dynamicForwardButton.configure(state="normal")
-        dynamicBackwardButton.configure(state="normal")
-        if (
-            STATE.sf_completed.get() == "Completed"
-            and STATE.sb_completed.get() == "Completed"
-            and STATE.ff_completed.get() == "Completed"
-            and STATE.fb_completed.get() == "Completed"
-        ):
+        all_completed = True
+        for step in tests:
+            step.enable()
+            all_completed &= step.isCompleted()
+        if all_completed:
             saveButton.configure(state="normal")
 
     def finishTest(textEntry):
@@ -91,8 +134,6 @@ def configure_gui(STATE, RUNNER):
         STATE.task_handle = STATE.mainGUI.after(10, runPostedTasks)
 
     def quasiForward():
-        disableTestButtons()
-        STATE.sf_completed.set("Running...")
         threading.Thread(
             target=RUNNER.runTest,
             args=(
@@ -104,8 +145,6 @@ def configure_gui(STATE, RUNNER):
         ).start()
 
     def quasiBackward():
-        disableTestButtons()
-        STATE.sb_completed.set("Running...")
         threading.Thread(
             target=RUNNER.runTest,
             args=(
@@ -117,8 +156,6 @@ def configure_gui(STATE, RUNNER):
         ).start()
 
     def dynamicForward():
-        disableTestButtons()
-        STATE.ff_completed.set("Running...")
         threading.Thread(
             target=RUNNER.runTest,
             args=(
@@ -130,8 +167,6 @@ def configure_gui(STATE, RUNNER):
         ).start()
 
     def dynamicBackward():
-        disableTestButtons()
-        STATE.fb_completed.set("Running...")
         threading.Thread(
             target=RUNNER.runTest,
             args=(
@@ -183,53 +218,22 @@ def configure_gui(STATE, RUNNER):
     teamNumEntry = IntEntry(bodyFrame, textvariable=STATE.team_number, width=6)
     teamNumEntry.grid(row=0, column=3, sticky="ew")
 
-    Label(bodyFrame, text="Quasistatic ramp rate (V/s):", anchor="e").grid(
-        row=1, column=2, sticky="ew"
-    )
-    rampEntry = FloatEntry(bodyFrame, textvariable=STATE.quasi_ramp_rate)
-    rampEntry.grid(row=1, column=3, sticky="ew")
+    tests = [
+        Test("Quasistatic Forward", quasiForward, STATE.sf_completed,
+            "Quasistatic ramp rate (V/s):", STATE.quasi_ramp_rate),
+        Test("Quasistatic Backward", quasiBackward, STATE.sb_completed),
 
-    Label(bodyFrame, text="Dynamic step voltage (V):", anchor="e").grid(
-        row=3, column=2, sticky="ew"
-    )
-    stepEntry = FloatEntry(bodyFrame, textvariable=STATE.dynamic_step_voltage)
-    stepEntry.grid(row=3, column=3, sticky="ew")
+        Test("Dynamic Forward", dynamicForward, STATE.ff_completed,
+            "Dynamic step voltage (V):", STATE.dynamic_step_voltage),
+        Test("Dynamic Backward", dynamicBackward, STATE.fb_completed)
+    ]
+    try:
+        tests += RUNNER.getAdditionalTests(enableTestButtons)
+    except AttributeError:
+        pass
 
-    quasiForwardButton = Button(
-        bodyFrame, text="Quasistatic Forward", command=quasiForward, state="disabled"
-    )
-    quasiForwardButton.grid(row=1, column=0, sticky="ew")
-
-    quasiForwardCompleted = Entry(bodyFrame, textvariable=STATE.sf_completed)
-    quasiForwardCompleted.configure(state="readonly")
-    quasiForwardCompleted.grid(row=1, column=1)
-
-    quasiBackwardButton = Button(
-        bodyFrame, text="Quasistatic Backward", command=quasiBackward, state="disabled"
-    )
-    quasiBackwardButton.grid(row=2, column=0, sticky="ew")
-
-    quasiBackwardCompleted = Entry(bodyFrame, textvariable=STATE.sb_completed)
-    quasiBackwardCompleted.configure(state="readonly")
-    quasiBackwardCompleted.grid(row=2, column=1)
-
-    dynamicForwardButton = Button(
-        bodyFrame, text="Dynamic Forward", command=dynamicForward, state="disabled"
-    )
-    dynamicForwardButton.grid(row=3, column=0, sticky="ew")
-
-    dynamicForwardCompleted = Entry(bodyFrame, textvariable=STATE.ff_completed)
-    dynamicForwardCompleted.configure(state="readonly")
-    dynamicForwardCompleted.grid(row=3, column=1)
-
-    dynamicBackwardButton = Button(
-        bodyFrame, text="Dynamic Backward", command=dynamicBackward, state="disabled"
-    )
-    dynamicBackwardButton.grid(row=4, column=0, sticky="ew")
-
-    dynamicBackwardCompleted = Entry(bodyFrame, textvariable=STATE.fb_completed)
-    dynamicBackwardCompleted.configure(state="readonly")
-    dynamicBackwardCompleted.grid(row=4, column=1)
+    for row, step in enumerate(tests, start=1):
+        step.addToGUI(bodyFrame, row, disableTestButtons, STATE.mainGUI)
 
     for child in bodyFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)

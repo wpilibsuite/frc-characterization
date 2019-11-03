@@ -21,8 +21,10 @@ import queue
 import threading
 import time
 from tkinter import messagebox
+from tkinter import StringVar, DoubleVar
 
 import frc_characterization.logger_gui as logger_gui
+from frc_characterization.logger_gui import Test
 from frc_characterization.drive_characterization.data_analyzer import (AUTOSPEED_COL,
                                                   L_ENCODER_P_COL,
                                                   R_ENCODER_P_COL)
@@ -63,6 +65,12 @@ class TestRunner:
 
         self.STATE = STATE
 
+        self.STATE.trw_completed = StringVar(self.STATE.mainGUI)
+        self.STATE.trw_completed.set("Not run")
+
+        self.STATE.rotation_voltage = DoubleVar(self.STATE.mainGUI)
+        self.STATE.rotation_voltage.set(5)
+
         self.stored_data = {}
 
         self.queue = queue.Queue()
@@ -75,6 +83,22 @@ class TestRunner:
 
         # Last telemetry data received from the robot
         self.last_data = (0,) * 20
+
+    def getAdditionalTests(self, enableTestButtons):
+        return [
+            Test("Track Width", lambda: threading.Thread(
+                target=self.runTest,
+                args=(
+                    "track-width",
+                    STATE.rotation_voltage.get(),
+                    0,
+                    lambda: (
+                        self.STATE.trw_completed.set("Completed"),
+                        enableTestButtons()
+                    )
+                )
+            ), self.STATE.trw_completed, "Wheel voltage (V):", self.STATE.rotation_voltage)
+        ]
 
     def connectionListener(self, connected, info):
         # set our robot to 'disabled' if the connection drops so that we can
@@ -297,7 +321,6 @@ class TestRunner:
 
 
 def main(team, dir):
-
     logger_gui.main(team, dir, TestRunner)
 
 
