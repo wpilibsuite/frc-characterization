@@ -18,7 +18,7 @@ steps:
 - script: pip install black
   displayName: 'Install black formatter'
 
-- script: black --check ./
+- script: black --check --diff ./
   displayName: 'Black formatting check'
   condition: succeeded()
 
