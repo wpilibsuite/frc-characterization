@@ -11,6 +11,8 @@ import importlib.resources as resources
 import os
 import shutil
 import tkinter
+import glob
+from datetime import datetime
 from subprocess import PIPE, Popen, STDOUT
 from tkinter import *
 from tkinter import messagebox
@@ -114,18 +116,54 @@ def configureGUI(STATE, mech):
         else:
             cmd = "deploy"
 
+        def append_latest_jdk(process_args, jdk_base_path):
+            possible_jdk_paths = glob.glob(
+                os.path.join(jdk_base_path, "20[0-9][0-9]")
+            )
+
+            if len(possible_jdk_paths) <= 0:
+                messagebox.showwarning(
+                    "Warning!",
+                    "You do not appear to have any wpilib JDK installed. " +
+                    "If your system JDK is the wrong version then the deploy will fail."
+                )
+                return
+
+            year = max(
+                map(lambda x: int(os.path.basename(x)), possible_jdk_paths)
+            )
+            process_args.append(
+                "-Dorg.gradle.java.home=" + os.path.join(jdk_base_path, str(year), "jdk")
+            )
+
+            if int(year) != datetime.now().year:
+                messagebox.showwarning(
+                    "Warning!",
+                    "Your latest wpilib JDK's year (" + str(year) + ") doesn't match the current year (" +
+                    str(datetime.now().year) + "). Your deploy may fail."
+                )
+
         if os.name == "nt":
+            process_args = [
+                os.path.join(
+                    STATE.project_path.get(),
+                    "characterization-project",
+                    "gradlew.bat",
+                ),
+                cmd,
+                "--console=plain",
+            ]
+
+            # C:/Users/Public/wpilib/YEAR/jdk is correct *as of* wpilib 2020
+            # Prior to 2020 the path was C:/Users/Public/frcYEAR/jdk
+            jdk_base_path = os.path.join(
+                os.path.abspath(os.path.join(os.path.expanduser("~"), "..")), "Public", "wpilib"
+            )
+            append_latest_jdk(process_args, jdk_base_path)
+
             try:
                 process = Popen(
-                    [
-                        os.path.join(
-                            STATE.project_path.get(),
-                            "characterization-project",
-                            "gradlew.bat",
-                        ),
-                        cmd,
-                        "--console=plain",
-                    ],
+                    process_args,
                     stdout=PIPE,
                     stderr=STDOUT,
                     cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
@@ -134,15 +172,26 @@ def configureGUI(STATE, mech):
                 messagebox.showerror('Error!', 'Could not call gradlew deploy.\n' + 'Details:\n' + repr(e))
                 return
         else:
+            process_args = [
+                os.path.join(
+                    STATE.project_path.get(),
+                    "characterization-project",
+                    "gradlew"
+                ),
+                cmd,
+                "--console=plain",
+            ]
+            
+            # This path is correct *as of* wpilib 2020
+            # Prior to 2020 the path was ~/frcYEAR/jdk
+            jdk_base_path = os.path.join(
+                os.path.expanduser("~"), "wpilib"
+            )
+            append_latest_jdk(process_args, jdk_base_path)
+
             try:
                 process = Popen(
-                    [
-                        os.path.join(
-                            STATE.project_path.get(), "characterization-project", "gradlew"
-                        ),
-                        cmd,
-                        "--console=plain",
-                    ],
+                    process_args,
                     stdout=PIPE,
                     stderr=STDOUT,
                     cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
