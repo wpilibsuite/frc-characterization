@@ -639,11 +639,11 @@ def compute_accel(data, window, STATE):
     acc = smoothDerivative(data[TIME_COL], data[ENCODER_V_COL], window)
 
     # Compute cosine of angle
-    if STATE.units.get() == 'Degrees':
+    if STATE.units.get() == "Degrees":
         cos = np.array([math.cos(math.radians(x)) for x in data[ENCODER_P_COL]])
-    elif STATE.units.get() == 'Radians':
+    elif STATE.units.get() == "Radians":
         cos = np.array([math.cos(x) for x in data[ENCODER_P_COL]])
-    elif STATE.units.get() == 'Rotations':
+    elif STATE.units.get() == "Rotations":
         cos = np.array([math.cos(x * 2 * math.pi) for x in data[ENCODER_P_COL]])
 
     dat = np.vstack(

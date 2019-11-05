@@ -76,10 +76,7 @@ def configureGUI(STATE, mech):
         dst = os.path.join(STATE.project_path.get(), "characterization-project")
         try:
             with resources.path(res, "project") as path:
-                shutil.copytree(
-                    src=path,
-                    dst=dst,
-                )
+                shutil.copytree(src=path, dst=dst)
                 with open(
                     os.path.join(dst, "src", "main", "java", "dc", "Robot.java"), "w+"
                 ) as robot:
@@ -105,7 +102,7 @@ def configureGUI(STATE, mech):
             messagebox.showerror(
                 "Error!",
                 "Unable to generate project - config may be bad.\n"
-                + 'Details:\n'
+                + "Details:\n"
                 + repr(e),
             )
             shutil.rmtree(dst)
@@ -117,38 +114,32 @@ def configureGUI(STATE, mech):
             cmd = "deploy"
 
         def append_latest_jdk(process_args, jdk_base_path):
-            possible_jdk_paths = glob.glob(
-                os.path.join(jdk_base_path, "20[0-9][0-9]")
-            )
+            possible_jdk_paths = glob.glob(os.path.join(jdk_base_path, "20[0-9][0-9]"))
 
             if len(possible_jdk_paths) <= 0:
                 messagebox.showwarning(
                     "Warning!",
-                    "You do not appear to have any wpilib JDK installed. " +
-                    "If your system JDK is the wrong version then the deploy will fail."
+                    "You do not appear to have any wpilib JDK installed. "
+                    + "If your system JDK is the wrong version then the deploy will fail.",
                 )
                 return
 
-            year = max(
-                map(lambda x: int(os.path.basename(x)), possible_jdk_paths)
-            )
+            year = max([int(os.path.basename(path)) for path in possible_jdk_paths])
             process_args.append(
-                "-Dorg.gradle.java.home=" + os.path.join(jdk_base_path, str(year), "jdk")
+                "-Dorg.gradle.java.home="
+                + os.path.join(jdk_base_path, str(year), "jdk")
             )
 
             if int(year) != datetime.now().year:
                 messagebox.showwarning(
                     "Warning!",
-                    "Your latest wpilib JDK's year (" + str(year) + ") doesn't match the current year (" +
-                    str(datetime.now().year) + "). Your deploy may fail."
+                    f"Your latest wpilib JDK's year ({year}) doesn't match the current year ({datetime.now().year}). Your deploy may fail.",
                 )
 
         if os.name == "nt":
             process_args = [
                 os.path.join(
-                    STATE.project_path.get(),
-                    "characterization-project",
-                    "gradlew.bat",
+                    STATE.project_path.get(), "characterization-project", "gradlew.bat"
                 ),
                 cmd,
                 "--console=plain",
@@ -157,7 +148,9 @@ def configureGUI(STATE, mech):
             # C:/Users/Public/wpilib/YEAR/jdk is correct *as of* wpilib 2020
             # Prior to 2020 the path was C:/Users/Public/frcYEAR/jdk
             jdk_base_path = os.path.join(
-                os.path.abspath(os.path.join(os.path.expanduser("~"), "..")), "Public", "wpilib"
+                os.path.abspath(os.path.join(os.path.expanduser("~"), "..")),
+                "Public",
+                "wpilib",
             )
             append_latest_jdk(process_args, jdk_base_path)
 
@@ -166,27 +159,28 @@ def configureGUI(STATE, mech):
                     process_args,
                     stdout=PIPE,
                     stderr=STDOUT,
-                    cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
+                    cwd=os.path.join(
+                        STATE.project_path.get(), "characterization-project"
+                    ),
                 )
             except Exception as e:
-                messagebox.showerror('Error!', 'Could not call gradlew deploy.\n' + 'Details:\n' + repr(e))
+                messagebox.showerror(
+                    "Error!",
+                    "Could not call gradlew deploy.\n" + "Details:\n" + repr(e),
+                )
                 return
         else:
             process_args = [
                 os.path.join(
-                    STATE.project_path.get(),
-                    "characterization-project",
-                    "gradlew"
+                    STATE.project_path.get(), "characterization-project", "gradlew"
                 ),
                 cmd,
                 "--console=plain",
             ]
-            
+
             # This path is correct *as of* wpilib 2020
             # Prior to 2020 the path was ~/frcYEAR/jdk
-            jdk_base_path = os.path.join(
-                os.path.expanduser("~"), "wpilib"
-            )
+            jdk_base_path = os.path.join(os.path.expanduser("~"), "wpilib")
             append_latest_jdk(process_args, jdk_base_path)
 
             try:
@@ -194,10 +188,15 @@ def configureGUI(STATE, mech):
                     process_args,
                     stdout=PIPE,
                     stderr=STDOUT,
-                    cwd=os.path.join(STATE.project_path.get(), "characterization-project"),
+                    cwd=os.path.join(
+                        STATE.project_path.get(), "characterization-project"
+                    ),
                 )
             except Exception as e:
-                messagebox.showerror('Error!', 'Could not call gradlew deploy.\n' + 'Details:\n' + repr(e))
+                messagebox.showerror(
+                    "Error!",
+                    "Could not call gradlew deploy.\n" + "Details:\n" + repr(e),
+                )
                 return
 
         window = stdoutWindow()
@@ -223,7 +222,7 @@ def configureGUI(STATE, mech):
                 messagebox.showerror(
                     "Error!",
                     "Deployment failed!\n" + "Check the console for more details.",
-                    parent=window
+                    parent=window,
                 )
 
     def runLogger():

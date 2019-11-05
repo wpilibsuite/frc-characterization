@@ -3,9 +3,11 @@
 
 import frc_characterization.cli as cli
 
+
 def main():
 
     cli.main()
+
 
 if __name__ == "__main__":
 
