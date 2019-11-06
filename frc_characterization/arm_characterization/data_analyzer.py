@@ -143,9 +143,12 @@ def configure_gui(STATE):
 
     def runAnalysis():
 
-        STATE.quasi_forward, STATE.quasi_backward, STATE.step_forward, STATE.step_backward = prepare_data(
-            STATE.stored_data, window=STATE.window_size.get(), STATE=STATE
-        )
+        (
+            STATE.quasi_forward,
+            STATE.quasi_backward,
+            STATE.step_forward,
+            STATE.step_backward,
+        ) = prepare_data(STATE.stored_data, window=STATE.window_size.get(), STATE=STATE)
 
         if (
             STATE.quasi_forward is None
