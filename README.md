@@ -370,7 +370,7 @@ think others can use:
 1. [Fork this git repository](https://github.com/allwpilib/robot-characterization/fork) to your GitHub account.
 2. Create your feature branch (`git checkout -b my-new-feature`).
 3. Make changes.
-4. Install the black formatter (`pip install black`), and run it (`black ./` when your working directory is this repo).
+4. Install the black formatter (`pip install black --upgrade`), and run it (`black ./` when your working directory is this repo). If your PR is failing because of formatting issues and your local formatter says everything is good then black is likely out of date.
 5. Commit your changes (`git commit -am 'Add some feature'`).
 6. Push to the branch (`git push -u origin my-new-feature`).
 7. Create new Pull Request on github.
