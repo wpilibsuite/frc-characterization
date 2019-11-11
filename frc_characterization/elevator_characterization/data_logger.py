@@ -24,19 +24,21 @@ import time
 from tkinter import messagebox
 
 from frc_characterization import logger_gui
-from frc_characterization.elevator_characterization.data_analyzer import (AUTOSPEED_COL,
-                                                     ENCODER_P_COL)
+from frc_characterization.elevator_characterization.data_analyzer import (
+    AUTOSPEED_COL,
+    ENCODER_P_COL,
+)
 from networktables import NetworkTables
 from networktables import __version__ as ntversion
 from networktables.util import ntproperty
 
 # Older versions of pynetworktables (and ntcore) had bugs related to flush()
-if tuple(map(int, ntversion.split('.')[:3])) < (2018, 1, 2):
-    print('Requires pynetworktables >= 2018.1.3, %s is installed' % ntversion)
+if tuple(map(int, ntversion.split(".")[:3])) < (2018, 1, 2):
+    print("Requires pynetworktables >= 2018.1.3, %s is installed" % ntversion)
     exit(1)
 
 
-logger = logging.getLogger('logger')
+logger = logging.getLogger("logger")
 
 # FMSControlData bitfields
 ENABLED_FIELD = 1 << 0
@@ -50,13 +52,13 @@ DS_ATTACHED_FIELD = 1 << 5
 def translate_control_word(value):
     value = int(value)
     if value & ENABLED_FIELD == 0:
-        return 'disabled'
+        return "disabled"
     if value & AUTO_FIELD:
-        return 'auto'
+        return "auto"
     if value & TEST_FIELD:
-        return 'test'
+        return "test"
     else:
-        return 'teleop'
+        return "teleop"
 
 
 class TestRunner:
@@ -65,12 +67,12 @@ class TestRunner:
     stored_data = None
 
     # Change this key to whatever NT key you want to log
-    log_key = '/robot/telemetry'
+    log_key = "/robot/telemetry"
 
-    matchNumber = ntproperty('/FMSInfo/MatchNumber', 0, writeDefault=False)
-    eventName = ntproperty('/FMSInfo/EventName', 'unknown', writeDefault=False)
+    matchNumber = ntproperty("/FMSInfo/MatchNumber", 0, writeDefault=False)
+    eventName = ntproperty("/FMSInfo/EventName", "unknown", writeDefault=False)
 
-    autospeed = ntproperty('/robot/autospeed', 0, writeDefault=True)
+    autospeed = ntproperty("/robot/autospeed", 0, writeDefault=True)
 
     def __init__(self, STATE):
         self.STATE = STATE
@@ -78,7 +80,7 @@ class TestRunner:
         self.stored_data = {}
 
         self.queue = queue.Queue()
-        self.mode = 'disabled'
+        self.mode = "disabled"
         self.data = []
         self.lock = threading.Condition()
 
@@ -92,13 +94,13 @@ class TestRunner:
         # set our robot to 'disabled' if the connection drops so that we can
         # guarantee the data gets written to disk
         if not connected:
-            self.valueChanged('/FMSInfo/FMSControlData', 0, False)
+            self.valueChanged("/FMSInfo/FMSControlData", 0, False)
 
-        self.queue.put('connected' if connected else 'disconnected')
+        self.queue.put("connected" if connected else "disconnected")
 
     def valueChanged(self, key, value, isNew):
 
-        if key == '/FMSInfo/FMSControlData':
+        if key == "/FMSInfo/FMSControlData":
 
             mode = translate_control_word(value)
 
@@ -111,12 +113,12 @@ class TestRunner:
 
                 self.lock.notifyAll()
 
-            logger.info('Robot mode: %s -> %s', last, mode)
+            logger.info("Robot mode: %s -> %s", last, mode)
 
             # This example only stores on auto -> disabled transition. Change it
             # to whatever it is that you need for logging
-            if last == 'auto':
-                logger.info('%d items received', len(data))
+            if last == "auto":
+                logger.info("%d items received", len(data))
 
                 # Don't block the NT thread -- write the data to the queue so
                 # it can be processed elsewhere
@@ -133,7 +135,7 @@ class TestRunner:
 
                 if dlen and dlen % 100 == 0:
                     logger.info(
-                        'Received %d datapoints (last commanded speed: %.2f)',
+                        "Received %d datapoints (last commanded speed: %.2f)",
                         dlen,
                         value[AUTOSPEED_COL],
                     )
@@ -146,7 +148,7 @@ class TestRunner:
 
     def wait_for_stationary(self):
         # Wait for the velocity to be 0 for at least one second
-        logger.info('Waiting for robot to stop moving for at least 1 second...')
+        logger.info("Waiting for robot to stop moving for at least 1 second...")
 
         first_stationary_time = time.monotonic()
         last_encoder = 0
@@ -171,7 +173,7 @@ class TestRunner:
             if abs(last_encoder - encoder) > 0.01:
                 first_stationary_time = now
             elif now - first_stationary_time > 1:
-                logger.info('Robot has waited long enough, beginning test')
+                logger.info("Robot has waited long enough, beginning test")
                 return
 
             last_encoder = encoder
@@ -179,11 +181,11 @@ class TestRunner:
     def ramp_voltage_in_auto(self, initial_speed, ramp):
 
         logger.info(
-            'Activating robot at %.1f%%, adding %.3f per 50ms', initial_speed, ramp
+            "Activating robot at %.1f%%, adding %.3f per 50ms", initial_speed, ramp
         )
 
         self.discard_data = False
-        self.autospeed = initial_speed/12
+        self.autospeed = initial_speed / 12
         NetworkTables.flush()
 
         try:
@@ -220,45 +222,44 @@ class TestRunner:
 
             self.STATE.postTask(
                 lambda: messagebox.showinfo(
-                    'Running ' + name,
-                    'Please enable the robot in autonomous mode, and then '
-                    + 'disable it before it runs out of space.\n'
-                    + 'Note: The robot will continue to move until you disable it - '
-                    + 'It is your responsibility to ensure it does not hit anything!',
-                    parent=self.STATE.mainGUI
+                    "Running " + name,
+                    "Please enable the robot in autonomous mode, and then "
+                    + "disable it before it runs out of space.\n"
+                    + "Note: The robot will continue to move until you disable it - "
+                    + "It is your responsibility to ensure it does not hit anything!",
+                    parent=self.STATE.mainGUI,
                 )
             )
 
             # Wait for robot to signal that it entered autonomous mode
             with self.lock:
-                self.lock.wait_for(lambda: self.mode == 'auto')
+                self.lock.wait_for(lambda: self.mode == "auto")
 
             data = self.wait_for_stationary()
             if data is not None:
-                if data in ('connected', 'disconnected'):
+                if data in ("connected", "disconnected"):
                     self.STATE.postTask(
                         lambda: messagebox.showerror(
-                            'Error!', 'NT disconnected.',
-                            parent=self.STATE.mainGUI
+                            "Error!", "NT disconnected.", parent=self.STATE.mainGUI
                         )
                     )
                     return
                 else:
                     self.STATE.postTask(
                         lambda: messagebox.showerror(
-                            'Error!',
-                            'Robot exited autonomous mode before data could be sent?',
-                            parent=self.STATE.mainGUI
+                            "Error!",
+                            "Robot exited autonomous mode before data could be sent?",
+                            parent=self.STATE.mainGUI,
                         )
                     )
                     return
 
             # Ramp the voltage at the specified rate
             data = self.ramp_voltage_in_auto(initial_speed, ramp)
-            if data in ('connected', 'disconnected'):
+            if data in ("connected", "disconnected"):
                 self.STATE.postTask(
-                    lambda: messagebox.showerror('Error!', 'NT disconnected.'),
-                    parent=self.STATE.mainGUI
+                    lambda: messagebox.showerror("Error!", "NT disconnected."),
+                    parent=self.STATE.mainGUI,
                 )
                 return
 
@@ -266,9 +267,9 @@ class TestRunner:
             if len(data) < 3:
                 self.STATE.postTask(
                     lambda: messagebox.showwarning(
-                        'Warning!',
-                        'Last run produced an unusually small amount of data',
-                        parent=self.STATE.mainGUI
+                        "Warning!",
+                        "Last run produced an unusually small amount of data",
+                        parent=self.STATE.mainGUI,
                     )
                 )
             else:
@@ -276,13 +277,13 @@ class TestRunner:
 
                 self.STATE.postTask(
                     lambda: messagebox.showinfo(
-                        name + ' Complete',
-                        'The robot reported traveling the following distance:\n'
-                        + '%.3f units' % distance
-                        + '\n'
-                        + 'If that seems wrong, you should change the encoder calibration'
-                        + 'in the robot program or fix your encoders!',
-                        parent=self.STATE.mainGUI
+                        name + " Complete",
+                        "The robot reported traveling the following distance:\n"
+                        + "%.3f units" % distance
+                        + "\n"
+                        + "If that seems wrong, you should change the encoder calibration"
+                        + "in the robot program or fix your encoders!",
+                        parent=self.STATE.mainGUI,
                     )
                 )
 
@@ -300,7 +301,7 @@ def main(team, dir):
     logger_gui.main(team, dir, TestRunner)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     main(0, os.getcwd())
 
