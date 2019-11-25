@@ -85,7 +85,7 @@ def configureGUI(STATE, mech):
                             STATE.project_type.get(), eval(STATE.config.get())
                         )
                     )
-                with open(os.path.join(dst, "Build.gradle"), "w+") as build:
+                with open(os.path.join(dst, "build.gradle"), "w+") as build:
                     build.write(
                         mech.genBuildGradle(
                             STATE.project_type.get(), STATE.team_number.get()
