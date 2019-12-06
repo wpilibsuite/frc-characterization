@@ -12,6 +12,7 @@ package dc;
 
 import java.util.function.Supplier;
 
+import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -38,6 +39,7 @@ public class Robot extends TimedRobot {
   Joystick stick;
 
   CANSparkMax elevatorMaster;
+  CANEncoder elevatorEncoder;
 
   Supplier<Double> encoderPosition;
   Supplier<Double> encoderRate;
@@ -64,6 +66,8 @@ public class Robot extends TimedRobot {
     % endif
     elevatorMaster.setIdleMode(IdleMode.kBrake);
 
+    elevatorEncoder = elevatorMaster.getEncoder();
+
     % for port in ports[1:]:
     CANSparkMax elevatorSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
     % if inverted[loop.index+1]:
@@ -83,12 +87,12 @@ public class Robot extends TimedRobot {
     double encoderConstant = (1 / GEARING) * WHEEL_DIAMETER * Math.PI;
 
     encoderPosition = ()
-        -> elevatorMaster.getEncoder().getPosition() * encoderConstant;
+        -> elevatorEncoder.getPosition() * encoderConstant;
     encoderRate =
-        () -> elevatorMaster.getEncoder().getVelocity() * encoderConstant / 60.;
+        () -> elevatorEncoder.getVelocity() * encoderConstant / 60.;
 
     // Reset encoders
-    elevatorMaster.getEncoder().setPosition(0);
+    elevatorEncoder.setPosition(0);
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
