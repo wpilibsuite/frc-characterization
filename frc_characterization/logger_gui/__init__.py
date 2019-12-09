@@ -238,6 +238,7 @@ def configure_gui(STATE, RUNNER):
 
     runPostedTasks()
 
+
 class GuiState:
     def __init__(self, team, dir):
         self.mainGUI = tkinter.Tk()

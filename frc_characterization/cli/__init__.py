@@ -61,7 +61,9 @@ tool_dict = {
         "analyzer": analyzerArm,
     },
     "elevator": {
-        "new": lambda dir: newProject(dir, frc_characterization.elevator_characterization),
+        "new": lambda dir: newProject(
+            dir, frc_characterization.elevator_characterization
+        ),
         "logger": loggerElevator,
         "analyzer": analyzerElevator,
     },
@@ -87,9 +89,7 @@ def main():
 
         tool_dict[mech_type][tool_type](None)
     else:
-        parser = argparse.ArgumentParser(
-            description="FRC characterization tools CLI"
-        )
+        parser = argparse.ArgumentParser(description="FRC characterization tools CLI")
         parser.add_argument(
             "mech_type",
             choices=list(tool_dict.keys()),

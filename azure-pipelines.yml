@@ -15,6 +15,13 @@ steps:
 - script: pip install twine
   displayName: 'Install twine'
 
+- script: pip install black
+  displayName: 'Install black formatter'
+
+- script: black --check --diff ./
+  displayName: 'Black formatting check'
+  condition: succeeded()
+
 # Build the python distribution from source
 - script: python setup.py bdist_wheel
   displayName: 'Build package'
