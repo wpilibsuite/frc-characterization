@@ -12,6 +12,7 @@ package dc;
 
 import java.util.function.Supplier;
 
+import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -37,6 +38,9 @@ public class Robot extends TimedRobot {
 
   CANSparkMax leftMaster;
   CANSparkMax rightMaster;
+
+  CANEncoder leftEncoder;
+  CANEncoder rightEncoder;
 
   Supplier<Double> leftEncoderPosition;
   Supplier<Double> leftEncoderRate;
@@ -65,6 +69,8 @@ public class Robot extends TimedRobot {
     % endif
     leftMaster.setIdleMode(IdleMode.kBrake);
 
+    leftEncoder = leftMaster.getEncoder();
+
     rightMaster = new CANSparkMax(${rports[0]}, MotorType.kBrushless);
     % if linverted[0]:
     rightMaster.setInverted(true);
@@ -72,6 +78,8 @@ public class Robot extends TimedRobot {
     rightMaster.setInverted(false);
     % endif
     rightMaster.setIdleMode(IdleMode.kBrake);
+
+    rightEncoder = rightMaster.getEncoder();
 
     % for port in lports[1:]:
     CANSparkMax leftSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
@@ -110,18 +118,18 @@ public class Robot extends TimedRobot {
         (1 / GEARING) * WHEEL_DIAMETER * Math.PI;
 
     leftEncoderPosition = ()
-        -> leftMaster.getEncoder().getPosition() * encoderConstant;
+        -> leftEncoder.getPosition() * encoderConstant;
     leftEncoderRate = ()
-        -> leftMaster.getEncoder().getVelocity() * encoderConstant / 60.;
+        -> leftEncoder.getVelocity() * encoderConstant / 60.;
 
     rightEncoderPosition = ()
-        -> rightMaster.getEncoder().getPosition() * encoderConstant;
+        -> rightEncoder.getPosition() * encoderConstant;
     rightEncoderRate = ()
-        -> rightMaster.getEncoder().getVelocity() * encoderConstant / 60.;
+        -> rightEncoder.getVelocity() * encoderConstant / 60.;
 
     // Reset encoders
-    leftMaster.getEncoder().setPosition(0);
-    rightMaster.getEncoder().setPosition(0);
+    leftEncoder.setPosition(0);
+    rightEncoder.setPosition(0);
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition

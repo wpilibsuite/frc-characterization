@@ -134,8 +134,8 @@ public class Robot extends TimedRobot {
         -> leftEncoder.getVelocity() * encoderConstant / 60.;
 
     // Reset encoders
-    leftMaster.getEncoder().setPosition(0);
-    rightMaster.getEncoder().setPosition(0);
+    leftEncoder.setPosition(0);
+    rightEncoder.setPosition(0);
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
