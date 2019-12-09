@@ -1,2 +1,2 @@
-recursive-include **/robot *.*
-recursive-include **/templates *.*
+recursive-include **/robot *
+recursive-include **/templates *
