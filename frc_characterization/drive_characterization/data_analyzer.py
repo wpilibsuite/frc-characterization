@@ -448,7 +448,7 @@ def configure_gui(STATE):
                 STATE.controller_type.set("Onboard"),
             ),
             "WPILib (2020-)": lambda: (
-                STATE.max_controller_output.set(1),
+                STATE.max_controller_output.set(12),
                 STATE.period.set(0.02),
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Onboard"),
