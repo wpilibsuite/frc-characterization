@@ -14,8 +14,11 @@ from frc_characterization.utils import FloatEntry, IntEntry
 
 # GUI SETUP
 
+
 class Test:
-    def __init__(self, button_text, on_click, status_text_val, option_label=None, option_val=None):
+    def __init__(
+        self, button_text, on_click, status_text_val, option_label=None, option_val=None
+    ):
         self._button_text = button_text
         self._on_click = on_click
         self._status_text_val = status_text_val
@@ -27,15 +30,16 @@ class Test:
 
     def addToGUI(self, frame, row, disable_all_buttons, mainGUI):
         self._run_button = Button(
-            frame, text=self._button_text, command=lambda: (
+            frame,
+            text=self._button_text,
+            command=lambda: (
                 disable_all_buttons(),
                 self._status_text_val.set("Running..."),
-                self._on_click()
-            ), state="disabled"
+                self._on_click(),
+            ),
+            state="disabled",
         )
-        self._run_button.grid(
-            row=row, column=0, sticky="ew"
-        )
+        self._run_button.grid(row=row, column=0, sticky="ew")
 
         status = Entry(frame, textvariable=self._status_text_val)
         status.configure(state="readonly")
@@ -60,6 +64,7 @@ class Test:
 
     def isCompleted(self):
         return self._status_text_val.get() == "Completed"
+
 
 def configure_gui(STATE, RUNNER):
     tests = []
@@ -219,13 +224,22 @@ def configure_gui(STATE, RUNNER):
     teamNumEntry.grid(row=0, column=3, sticky="ew")
 
     tests = [
-        Test("Quasistatic Forward", quasiForward, STATE.sf_completed,
-            "Quasistatic ramp rate (V/s):", STATE.quasi_ramp_rate),
+        Test(
+            "Quasistatic Forward",
+            quasiForward,
+            STATE.sf_completed,
+            "Quasistatic ramp rate (V/s):",
+            STATE.quasi_ramp_rate,
+        ),
         Test("Quasistatic Backward", quasiBackward, STATE.sb_completed),
-
-        Test("Dynamic Forward", dynamicForward, STATE.ff_completed,
-            "Dynamic step voltage (V):", STATE.dynamic_step_voltage),
-        Test("Dynamic Backward", dynamicBackward, STATE.fb_completed)
+        Test(
+            "Dynamic Forward",
+            dynamicForward,
+            STATE.ff_completed,
+            "Dynamic step voltage (V):",
+            STATE.dynamic_step_voltage,
+        ),
+        Test("Dynamic Backward", dynamicBackward, STATE.fb_completed),
     ]
     try:
         # You must add both getAdditionalTests and injectGUIElements if you use either

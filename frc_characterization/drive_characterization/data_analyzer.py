@@ -463,15 +463,15 @@ def configure_gui(STATE):
         if diameter < 0:
             messagebox.showerror(
                 "Warning",
-                "Your track width was negative." +
-                "This means that your gyro is returning clockwise positive angles." +
-                "Use counterclockwise positive angles instead (negate the angle in your code.)"
+                "Your track width was negative."
+                + "This means that your gyro is returning clockwise positive angles."
+                + "Use counterclockwise positive angles instead (negate the angle in your code.)",
             )
         messagebox.showerror(
             "Warning",
-            "Your track width was negative." +
-            "This means that your gyro is returning clockwise positive angles." +
-            "Use counterclockwise positive angles instead (negate the angle in your code.)"
+            "Your track width was negative."
+            + "This means that your gyro is returning clockwise positive angles."
+            + "Use counterclockwise positive angles instead (negate the angle in your code.)",
         )
 
         return diameter
@@ -884,9 +884,9 @@ def trim_quasi_testdata(data, STATE):
     if temp[TIME_COL].size == 0:
         messagebox.showinfo(
             "Error!",
-            "No data in quasistatic test is above motion threshold. " +
-            "Try running with a smaller motion threshold (use --motion_threshold) " +
-            "and make sure your encoder is reporting correctly!"
+            "No data in quasistatic test is above motion threshold. "
+            + "Try running with a smaller motion threshold (use --motion_threshold) "
+            + "and make sure your encoder is reporting correctly!",
         )
         return None
     else:

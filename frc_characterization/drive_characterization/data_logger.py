@@ -63,11 +63,11 @@ class TestRunner:
     # Change this key to whatever NT key you want to log
     log_key = "/robot/telemetry"
 
-    matchNumber = ntproperty('/FMSInfo/MatchNumber', 0, writeDefault=False)
-    eventName = ntproperty('/FMSInfo/EventName', 'unknown', writeDefault=False)
+    matchNumber = ntproperty("/FMSInfo/MatchNumber", 0, writeDefault=False)
+    eventName = ntproperty("/FMSInfo/EventName", "unknown", writeDefault=False)
 
     autospeed = ntproperty("/robot/autospeed", 0, writeDefault=True)
-    rotate = ntproperty('/robot/rotate', False, writeDefault=False)
+    rotate = ntproperty("/robot/rotate", False, writeDefault=False)
 
     def __init__(self, STATE):
 
@@ -80,7 +80,7 @@ class TestRunner:
         self.STATE.rotation_voltage.set(5)
 
         self.STATE.angular_mode = BooleanVar(self.STATE.mainGUI)
-        self.STATE.angular_mode.set(False);
+        self.STATE.angular_mode.set(False)
 
         self.stored_data = {}
 
@@ -100,23 +100,31 @@ class TestRunner:
         Label(self.STATE.topFrame, text="Angular Mode:", anchor="e").grid(
             row=1, column=3, sticky="ew"
         )
-        timestampEnabled = Checkbutton(self.STATE.topFrame, variable=self.STATE.angular_mode)
+        timestampEnabled = Checkbutton(
+            self.STATE.topFrame, variable=self.STATE.angular_mode
+        )
         timestampEnabled.grid(row=1, column=4)
 
     def getAdditionalTests(self, enableTestButtons):
         return [
-            Test("Track Width", lambda: threading.Thread(
-                target=self.runTest,
-                args=(
-                    "track-width",
-                    STATE.rotation_voltage.get(),
-                    0,
-                    lambda: (
-                        self.STATE.trw_completed.set("Completed"),
-                        enableTestButtons()
-                    )
-                )
-            ).start(), self.STATE.trw_completed, "Wheel voltage (V):", self.STATE.rotation_voltage)
+            Test(
+                "Track Width",
+                lambda: threading.Thread(
+                    target=self.runTest,
+                    args=(
+                        "track-width",
+                        STATE.rotation_voltage.get(),
+                        0,
+                        lambda: (
+                            self.STATE.trw_completed.set("Completed"),
+                            enableTestButtons(),
+                        ),
+                    ),
+                ).start(),
+                self.STATE.trw_completed,
+                "Wheel voltage (V):",
+                self.STATE.rotation_voltage,
+            )
         ]
 
     def connectionListener(self, connected, info):
