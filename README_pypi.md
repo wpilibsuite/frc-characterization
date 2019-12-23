@@ -170,7 +170,7 @@ To launch the data logger, press the `Launch Data Logger` button:
 
 This should open the data logger GUI:
 
-![Data logger GUO](https://github.com/allwpilib/robot-characterization/raw/logging_gui/images/datalogger.png)
+![Data logger GUI](https://github.com/allwpilib/robot-characterization/raw/logging_gui/images/datalogger.png)
 
 #### Connect to robot
 
@@ -188,8 +188,9 @@ A standard motor characterization routine consists of two types of tests:
 
 * Quasistatic: In this test, the mechanism is gradually sped-up such that the voltage corresponding to acceleration is negligible (hence, "as if static").
 * Dynamic: In this test, a constant 'step voltage' is given to the mechanism, so that the behavior while accelerating can be determined.
+* Track width (this test will only appear with drivetrain characterization): In this test, the robot spins at a constant rate and records its angle from the gyro (you must have a gyro/IMU) and distance traveled by the left and right wheels. **This test is optional.**
 
-Each test type is run both forwards and backwards, for four tests in total, corresponding to the four buttons:
+Each test type is run both forwards and backwards, for four (or five) tests in total, corresponding to the four (or five) buttons:
 
 ![Test buttons](https://github.com/allwpilib/robot-characterization/raw/logging_gui/images/testbuttons.png)
 
@@ -199,7 +200,7 @@ Follow the instructions in the pop-up windows after pressing each test button:
 
 ![Test instructions](https://github.com/allwpilib/robot-characterization/raw/logging_gui/images/runningtest.png)
 
-After all four tests have been completed, the `save` button will become activated:
+After all four tests (track width is optional) have been completed, the `save` button will become activated:
 
 ![Save data](https://github.com/allwpilib/robot-characterization/raw/logging_gui/images/savedata.png)
 
@@ -231,7 +232,7 @@ By default, the analysis will be run by combining all the data in the test.  For
 
 ![Subset menu](https://github.com/allwpilib/robot-characterization/raw/logging_gui/images/subset.png)
 
-The computed coefficients of the mechanism characterization will then be filled in, along with a goodness-of-fit measure (r-squared):
+The computed coefficients of the mechanism characterization will then be filled in, along with a goodness-of-fit measure (r-squared) and track width (if you're doing drive characterization):
 
 ![Regression coefficients](https://github.com/allwpilib/robot-characterization/raw/logging_gui/images/regrcoeffs.png)
 
@@ -240,6 +241,8 @@ The coefficients correspond to the characterization equation for each of the mec
 * Drive: ![voltage balance equation](https://latex.codecogs.com/gif.latex?V_{applied}=kS&plus;kV\cdot\dot{d}&plus;kA\cdot\ddot{d})
 * Arm: ![voltage balance equation](https://latex.codecogs.com/gif.latex?V_{applied}=kS&plus;kCos\cdot\cos{\theta}&plus;kV\cdot\dot{\theta}&plus;kA\cdot\ddot{\theta})
 * Elevator: ![voltage balance equation](https://latex.codecogs.com/gif.latex?V_{applied}=kG&plus;kFr\cdot&space;sgn(\dot{d})&plus;kV\cdot\dot{d}&plus;kA\cdot\ddot{d})
+
+The track width is the distance between the center of the left and right wheels, **taking into account wheel slip**.
 
 #### View diagnostics
 

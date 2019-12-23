@@ -42,7 +42,7 @@ class ProgramState:
         self.wheel_diam.set(".333")
 
         self.track_width = DoubleVar(self.mainGUI)
-        self.track_width.set()
+        self.track_width.set("N/A")
 
         self.stored_data = None
 
@@ -664,6 +664,11 @@ def configure_gui(STATE):
     Label(ffFrame, text="r-squared:", anchor="e").grid(row=4, column=3, sticky="ew")
     rSquareEntry = FloatEntry(ffFrame, textvariable=STATE.r_square, width=10)
     rSquareEntry.grid(row=4, column=4)
+    rSquareEntry.configure(state="readonly")
+
+    Label(ffFrame, text="Track Width:", anchor="e").grid(row=5, column=3, sticky="ew")
+    rSquareEntry = FloatEntry(ffFrame, textvariable=STATE.track_width, width=10)
+    rSquareEntry.grid(row=5, column=4)
     rSquareEntry.configure(state="readonly")
 
     for child in ffFrame.winfo_children():
