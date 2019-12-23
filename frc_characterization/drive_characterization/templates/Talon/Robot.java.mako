@@ -17,6 +17,10 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
+import com.ctre.phoenix.sensors.PigeonIMU;
+import com.kauailabs.navx.frc.AHRS;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Joystick;
@@ -43,14 +47,17 @@ public class Robot extends TimedRobot {
   Supplier<Double> leftEncoderRate;
   Supplier<Double> rightEncoderPosition;
   Supplier<Double> rightEncoderRate;
+  Supplier<Double> gyroAngleRadians;
 
   NetworkTableEntry autoSpeedEntry =
       NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
   NetworkTableEntry telemetryEntry =
       NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
+  NetworkTableEntry rotateEntry =
+    NetworkTableInstance.getDefault().getEntry("/robot/rotate");
 
   double priorAutospeed = 0;
-  Number[] numberArray = new Number[9];
+  Number[] numberArray = new Number[10];
 
   @Override
   public void robotInit() {
@@ -59,7 +66,7 @@ public class Robot extends TimedRobot {
     stick = new Joystick(0);
 
     leftMaster = new ${lcontrollers[0]}(${lports[0]});
-    % if linverted[0] ^ turn:
+    % if linverted[0]:
     leftMaster.setInverted(true);
     % else:
     leftMaster.setInverted(false);
@@ -86,7 +93,7 @@ public class Robot extends TimedRobot {
 
     % for port in lports[1:]:
     ${lcontrollers[loop.index+1]} leftSlave${loop.index} = new ${lcontrollers[loop.index+1]}(${port});
-    % if linverted[loop.index+1] ^ turn:
+    % if linverted[loop.index+1]:
     leftSlave${loop.index}.setInverted(true);
     % else:
     leftSlave${loop.index}.setInverted(false);
@@ -105,6 +112,31 @@ public class Robot extends TimedRobot {
     rightSlave${loop.index}.follow(rightMaster);
     rightSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
     % endfor
+
+		//
+		// Configure gyro
+		//
+
+    // Note that the angle from the NavX and all implementors of wpilib Gyro
+		// must be negated because getAngle returns a clockwise positive angle
+    % if gyro == "ADXRS450":
+		Gyro gyro = new ADXRS450_Gyro();
+		gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
+    % elif gyro == "NavX":
+		AHRS navx = new AHRS();
+		gyroAngleRadians = () -> -1 * Math.toRadians(navx.getAngle());
+    % elif gyrp == "Pigeon":
+		// Uncomment for Pigeon
+		PigeonIMU pigeon = new PigeonIMU(0);
+		gyroAngleRadians = () -> {
+      // Allocating a new array every loop is bad but concise
+		  double[] xyz = new double[3];
+			pigeon.getAccumGyro(xyz);
+			return Math.toRadians(xyz[2]);
+		};
+    % else:
+		gyroAngleRadians = () -> 0.0;
+    % endif
 
     //
     // Configure drivetrain movement
@@ -210,6 +242,9 @@ public class Robot extends TimedRobot {
     double leftMotorVolts = leftMaster.getMotorOutputVoltage();
     double rightMotorVolts = rightMaster.getMotorOutputVoltage();
 
+    if (rotateEntry.getBoolean(false))
+      leftRate *= -1;
+
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
@@ -227,6 +262,7 @@ public class Robot extends TimedRobot {
     numberArray[6] = rightPosition;
     numberArray[7] = leftRate;
     numberArray[8] = rightRate;
+    numberArray[9] = gyroAngleRadians.get();
 
     telemetryEntry.setNumberArray(numberArray);
   }

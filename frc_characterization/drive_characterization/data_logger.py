@@ -20,22 +20,18 @@ import os
 import queue
 import threading
 import time
-from tkinter import messagebox
-from tkinter import StringVar, DoubleVar
+from tkinter import messagebox, Checkbutton, Label
+from tkinter import StringVar, DoubleVar, BooleanVar
 
 import frc_characterization.logger_gui as logger_gui
-<<<<<<< HEAD
 from frc_characterization.logger_gui import Test
-from frc_characterization.drive_characterization.data_analyzer import (AUTOSPEED_COL,
-                                                  L_ENCODER_P_COL,
-                                                  R_ENCODER_P_COL)
-=======
+
 from frc_characterization.drive_characterization.data_analyzer import (
     AUTOSPEED_COL,
     L_ENCODER_P_COL,
     R_ENCODER_P_COL,
 )
->>>>>>> master
+
 from networktables import NetworkTables
 from networktables.util import ntproperty
 
@@ -67,10 +63,11 @@ class TestRunner:
     # Change this key to whatever NT key you want to log
     log_key = "/robot/telemetry"
 
-    matchNumber = ntproperty("/FMSInfo/MatchNumber", 0, writeDefault=False)
-    eventName = ntproperty("/FMSInfo/EventName", "unknown", writeDefault=False)
+    matchNumber = ntproperty('/FMSInfo/MatchNumber', 0, writeDefault=False)
+    eventName = ntproperty('/FMSInfo/EventName', 'unknown', writeDefault=False)
 
     autospeed = ntproperty("/robot/autospeed", 0, writeDefault=True)
+    rotate = ntproperty('/robot/rotate', False, writeDefault=False)
 
     def __init__(self, STATE):
 
@@ -81,6 +78,9 @@ class TestRunner:
 
         self.STATE.rotation_voltage = DoubleVar(self.STATE.mainGUI)
         self.STATE.rotation_voltage.set(5)
+
+        self.STATE.angular_mode = BooleanVar(self.STATE.mainGUI)
+        self.STATE.angular_mode.set(False);
 
         self.stored_data = {}
 
@@ -94,6 +94,14 @@ class TestRunner:
 
         # Last telemetry data received from the robot
         self.last_data = (0,) * 20
+
+    def injectGUIElements(self):
+        # Add an extra checkbox to the top frame
+        Label(self.STATE.topFrame, text="Angular Mode:", anchor="e").grid(
+            row=1, column=3, sticky="ew"
+        )
+        timestampEnabled = Checkbutton(self.STATE.topFrame, variable=self.STATE.angular_mode)
+        timestampEnabled.grid(row=1, column=4)
 
     def getAdditionalTests(self, enableTestButtons):
         return [
@@ -205,12 +213,15 @@ class TestRunner:
             last_l_encoder = l_encoder
             last_r_encoder = r_encoder
 
-    def ramp_voltage_in_auto(self, initial_speed, ramp):
+    def ramp_voltage_in_auto(self, initial_speed, ramp, rotate=None):
 
         logger.info(
             "Activating robot at %.1f%%, adding %.3f per 50ms", initial_speed, ramp
         )
 
+        if rotate == None:
+            rotate = self.STATE.angular_mode.get()
+        self.rotate = rotate
         self.discard_data = False
         self.autospeed = initial_speed / 12
         NetworkTables.flush()

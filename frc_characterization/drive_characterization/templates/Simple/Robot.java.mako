@@ -12,6 +12,10 @@ import java.util.function.Supplier;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
+import com.ctre.phoenix.sensors.PigeonIMU;
+import com.kauailabs.navx.frc.AHRS;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Encoder;
@@ -41,12 +45,14 @@ public class Robot extends TimedRobot {
   Supplier<Double> leftEncoderRate;
   Supplier<Double> rightEncoderPosition;
   Supplier<Double> rightEncoderRate;
+  Supplier<Double> gyroAngleRadians;
 
   NetworkTableEntry autoSpeedEntry = NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
   NetworkTableEntry telemetryEntry = NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
+  NetworkTableEntry rotateEntry = NetworkTableInstance.getDefault().getEntry("/robot/rotate");
 
   double priorAutospeed = 0;
-  Number[] numberArray = new Number[9];
+  Number[] numberArray = new Number[10];
 
   @Override
   public void robotInit() {
@@ -80,15 +86,36 @@ public class Robot extends TimedRobot {
     % endif
     % endfor
 
+		//
+		// Configure gyro
+		//
+
+    // Note that the angle from the NavX and all implementors of wpilib Gyro
+		// must be negated because getAngle returns a clockwise positive angle
+    % if gyro == "ADXRS450":
+		Gyro gyro = new ADXRS450_Gyro();
+		gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
+    % elif gyro == "NavX":
+		AHRS navx = new AHRS();
+		gyroAngleRadians = () -> -1 * Math.toRadians(navx.getAngle());
+    % elif gyrp == "Pigeon":
+		// Uncomment for Pigeon
+		PigeonIMU pigeon = new PigeonIMU(0);
+		gyroAngleRadians = () -> {
+      // Allocating a new array every loop is bad but concise
+		  double[] xyz = new double[3];
+			pigeon.getAccumGyro(xyz);
+			return Math.toRadians(xyz[2]);
+		};
+    % else:
+		gyroAngleRadians = () -> 0.0;
+    % endif
+
     //
     // Configure drivetrain movement
     //
 
     SpeedControllerGroup leftGroup = new SpeedControllerGroup(leftMotor1, leftMotors);
-    % if turn:
-    leftGroup.setInverted(true);
-    % endif
-
     SpeedControllerGroup rightGroup = new SpeedControllerGroup(rightMotor1, rightMotors);
 
     drive = new DifferentialDrive(leftGroup, rightGroup);
@@ -187,6 +214,9 @@ public class Robot extends TimedRobot {
     double leftMotorVolts = motorVolts;
     double rightMotorVolts = motorVolts;
 
+    if (rotateEntry.getBoolean(false))
+      leftRate *= -1;
+
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
@@ -204,6 +234,7 @@ public class Robot extends TimedRobot {
     numberArray[6] = rightPosition;
     numberArray[7] = leftRate;
     numberArray[8] = rightRate;
+    numberArray[9] = gyroAngleRadians.get();
 
     telemetryEntry.setNumberArray(numberArray);
   }

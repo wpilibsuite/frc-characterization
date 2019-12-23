@@ -200,6 +200,8 @@ def configure_gui(STATE, RUNNER):
     for child in topFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
 
+    STATE.topFrame = topFrame
+
     # WINDOW BODY (TEST RUNNING CONTROLS)
 
     bodyFrame = Frame(STATE.mainGUI, bd=2, relief="groove")
@@ -226,7 +228,9 @@ def configure_gui(STATE, RUNNER):
         Test("Dynamic Backward", dynamicBackward, STATE.fb_completed)
     ]
     try:
+        # You must add both getAdditionalTests and injectGUIElements if you use either
         tests += RUNNER.getAdditionalTests(enableTestButtons)
+        RUNNER.injectGUIElements()
     except AttributeError:
         pass
 
