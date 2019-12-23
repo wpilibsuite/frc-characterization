@@ -21,6 +21,8 @@ import com.revrobotics.EncoderType;
 import com.ctre.phoenix.sensors.PigeonIMU;
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.I2C.Port;
+import edu.wpi.first.wpilibj.SPI.Port;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -110,14 +112,14 @@ public class Robot extends TimedRobot {
     // Note that the angle from the NavX and all implementors of wpilib Gyro
 		// must be negated because getAngle returns a clockwise positive angle
     % if gyro == "ADXRS450":
-		Gyro gyro = new ADXRS450_Gyro();
+		Gyro gyro = new ADXRS450_Gyro(${gyroport});
 		gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
     % elif gyro == "NavX":
-		AHRS navx = new AHRS();
+		AHRS navx = new AHRS(${gyroport});
 		gyroAngleRadians = () -> -1 * Math.toRadians(navx.getAngle());
-    % elif gyrp == "Pigeon":
+    % elif gyro == "Pigeon":
 		// Uncomment for Pigeon
-		PigeonIMU pigeon = new PigeonIMU(0);
+		PigeonIMU pigeon = new PigeonIMU(${gyroport});
 		gyroAngleRadians = () -> {
       // Allocating a new array every loop is bad but concise
 		  double[] xyz = new double[3];

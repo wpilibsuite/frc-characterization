@@ -22,6 +22,7 @@ def genRobotCode(projectType, config):
                     lencoderinv=config["leftEncoderInverted"],
                     rencoderinv=config["rightEncoderInverted"],
                     gyro=config["gyroType"],
+                    gyroport=config["gyroPort"],
                 )
     elif projectType == "Talon":
         with resources.path(__name__, "templates") as path:
@@ -38,6 +39,7 @@ def genRobotCode(projectType, config):
                     lencoderinv=config["leftEncoderInverted"],
                     rencoderinv=config["rightEncoderInverted"],
                     gyro=config["gyroType"],
+                    gyroport=config["gyroPort"],
                 )
     elif projectType == "SparkMax":
         with resources.path(__name__, "templates") as path:
@@ -55,6 +57,7 @@ def genRobotCode(projectType, config):
                     lencoderinv=config["leftEncoderInverted"],
                     rencoderinv=config["rightEncoderInverted"],
                     gyro=config["gyroType"],
+                    gyroport=config["gyroPort"],
                 )
     elif projectType == "Neo":
         with resources.path(__name__, "templates") as path:
@@ -67,6 +70,7 @@ def genRobotCode(projectType, config):
                     linverted=config["leftMotorsInverted"],
                     rinverted=config["rightMotorsInverted"],
                     gyro=config["gyroType"],
+                    gyroport=config["gyroPort"],
                 )
 
 
