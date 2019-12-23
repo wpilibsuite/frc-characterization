@@ -13,6 +13,7 @@ from tkinter import messagebox
 import control as cnt
 import frccontrol as frccnt
 import matplotlib
+
 # This fixes a crash on macOS Mojave by using the TkAgg backend
 # https://stackoverflow.com/a/34109240
 matplotlib.use("TkAgg")
