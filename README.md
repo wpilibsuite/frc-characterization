@@ -200,7 +200,7 @@ Follow the instructions in the pop-up windows after pressing each test button:
 
 ![Test instructions](images/runningtest.png)
 
-After all four tests (track width is optional) have been completed, the `save` button will become activated:
+After all four tests (track width is optional--if you use it, set the rotation voltage to something that makes your robot go relatively slow) have been completed, the `save` button will become activated:
 
 ![Save data](images/savedata.png)
 

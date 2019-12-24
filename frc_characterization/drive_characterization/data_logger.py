@@ -77,7 +77,7 @@ class TestRunner:
         self.STATE.trw_completed.set("Not run")
 
         self.STATE.rotation_voltage = DoubleVar(self.STATE.mainGUI)
-        self.STATE.rotation_voltage.set(5)
+        self.STATE.rotation_voltage.set(2)
 
         self.STATE.angular_mode = BooleanVar(self.STATE.mainGUI)
         self.STATE.angular_mode.set(False)
