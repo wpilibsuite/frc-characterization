@@ -455,7 +455,10 @@ def configure_gui(STATE):
         d_angle = table[-1][GYRO_ANGLE_COL] - table[0][GYRO_ANGLE_COL]
 
         if d_angle == 0:
-            print("Change in gyro angle was 0... Is your gyro set up correctly?")
+            messagebox.showerror(
+                "Error!",
+                "Change in gyro angle was 0... Is your gyro set up correctly?"
+            )
             return 0.0
 
         # The below comes from solving ω=(vr−vl)/2r for 2r
@@ -664,9 +667,9 @@ def configure_gui(STATE):
     rSquareEntry.configure(state="readonly")
 
     Label(ffFrame, text="Track Width:", anchor="e").grid(row=5, column=3, sticky="ew")
-    rSquareEntry = FloatEntry(ffFrame, textvariable=STATE.track_width, width=10)
-    rSquareEntry.grid(row=5, column=4)
-    rSquareEntry.configure(state="readonly")
+    trackWidthEntry = FloatEntry(ffFrame, textvariable=STATE.track_width, width=10)
+    trackWidthEntry.grid(row=5, column=4)
+    trackWidthEntry.configure(state="readonly")
 
     for child in ffFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
