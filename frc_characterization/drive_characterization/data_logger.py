@@ -119,7 +119,7 @@ class TestRunner:
                             self.STATE.trw_completed.set("Completed"),
                             enableTestButtons(),
                         ),
-                        True
+                        True,
                     ),
                 ).start(),
                 self.STATE.trw_completed,
