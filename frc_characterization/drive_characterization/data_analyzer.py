@@ -456,8 +456,7 @@ def configure_gui(STATE):
 
         if d_angle == 0:
             messagebox.showerror(
-                "Error!",
-                "Change in gyro angle was 0... Is your gyro set up correctly?"
+                "Error!", "Change in gyro angle was 0... Is your gyro set up correctly?"
             )
             return 0.0
 
