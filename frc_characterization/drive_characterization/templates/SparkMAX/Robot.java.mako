@@ -105,29 +105,29 @@ public class Robot extends TimedRobot {
     rightSlave${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
 
-		//
-		// Configure gyro
-		//
+    //
+    // Configure gyro
+    //
 
     // Note that the angle from the NavX and all implementors of wpilib Gyro
-		// must be negated because getAngle returns a clockwise positive angle
+    // must be negated because getAngle returns a clockwise positive angle
     % if gyro == "ADXRS450":
-		Gyro gyro = new ADXRS450_Gyro(${gyroport});
-		gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
+    Gyro gyro = new ADXRS450_Gyro(${gyroport});
+    gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
     % elif gyro == "NavX":
-		AHRS navx = new AHRS(${gyroport});
-		gyroAngleRadians = () -> -1 * Math.toRadians(navx.getAngle());
+    AHRS navx = new AHRS(${gyroport});
+    gyroAngleRadians = () -> -1 * Math.toRadians(navx.getAngle());
     % elif gyro == "Pigeon":
-		// Uncomment for Pigeon
-		PigeonIMU pigeon = new PigeonIMU(${gyroport});
-		gyroAngleRadians = () -> {
+    // Uncomment for Pigeon
+    PigeonIMU pigeon = new PigeonIMU(${gyroport});
+    gyroAngleRadians = () -> {
       // Allocating a new array every loop is bad but concise
-		  double[] xyz = new double[3];
-			pigeon.getAccumGyro(xyz);
-			return Math.toRadians(xyz[2]);
-		};
+      double[] xyz = new double[3];
+      pigeon.getAccumGyro(xyz);
+      return Math.toRadians(xyz[2]);
+    };
     % else:
-		gyroAngleRadians = () -> 0.0;
+    gyroAngleRadians = () -> 0.0;
     % endif
 
     //
