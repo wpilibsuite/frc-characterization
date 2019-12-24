@@ -20,8 +20,8 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.ctre.phoenix.sensors.PigeonIMU;
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
-import edu.wpi.first.wpilibj.I2C.Port;
-import edu.wpi.first.wpilibj.SPI.Port;
+import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.wpilibj.SPI;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -228,15 +228,15 @@ public class Robot extends TimedRobot {
     double leftMotorVolts = leftMaster.getBusVoltage() * leftMaster.getAppliedOutput();
     double rightMotorVolts = rightMaster.getBusVoltage() * rightMaster.getAppliedOutput();
 
-    if (rotateEntry.getBoolean(false))
-      leftRate *= -1;
-
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
 
     // command motors to do things
-    drive.tankDrive(autospeed, autospeed, false);
+    drive.tankDrive(
+      (rotateEntry.getBoolean(false) ? -1 : 1) * autospeed, autospeed,
+      false
+    );
 
     // send telemetry data array back to NT
     numberArray[0] = now;

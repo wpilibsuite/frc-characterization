@@ -113,16 +113,17 @@ class TestRunner:
                     target=self.runTest,
                     args=(
                         "track-width",
-                        STATE.rotation_voltage.get(),
+                        self.STATE.rotation_voltage.get(),
                         0,
                         lambda: (
                             self.STATE.trw_completed.set("Completed"),
                             enableTestButtons(),
                         ),
+                        True
                     ),
                 ).start(),
                 self.STATE.trw_completed,
-                "Wheel voltage (V):",
+                "Rotation Wheel voltage (V):",
                 self.STATE.rotation_voltage,
             )
         ]
@@ -221,7 +222,7 @@ class TestRunner:
             last_l_encoder = l_encoder
             last_r_encoder = r_encoder
 
-    def ramp_voltage_in_auto(self, initial_speed, ramp, rotate=None):
+    def ramp_voltage_in_auto(self, initial_speed, ramp, rotate):
 
         logger.info(
             "Activating robot at %.1f%%, adding %.3f per 50ms", initial_speed, ramp
@@ -249,7 +250,7 @@ class TestRunner:
             self.discard_data = True
             self.autospeed = 0
 
-    def runTest(self, name, initial_speed, ramp, finished):
+    def runTest(self, name, initial_speed, ramp, finished, rotate=None):
         try:
             # Initialize the robot commanded speed to 0
             self.autospeed = 0
@@ -301,7 +302,7 @@ class TestRunner:
                     return
 
             # Ramp the voltage at the specified rate
-            data = self.ramp_voltage_in_auto(initial_speed, ramp)
+            data = self.ramp_voltage_in_auto(initial_speed, ramp, rotate)
             if data in ("connected", "disconnected"):
                 self.STATE.postTask(
                     lambda: messagebox.showerror(

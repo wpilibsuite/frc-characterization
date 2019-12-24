@@ -222,6 +222,8 @@ def configure_gui(STATE):
 
         if "track-width" in STATE.stored_data:
             STATE.track_width.set(calcTrackWidth(STATE.stored_data["track-width"]))
+        else:
+            STATE.track_width.set("N/A")
 
         calcGains()
 
@@ -445,11 +447,11 @@ def configure_gui(STATE):
         STATE.kd.set(float("%.3g" % kd))
 
     def calcTrackWidth(table):
-        # Note that this assumes the gyro angle is not modded (i.e. on [0, +infinity]),
+        # Note that this assumes the gyro angle is not modded (i.e. on [0, +infinity)),
         # and that a positive angle travels in the counter-clockwise direction
 
-        d_left = table[0][R_ENCODER_P_COL] - table[-1][R_ENCODER_P_COL]
-        d_right = table[0][L_ENCODER_P_COL] - table[-1][L_ENCODER_P_COL]
+        d_left = table[-1][R_ENCODER_P_COL] - table[0][R_ENCODER_P_COL]
+        d_right = table[-1][L_ENCODER_P_COL] - table[0][L_ENCODER_P_COL]
         d_angle = table[-1][GYRO_ANGLE_COL] - table[0][GYRO_ANGLE_COL]
 
         if d_angle == 0:
@@ -463,16 +465,11 @@ def configure_gui(STATE):
         if diameter < 0:
             messagebox.showerror(
                 "Warning",
-                "Your track width was negative."
-                + "This means that your gyro is returning clockwise positive angles."
-                + "Use counterclockwise positive angles instead (negate the angle in your code.)",
+                "Your track width was negative. Either your gyro is returning "
+                + "clockwise positive angles, or your robot rotated clockwise."
+                + "Use counterclockwise positive angles (negate the angle in your code)"
+                + "and make your robot rotate counterclockwise.",
             )
-        messagebox.showerror(
-            "Warning",
-            "Your track width was negative."
-            + "This means that your gyro is returning clockwise positive angles."
-            + "Use counterclockwise positive angles instead (negate the angle in your code.)",
-        )
 
         return diameter
 
