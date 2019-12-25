@@ -41,6 +41,9 @@ class ProgramState:
         self.wheel_diam = DoubleVar(self.mainGUI)
         self.wheel_diam.set(".333")
 
+        self.track_width = DoubleVar(self.mainGUI)
+        self.track_width.set("N/A")
+
         self.stored_data = None
 
         self.quasi_forward_l = None
@@ -216,6 +219,11 @@ def configure_gui(STATE):
         STATE.kv.set(float("%.3g" % kv))
         STATE.ka.set(float("%.3g" % ka))
         STATE.r_square.set(float("%.3g" % rsquare))
+
+        if "track-width" in STATE.stored_data:
+            STATE.track_width.set(calcTrackWidth(STATE.stored_data["track-width"]))
+        else:
+            STATE.track_width.set("N/A")
 
         calcGains()
 
@@ -438,6 +446,35 @@ def configure_gui(STATE):
         STATE.kp.set(float("%.3g" % kp))
         STATE.kd.set(float("%.3g" % kd))
 
+    def calcTrackWidth(table):
+        # Note that this assumes the gyro angle is not modded (i.e. on [0, +infinity)),
+        # and that a positive angle travels in the counter-clockwise direction
+
+        d_left = table[-1][R_ENCODER_P_COL] - table[0][R_ENCODER_P_COL]
+        d_right = table[-1][L_ENCODER_P_COL] - table[0][L_ENCODER_P_COL]
+        d_angle = table[-1][GYRO_ANGLE_COL] - table[0][GYRO_ANGLE_COL]
+
+        if d_angle == 0:
+            messagebox.showerror(
+                "Error!", "Change in gyro angle was 0... Is your gyro set up correctly?"
+            )
+            return 0.0
+
+        # The below comes from solving ω=(vr−vl)/2r for 2r
+        diameter = (d_left - d_right) / d_angle
+
+        # If you get this you can flip left and right in the above equation to fix things
+        if diameter < 0:
+            messagebox.showerror(
+                "Warning",
+                "Your track width was negative. Either your gyro is returning "
+                + "clockwise positive angles, or your robot rotated clockwise."
+                + "Use counterclockwise positive angles (negate the angle in your code)"
+                + "and make your robot rotate counterclockwise.",
+            )
+
+        return diameter
+
     def presetGains(*args):
 
         presets = {
@@ -628,6 +665,11 @@ def configure_gui(STATE):
     rSquareEntry.grid(row=4, column=4)
     rSquareEntry.configure(state="readonly")
 
+    Label(ffFrame, text="Track Width:", anchor="e").grid(row=5, column=3, sticky="ew")
+    trackWidthEntry = FloatEntry(ffFrame, textvariable=STATE.track_width, width=10)
+    trackWidthEntry.grid(row=5, column=4)
+    trackWidthEntry.configure(state="readonly")
+
     for child in ffFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
 
@@ -781,6 +823,7 @@ columns = dict(
     r_encoder_pos=6,
     l_encoder_vel=7,
     r_encoder_vel=8,
+    gyro_angle=9,
 )
 
 # These are the indices of data stored in the json file
@@ -793,6 +836,7 @@ L_ENCODER_P_COL = columns["l_encoder_pos"]
 R_ENCODER_P_COL = columns["r_encoder_pos"]
 L_ENCODER_V_COL = columns["l_encoder_vel"]
 R_ENCODER_V_COL = columns["r_encoder_vel"]
+GYRO_ANGLE_COL = columns["gyro_angle"]
 
 # The are the indices of data returned from prepare_data function
 PREPARED_TM_COL = 0
@@ -837,9 +881,12 @@ def trim_quasi_testdata(data, STATE):
     temp = data.transpose()[truth].transpose()
 
     if temp[TIME_COL].size == 0:
-        print("Error! No data in quasistatic test is above motion threshold.")
-        print("Try running with a smaller motion threshold (use --motion_threshold)")
-        print("and make sure your encoder is reporting correctly!")
+        messagebox.showinfo(
+            "Error!",
+            "No data in quasistatic test is above motion threshold. "
+            + "Try running with a smaller motion threshold (use --motion_threshold) "
+            + "and make sure your encoder is reporting correctly!",
+        )
         return None
     else:
         return temp

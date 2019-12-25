@@ -20,14 +20,18 @@ import os
 import queue
 import threading
 import time
-from tkinter import messagebox
+from tkinter import messagebox, Checkbutton, Label
+from tkinter import StringVar, DoubleVar, BooleanVar
 
 import frc_characterization.logger_gui as logger_gui
+from frc_characterization.logger_gui import Test
+
 from frc_characterization.drive_characterization.data_analyzer import (
     AUTOSPEED_COL,
     L_ENCODER_P_COL,
     R_ENCODER_P_COL,
 )
+
 from networktables import NetworkTables
 from networktables.util import ntproperty
 
@@ -63,10 +67,20 @@ class TestRunner:
     eventName = ntproperty("/FMSInfo/EventName", "unknown", writeDefault=False)
 
     autospeed = ntproperty("/robot/autospeed", 0, writeDefault=True)
+    rotate = ntproperty("/robot/rotate", False, writeDefault=False)
 
     def __init__(self, STATE):
 
         self.STATE = STATE
+
+        self.STATE.trw_completed = StringVar(self.STATE.mainGUI)
+        self.STATE.trw_completed.set("Not run")
+
+        self.STATE.rotation_voltage = DoubleVar(self.STATE.mainGUI)
+        self.STATE.rotation_voltage.set(2)
+
+        self.STATE.angular_mode = BooleanVar(self.STATE.mainGUI)
+        self.STATE.angular_mode.set(False)
 
         self.stored_data = {}
 
@@ -80,6 +94,39 @@ class TestRunner:
 
         # Last telemetry data received from the robot
         self.last_data = (0,) * 20
+
+    def injectGUIElements(self):
+        # Add an extra checkbox to the top frame
+        Label(self.STATE.topFrame, text="Angular Mode:", anchor="e").grid(
+            row=1, column=3, sticky="ew"
+        )
+        timestampEnabled = Checkbutton(
+            self.STATE.topFrame, variable=self.STATE.angular_mode
+        )
+        timestampEnabled.grid(row=1, column=4)
+
+    def getAdditionalTests(self, enableTestButtons):
+        return [
+            Test(
+                "Track Width",
+                lambda: threading.Thread(
+                    target=self.runTest,
+                    args=(
+                        "track-width",
+                        self.STATE.rotation_voltage.get(),
+                        0,
+                        lambda: (
+                            self.STATE.trw_completed.set("Completed"),
+                            enableTestButtons(),
+                        ),
+                        True,
+                    ),
+                ).start(),
+                self.STATE.trw_completed,
+                "Rotation Wheel voltage (V):",
+                self.STATE.rotation_voltage,
+            )
+        ]
 
     def connectionListener(self, connected, info):
         # set our robot to 'disabled' if the connection drops so that we can
@@ -175,12 +222,15 @@ class TestRunner:
             last_l_encoder = l_encoder
             last_r_encoder = r_encoder
 
-    def ramp_voltage_in_auto(self, initial_speed, ramp):
+    def ramp_voltage_in_auto(self, initial_speed, ramp, rotate):
 
         logger.info(
             "Activating robot at %.1f%%, adding %.3f per 50ms", initial_speed, ramp
         )
 
+        if rotate == None:
+            rotate = self.STATE.angular_mode.get()
+        self.rotate = rotate
         self.discard_data = False
         self.autospeed = initial_speed / 12
         NetworkTables.flush()
@@ -200,7 +250,7 @@ class TestRunner:
             self.discard_data = True
             self.autospeed = 0
 
-    def runTest(self, name, initial_speed, ramp, finished):
+    def runTest(self, name, initial_speed, ramp, finished, rotate=None):
         try:
             # Initialize the robot commanded speed to 0
             self.autospeed = 0
@@ -252,7 +302,7 @@ class TestRunner:
                     return
 
             # Ramp the voltage at the specified rate
-            data = self.ramp_voltage_in_auto(initial_speed, ramp)
+            data = self.ramp_voltage_in_auto(initial_speed, ramp, rotate)
             if data in ("connected", "disconnected"):
                 self.STATE.postTask(
                     lambda: messagebox.showerror(
@@ -298,7 +348,6 @@ class TestRunner:
 
 
 def main(team, dir):
-
     logger_gui.main(team, dir, TestRunner)
 
 
