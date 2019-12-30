@@ -193,12 +193,12 @@ def configure_gui(STATE):
                 ),
                 np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
             )
-        elif STATE.subset.get() == "Combined Left":
+        elif STATE.subset.get() == "Left Combined":
             ks, kv, ka, rsquare = calcFit(
                 np.concatenate((STATE.quasi_forward_l, STATE.quasi_backward_l), axis=1),
                 np.concatenate((STATE.step_forward_l, STATE.step_backward_l), axis=1),
             )
-        elif STATE.subset.get() == "Combined Right":
+        elif STATE.subset.get() == "Right Combined":
             ks, kv, ka, rsquare = calcFit(
                 np.concatenate((STATE.quasi_forward_r, STATE.quasi_backward_r), axis=1),
                 np.concatenate((STATE.step_forward_r, STATE.step_backward_r), axis=1),
@@ -271,15 +271,15 @@ def configure_gui(STATE):
                 ),
                 np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
             )
-        elif STATE.subset.get() == "Combined Left":
+        elif STATE.subset.get() == "Left Combined":
             _plotTimeDomain(
-                "Combined Left",
+                "Left Combined",
                 np.concatenate((STATE.quasi_forward_l, STATE.quasi_backward_l), axis=1),
                 np.concatenate((STATE.step_forward_l, STATE.step_backward_l), axis=1),
             )
-        elif STATE.subset.get() == "Combined Right":
+        elif STATE.subset.get() == "Right Combined":
             _plotTimeDomain(
-                "Combined Right",
+                "Right Combined",
                 np.concatenate((STATE.quasi_forward_r, STATE.quasi_backward_r), axis=1),
                 np.concatenate((STATE.step_forward_r, STATE.step_backward_r), axis=1),
             )
@@ -339,16 +339,16 @@ def configure_gui(STATE):
                 np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
                 STATE,
             )
-        elif STATE.subset.get() == "Combined Left":
+        elif STATE.subset.get() == "Left Combined":
             _plotVoltageDomain(
-                "Combined Left",
+                "Left Combined",
                 np.concatenate((STATE.quasi_forward_l, STATE.quasi_backward_l), axis=1),
                 np.concatenate((STATE.step_forward_l, STATE.step_backward_l), axis=1),
                 STATE,
             )
-        elif STATE.subset.get() == "Combined Right":
+        elif STATE.subset.get() == "Right Combined":
             _plotVoltageDomain(
-                "Combined Right",
+                "Right Combined",
                 np.concatenate((STATE.quasi_forward_r, STATE.quasi_backward_r), axis=1),
                 np.concatenate((STATE.step_forward_r, STATE.step_backward_r), axis=1),
                 STATE,
@@ -406,16 +406,16 @@ def configure_gui(STATE):
                 np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
                 STATE,
             )
-        elif STATE.subset.get() == "Combined Left":
+        elif STATE.subset.get() == "Left Combined":
             _plot3D(
-                "Combined Left",
+                "Left Combined",
                 np.concatenate((STATE.quasi_forward_l, STATE.quasi_backward_l), axis=1),
                 np.concatenate((STATE.step_forward_l, STATE.step_backward_l), axis=1),
                 STATE,
             )
-        elif STATE.subset.get() == "Combined Right":
+        elif STATE.subset.get() == "Right Combined":
             _plot3D(
-                "Combined Right",
+                "Right Combined",
                 np.concatenate((STATE.quasi_forward_r, STATE.quasi_backward_r), axis=1),
                 np.concatenate((STATE.step_forward_r, STATE.step_backward_r), axis=1),
                 STATE,
@@ -642,8 +642,8 @@ def configure_gui(STATE):
         "Backward Left",
         "Backward Right",
         "Backward Combined",
-        "Combined Left",
-        "Combined Right",
+        "Left Combined",
+        "Right Combined",
     }
     dirMenu = OptionMenu(topFrame, STATE.subset, *sorted(subsets))
     dirMenu.configure(width=20)
