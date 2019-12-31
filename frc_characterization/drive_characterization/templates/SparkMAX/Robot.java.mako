@@ -21,6 +21,8 @@ import com.revrobotics.EncoderType;
 import com.ctre.phoenix.sensors.PigeonIMU;
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.AnalogGyro;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.SPI;
 
@@ -113,6 +115,9 @@ public class Robot extends TimedRobot {
     // must be negated because getAngle returns a clockwise positive angle
     % if gyro == "ADXRS450":
     Gyro gyro = new ADXRS450_Gyro(${gyroport});
+    gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
+    % elif gyro == "AnalogGyro":
+    Gyro gyro = new AnalogGyro(${gyroport});
     gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
     % elif gyro == "NavX":
     AHRS navx = new AHRS(${gyroport});
