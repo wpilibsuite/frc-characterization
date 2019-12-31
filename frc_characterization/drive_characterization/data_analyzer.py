@@ -193,6 +193,16 @@ def configure_gui(STATE):
                 ),
                 np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
             )
+        elif STATE.subset.get() == "Left Combined":
+            ks, kv, ka, rsquare = calcFit(
+                np.concatenate((STATE.quasi_forward_l, STATE.quasi_backward_l), axis=1),
+                np.concatenate((STATE.step_forward_l, STATE.step_backward_l), axis=1),
+            )
+        elif STATE.subset.get() == "Right Combined":
+            ks, kv, ka, rsquare = calcFit(
+                np.concatenate((STATE.quasi_forward_r, STATE.quasi_backward_r), axis=1),
+                np.concatenate((STATE.step_forward_r, STATE.step_backward_r), axis=1),
+            )
         else:
             ks, kv, ka, rsquare = calcFit(
                 np.concatenate(
@@ -261,6 +271,18 @@ def configure_gui(STATE):
                 ),
                 np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
             )
+        elif STATE.subset.get() == "Left Combined":
+            _plotTimeDomain(
+                "Left Combined",
+                np.concatenate((STATE.quasi_forward_l, STATE.quasi_backward_l), axis=1),
+                np.concatenate((STATE.step_forward_l, STATE.step_backward_l), axis=1),
+            )
+        elif STATE.subset.get() == "Right Combined":
+            _plotTimeDomain(
+                "Right Combined",
+                np.concatenate((STATE.quasi_forward_r, STATE.quasi_backward_r), axis=1),
+                np.concatenate((STATE.step_forward_r, STATE.step_backward_r), axis=1),
+            )
         else:
             _plotTimeDomain(
                 "All Combined",
@@ -317,6 +339,20 @@ def configure_gui(STATE):
                 np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
                 STATE,
             )
+        elif STATE.subset.get() == "Left Combined":
+            _plotVoltageDomain(
+                "Left Combined",
+                np.concatenate((STATE.quasi_forward_l, STATE.quasi_backward_l), axis=1),
+                np.concatenate((STATE.step_forward_l, STATE.step_backward_l), axis=1),
+                STATE,
+            )
+        elif STATE.subset.get() == "Right Combined":
+            _plotVoltageDomain(
+                "Right Combined",
+                np.concatenate((STATE.quasi_forward_r, STATE.quasi_backward_r), axis=1),
+                np.concatenate((STATE.step_forward_r, STATE.step_backward_r), axis=1),
+                STATE,
+            )
         else:
             _plotVoltageDomain(
                 "All Combined",
@@ -368,6 +404,20 @@ def configure_gui(STATE):
                     (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1
                 ),
                 np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
+                STATE,
+            )
+        elif STATE.subset.get() == "Left Combined":
+            _plot3D(
+                "Left Combined",
+                np.concatenate((STATE.quasi_forward_l, STATE.quasi_backward_l), axis=1),
+                np.concatenate((STATE.step_forward_l, STATE.step_backward_l), axis=1),
+                STATE,
+            )
+        elif STATE.subset.get() == "Right Combined":
+            _plot3D(
+                "Right Combined",
+                np.concatenate((STATE.quasi_forward_r, STATE.quasi_backward_r), axis=1),
+                np.concatenate((STATE.step_forward_r, STATE.step_backward_r), axis=1),
                 STATE,
             )
         else:
@@ -592,6 +642,8 @@ def configure_gui(STATE):
         "Backward Left",
         "Backward Right",
         "Backward Combined",
+        "Left Combined",
+        "Right Combined",
     }
     dirMenu = OptionMenu(topFrame, STATE.subset, *sorted(subsets))
     dirMenu.configure(width=20)
