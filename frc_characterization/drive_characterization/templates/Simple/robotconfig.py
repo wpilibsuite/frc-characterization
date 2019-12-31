@@ -33,13 +33,13 @@
     "leftEncoderInverted": False,
     # Whether the right encoder is inverted:
     "rightEncoderInverted": False,
-    # Your gyro type (one of "NavX", "Pigeon", "ADXRS450", or "None")
+    # Your gyro type (one of "NavX", "Pigeon", "ADXRS450", "AnalogGyro", or "None")
     "gyroType": "None",
     # Whatever you put into the constructor of your gyro
     # Could be:
     # "SPI.Port.kMXP" (MXP SPI port for NavX or ADXRS450),
     # "I2C.Port.kOnboard" (Onboard I2C port for NavX)
-    # "0" (Pigeon CAN ID),
+    # "0" (Pigeon CAN ID or AnalogGyro channel),
     # "new TalonSRX(3)" (Pigeon on a Talon SRX),
     # "" (NavX using default SPI, ADXRS450 using onboard CS0, or no gyro)
     "gyroPort": "",
