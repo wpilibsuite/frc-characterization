@@ -1,6 +1,6 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2020.1.1"
+    id "edu.wpi.first.GradleRIO" version "2020.1.2"
 }
 
 def ROBOT_MAIN_CLASS = "dc.Main"
@@ -59,5 +59,4 @@ jar {
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(ROBOT_MAIN_CLASS)
 }
-
 
