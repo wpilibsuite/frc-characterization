@@ -60,6 +60,4 @@ jar {
     manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(ROBOT_MAIN_CLASS)
 }
 
-wrapper {
-    gradleVersion = '6.0'
-}
+
