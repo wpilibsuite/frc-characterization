@@ -3,9 +3,7 @@
  * the data_logger script to characterize your drivetrain. If you wish to use
  * your actual robot code, you only need to implement the simple logic in the
  * autonomousPeriodic function and change the NetworkTables update rate
- *
- * This program assumes that you are using TalonSRX motor controllers and that
- * the drivetrain encoders are attached to the TalonSRX
+
  */
 
 package dc;
