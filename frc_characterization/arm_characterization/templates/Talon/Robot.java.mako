@@ -3,7 +3,6 @@
  * the data_logger script to characterize your drivetrain. If you wish to use
  * your actual robot code, you only need to implement the simple logic in the
  * autonomousPeriodic function and change the NetworkTables update rate
-
  */
 
 package dc;
