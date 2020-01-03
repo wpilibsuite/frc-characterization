@@ -31,7 +31,7 @@
     # "SPI.Port.kMXP" (MXP SPI port for NavX or ADXRS450),
     # "I2C.Port.kOnboard" (Onboard I2C port for NavX)
     # "0" (Pigeon CAN ID or AnalogGyro channel),
-    # "new TalonSRX(3)" (Pigeon on a Talon SRX),
+    # "new WPI_TalonSRX(3)" (Pigeon on a Talon SRX),
     # "" (NavX using default SPI, ADXRS450 using onboard CS0, or no gyro)
     "gyroPort": "",
 }
