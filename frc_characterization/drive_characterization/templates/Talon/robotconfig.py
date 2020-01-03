@@ -2,6 +2,7 @@
     # Class names of motor controllers used.
     # Options:
     # 'WPI_TalonSRX'
+    # 'WPI_TalonFX' (for Falcon 500 motors)
     # 'WPI_VictorSPX'
     # Note: The first motor on each side should always be a TalonSRX, as the
     # VictorSPX does not support encoder connections
