@@ -4,7 +4,7 @@
     # 'WPI_TalonSRX'
     # 'WPI_TalonFX' (for Falcon 500 motors)
     # 'WPI_VictorSPX'
-    # Note: The first motor on each side should always be a TalonSRX, as the
+    # Note: The first motor on each side should always be a Talon SRX/FX, as the
     # VictorSPX does not support encoder connections
     "rightControllerTypes": ["WPI_TalonSRX", "WPI_TalonSRX"],
     "leftControllerTypes": ["WPI_TalonSRX", "WPI_TalonSRX"],
@@ -35,7 +35,7 @@
     # "I2C.Port.kOnboard" (Onboard I2C port for NavX)
     # "0" (Pigeon CAN ID or AnalogGyro channel),
     # "new WPI_TalonSRX(3)" (Pigeon on a Talon SRX),
-    # "leftSlave" (Pigeon on the left slave Talon SRX),
+    # "leftSlave" (Pigeon on the left slave Talon SRX/FX),
     # "" (NavX using default SPI, ADXRS450 using onboard CS0, or no gyro)
     "gyroPort": "",
 }
