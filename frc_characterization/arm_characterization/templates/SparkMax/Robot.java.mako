@@ -30,7 +30,7 @@ public class Robot extends TimedRobot {
   // The offset of encoder zero from horizontal, in degrees.
   // It is CRUCIAL that this be set correctly, or the characterization will not
   // work!
-  static private int ENCODER_PPR = ${epr};
+  static private int ENCODER_EPR = ${epr};
   static private double OFFSET = ${offset};
   static private double GEARING = ${gearing};
   static private int PIDIDX = 0;
@@ -90,7 +90,7 @@ public class Robot extends TimedRobot {
     double encoderConstant = 1;
     % endif
 
-    CANEncoder encoder = armMaster.getEncoder(EncoderType.kQuadrature, ENCODER_PPR);
+    CANEncoder encoder = armMaster.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
 
     % if encoderinv:
     encoder.setInverted(true);

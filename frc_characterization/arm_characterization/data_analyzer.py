@@ -82,8 +82,8 @@ class ProgramState:
         self.controller_type = StringVar(self.mainGUI)
         self.controller_type.set("Onboard")
 
-        self.encoder_ppr = IntVar(self.mainGUI)
-        self.encoder_ppr.set(4096)
+        self.encoder_epr = IntVar(self.mainGUI)
+        self.encoder_epr.set(4096)
 
         self.has_slave = BooleanVar(self.mainGUI)
         self.has_slave.set(False)
@@ -260,8 +260,8 @@ def configure_gui(STATE):
 
         # Scale by gearing if using Talon
         if STATE.controller_type.get() == "Talon":
-            kp = kp * rotation / (STATE.encoder_ppr.get() * STATE.gearing.get())
-            kd = kd * rotation / (STATE.encoder_ppr.get() * STATE.gearing.get())
+            kp = kp * rotation / (STATE.encoder_epr.get() * STATE.gearing.get())
+            kd = kd * rotation / (STATE.encoder_epr.get() * STATE.gearing.get())
 
         STATE.kp.set(float("%.3g" % kp))
         STATE.kd.set(float("%.3g" % kd))
@@ -494,7 +494,7 @@ def configure_gui(STATE):
     gearingEntry.grid(row=6, column=1)
 
     Label(fbFrame, text="Encoder EPR:", anchor="e").grid(row=7, column=0, sticky="ew")
-    eprEntry = IntEntry(fbFrame, textvariable=STATE.encoder_ppr, width=10)
+    eprEntry = IntEntry(fbFrame, textvariable=STATE.encoder_epr, width=10)
     eprEntry.configure(state="disabled")
     eprEntry.grid(row=7, column=1)
 

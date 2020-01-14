@@ -20,7 +20,7 @@
     # 'Rotations'
     "units": "Degrees",
     # Encoder edges-per-revolution (*NOT* cycles per revolution!)
-    # This value should be the pulses per revolution *of the arm*, and so
+    # This value should be the edges per revolution *of the arm*, and so
     # should take into account gearing between the encoder and the arm
     "encoderEPR": 512,
     # Ports for the encoder

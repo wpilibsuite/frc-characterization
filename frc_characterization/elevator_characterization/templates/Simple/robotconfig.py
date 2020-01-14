@@ -12,7 +12,7 @@
     "motorsInverted": [False],
     # Pulley diameter (in units of your choice - will dictate units of analysis)
     "pulleyDiameter": 0.333,
-    # This value should be the pulses per revolution *of the pulley*, and so
+    # This value should be the edges per revolution *of the pulley*, and so
     # should take into account gearing between the encoder and the pulley
     "encoderEPR": 512,
     # Ports for the encoder
