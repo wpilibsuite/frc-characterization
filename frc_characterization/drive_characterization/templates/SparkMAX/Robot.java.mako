@@ -38,7 +38,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
-  static private int ENCODER_PPR = ${ppr};
+  static private int ENCODER_PPR = ${epr};
   static private double WHEEL_DIAMETER = ${diam};
   static private double GEARING = ${gearing};
   static private int PIDIDX = 0;

@@ -9,7 +9,7 @@ def genRobotCode(projectType, config):
         with resources.path(__name__, "templates") as path:
             with open(os.path.join(path, "Simple", "Robot.java.mako"), "r") as template:
                 return Template(template.read()).render(
-                    ppr=config["encoderPPR"],
+                    epr=config["encoderEPR"],
                     ports=config["motorPorts"],
                     inverted=config["motorsInverted"],
                     controllers=config["controllerTypes"],
@@ -22,7 +22,7 @@ def genRobotCode(projectType, config):
         with resources.path(__name__, "templates") as path:
             with open(os.path.join(path, "Talon", "Robot.java.mako"), "r") as template:
                 return Template(template.read()).render(
-                    ppr=config["encoderPPR"],
+                    epr=config["encoderEPR"],
                     ports=config["motorPorts"],
                     inverted=config["motorsInverted"],
                     controllers=config["controllerTypes"],
@@ -36,7 +36,7 @@ def genRobotCode(projectType, config):
                 os.path.join(path, "SparkMax", "Robot.java.mako"), "r"
             ) as template:
                 return Template(template.read()).render(
-                    ppr=config["encoderPPR"],
+                    epr=config["encoderEPR"],
                     ports=config["motorPorts"],
                     gearing=config["gearing"],
                     inverted=config["motorsInverted"],

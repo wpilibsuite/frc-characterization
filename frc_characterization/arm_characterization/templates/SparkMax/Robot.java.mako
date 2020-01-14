@@ -30,7 +30,7 @@ public class Robot extends TimedRobot {
   // The offset of encoder zero from horizontal, in degrees.
   // It is CRUCIAL that this be set correctly, or the characterization will not
   // work!
-  static private int ENCODER_PPR = ${ppr};
+  static private int ENCODER_PPR = ${epr};
   static private double OFFSET = ${offset};
   static private double GEARING = ${gearing};
   static private int PIDIDX = 0;

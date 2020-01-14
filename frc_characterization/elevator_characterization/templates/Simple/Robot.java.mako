@@ -33,7 +33,7 @@ public class Robot extends TimedRobot {
 
   // The diameter of the pulley driving the elevator, in feet
   static private double PULLEY_DIAMETER = ${diam};
-  static private double ENCODER_PULSE_PER_REV = ${ppr} / 4.;
+  static private double ENCODER_EDGES_PER_REV = ${epr} / 4.;
 
   Joystick stick;
 
@@ -77,7 +77,7 @@ public class Robot extends TimedRobot {
     //
 
     double encoderConstant = 
-        (1 / ENCODER_PULSE_PER_REV) * PULLEY_DIAMETER * Math.PI;
+        (1 / ENCODER_EDGES_PER_REV) * PULLEY_DIAMETER * Math.PI;
 
     Encoder encoder = new Encoder(${encoderports[0]}, ${encoderports[1]});
     encoder.setDistancePerPulse(encoderConstant);
