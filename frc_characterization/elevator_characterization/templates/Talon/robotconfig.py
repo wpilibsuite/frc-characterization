@@ -20,7 +20,7 @@
     "pulleyDiameter": 0.333,
     # This value should be the pulses per revolution *of the wheels*, and so
     # should take into account gearing between the encoder and the wheels
-    "encoderPPR": 512,
+    "encoderEPR": 512,
     # Whether the encoder is inverted
     "encoderInverted": False,
 }

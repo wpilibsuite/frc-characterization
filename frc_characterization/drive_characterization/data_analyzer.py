@@ -571,12 +571,12 @@ def configure_gui(STATE):
     def enableOffboard(*args):
         if STATE.controller_type.get() == "Onboard":
             gearingEntry.configure(state="disabled")
-            pprEntry.configure(state="disabled")
+            eprEntry.configure(state="disabled")
             hasSlave.configure(state="disabled")
             slavePeriodEntry.configure(state="disabled")
         elif STATE.controller_type.get() == "Talon":
             gearingEntry.configure(state="normal")
-            pprEntry.configure(state="normal")
+            eprEntry.configure(state="normal")
             hasSlave.configure(state="normal")
             if STATE.has_slave.get():
                 slavePeriodEntry.configure(state="normal")
@@ -584,7 +584,7 @@ def configure_gui(STATE):
                 slavePeriodEntry.configure(state="disabled")
         else:
             gearingEntry.configure(state="disabled")
-            pprEntry.configure(state="disabled")
+            eprEntry.configure(state="disabled")
             hasSlave.configure(state="normal")
             if STATE.has_slave.get():
                 slavePeriodEntry.configure(state="normal")
@@ -785,10 +785,10 @@ def configure_gui(STATE):
     gearingEntry.configure(state="disabled")
     gearingEntry.grid(row=6, column=1)
 
-    Label(fbFrame, text="Encoder PPR:", anchor="e").grid(row=7, column=0, sticky="ew")
-    pprEntry = IntEntry(fbFrame, textvariable=STATE.encoder_ppr, width=10)
-    pprEntry.configure(state="disabled")
-    pprEntry.grid(row=7, column=1)
+    Label(fbFrame, text="Encoder EPR:", anchor="e").grid(row=7, column=0, sticky="ew")
+    eprEntry = IntEntry(fbFrame, textvariable=STATE.encoder_ppr, width=10)
+    eprEntry.configure(state="disabled")
+    eprEntry.grid(row=7, column=1)
 
     Label(fbFrame, text="Has Slave:", anchor="e").grid(row=8, column=0, sticky="ew")
     hasSlave = Checkbutton(fbFrame, variable=STATE.has_slave)

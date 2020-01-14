@@ -16,10 +16,10 @@
     # 'Radians'
     # 'Rotations'
     "units": "Degrees",
-    # Encoder pulses-per-revolution (*NOT* cycles per revolution!)
+    # Encoder edges-per-revolution (*NOT* cycles per revolution!)
     # This value should be the pulses per revolution *of the arm*, and so
     # should take into account gearing between the encoder and the arm
-    "encoderPPR": 512,
+    "encoderEPR": 512,
     # Whether the encoder is inverted
     "encoderInverted": False,
     # Offset of your encoder zero from horizontal

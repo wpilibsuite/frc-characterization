@@ -43,7 +43,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends TimedRobot {
 
   static private double WHEEL_DIAMETER = ${diam};
-  static private double ENCODER_PULSE_PER_REV = ${ppr} / 4.;
+  static private double ENCODER_EDGES_PER_REV = ${epr} / 4.;
 
   Joystick stick;
   DifferentialDrive drive;
@@ -137,7 +137,7 @@ public class Robot extends TimedRobot {
     // units and units/s
     //
 
-    double encoderConstant = (1 / ENCODER_PULSE_PER_REV) * WHEEL_DIAMETER * Math.PI;
+    double encoderConstant = (1 / ENCODER_EDGES_PER_REV) * WHEEL_DIAMETER * Math.PI;
 
     Encoder leftEncoder = new Encoder(${lencoderports[0]}, ${lencoderports[1]});
     % if lencoderinv:

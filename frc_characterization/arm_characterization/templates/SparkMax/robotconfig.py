@@ -15,8 +15,8 @@
     # The total gear reduction between the motor and the wheels, expressed as
     # a fraction [motor turns]/[wheel turns]
     "gearing": 1,
-    # Encoder pulses-per-revolution (*NOT* cycles per revolution!)
-    "encoderPPR": 512,
+    # Encoder edges-per-revolution (*NOT* cycles per revolution!)
+    "encoderEPR": 512,
     # Whether the encoder is inverted
     "encoderInverted": False,
     # Offset of your encoder zero from horizontal

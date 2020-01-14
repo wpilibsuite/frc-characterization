@@ -36,7 +36,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends TimedRobot {
 
   static private double WHEEL_DIAMETER = ${diam};
-  static private double ENCODER_PULSE_PER_REV = ${ppr};
+  static private double ENCODER_EDGES_PER_REV = ${epr};
   static private int PIDIDX = 0;
 
   Joystick stick;
@@ -157,7 +157,7 @@ public class Robot extends TimedRobot {
     //
 
     double encoderConstant =
-        (1 / ENCODER_PULSE_PER_REV) * WHEEL_DIAMETER * Math.PI;
+        (1 / ENCODER_EDGES_PER_REV) * WHEEL_DIAMETER * Math.PI;
 
     leftMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
                                                 PIDIDX, 10);

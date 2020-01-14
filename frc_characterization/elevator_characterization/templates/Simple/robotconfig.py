@@ -14,7 +14,7 @@
     "pulleyDiameter": 0.333,
     # This value should be the pulses per revolution *of the pulley*, and so
     # should take into account gearing between the encoder and the pulley
-    "encoderPPR": 512,
+    "encoderEPR": 512,
     # Ports for the encoder
     "encoderPorts": [0, 1],
     # Whether the encoder is inverted

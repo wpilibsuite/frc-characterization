@@ -10,7 +10,7 @@ def genRobotCode(projectType, config):
             with open(os.path.join(path, "Simple", "Robot.java.mako"), "r") as template:
                 return Template(template.read()).render(
                     diam=config["wheelDiameter"],
-                    ppr=config["encoderPPR"],
+                    epr=config["encoderEPR"],
                     lports=config["leftMotorPorts"],
                     rports=config["rightMotorPorts"],
                     linverted=config["leftMotorsInverted"],
@@ -29,7 +29,7 @@ def genRobotCode(projectType, config):
             with open(os.path.join(path, "Talon", "Robot.java.mako"), "r") as template:
                 return Template(template.read()).render(
                     diam=config["wheelDiameter"],
-                    ppr=config["encoderPPR"],
+                    epr=config["encoderEPR"],
                     lports=config["leftMotorPorts"],
                     rports=config["rightMotorPorts"],
                     linverted=config["leftMotorsInverted"],
@@ -48,7 +48,7 @@ def genRobotCode(projectType, config):
             ) as template:
                 return Template(template.read()).render(
                     diam=config["wheelDiameter"],
-                    ppr=config["encoderPPR"],
+                    epr=config["encoderEPR"],
                     gearing=config["gearing"],
                     lports=config["leftMotorPorts"],
                     rports=config["rightMotorPorts"],

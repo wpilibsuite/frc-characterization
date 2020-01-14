@@ -28,7 +28,7 @@ public class Robot extends TimedRobot {
 
   // The diameter of the pulley driving the elevator, in feet
   static private double PULLEY_DIAMETER = ${diam};
-  static private double ENCODER_PULSE_PER_REV = ${ppr};
+  static private double ENCODER_EDGES_PER_REV = ${epr};
   static private int PIDIDX = 0;
 
   Joystick stick;
@@ -82,7 +82,7 @@ public class Robot extends TimedRobot {
     //
 
     double encoderConstant =
-        (1 / ENCODER_PULSE_PER_REV) * PULLEY_DIAMETER * Math.PI;
+        (1 / ENCODER_EDGES_PER_REV) * PULLEY_DIAMETER * Math.PI;
 
     elevatorMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, PIDIDX,
                                           10);

@@ -11,8 +11,8 @@
     "gearing": 1,
     # Pulley diameter (in units of your choice - will dictate units of analysis)
     "pulleyDiameter": 0.333,
-    # Encoder pulses-per-revolution (*NOT* cycles per revolution!)
-    "encoderPPR": 512,
+    # Encoder edges-per-revolution (*NOT* cycles per revolution!)
+    "encoderEPR": 512,
     # Whether the encoder is inverted
     "encoderInverted": False,
 }
