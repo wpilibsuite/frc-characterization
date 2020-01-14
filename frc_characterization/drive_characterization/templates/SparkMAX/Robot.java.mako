@@ -38,7 +38,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
-  static private int ENCODER_PPR = ${epr};
+  static private int ENCODER_EPR = ${epr};
   static private double WHEEL_DIAMETER = ${diam};
   static private double GEARING = ${gearing};
   static private int PIDIDX = 0;
@@ -151,8 +151,8 @@ public class Robot extends TimedRobot {
     double encoderConstant =
         (1 / GEARING) * WHEEL_DIAMETER * Math.PI;
 
-    CANEncoder leftEncoder = leftMaster.getEncoder(EncoderType.kQuadrature, ENCODER_PPR);
-    CANEncoder rightEncoder = rightMaster.getEncoder(EncoderType.kQuadrature, ENCODER_PPR);
+    CANEncoder leftEncoder = leftMaster.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
+    CANEncoder rightEncoder = rightMaster.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
 
     % if lencoderinv:
     leftEncoder.setInverted(true);
