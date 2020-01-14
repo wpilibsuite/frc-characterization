@@ -8,6 +8,7 @@
     # VictorSPX does not support encoder connections
     "rightControllerTypes": ["WPI_TalonSRX", "WPI_TalonSRX"],
     "leftControllerTypes": ["WPI_TalonSRX", "WPI_TalonSRX"],
+    # Note: The first id in the list of ports should be the one with an encoder
     # Ports for the left-side motors
     "leftMotorPorts": [0, 1],
     # Ports for the right-side motors
