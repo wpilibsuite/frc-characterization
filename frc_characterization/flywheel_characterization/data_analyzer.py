@@ -178,9 +178,7 @@ def configure_gui(STATE):
         if STATE.subset.get() == "Forward":
             _plotTimeDomain("Forward", STATE.quasi_forward, STATE.step_forward)
         elif STATE.subset.get() == "Backward":
-            _plotTimeDomain(
-                "Backward", STATE.quasi_backward, STATE.step_backward
-            )
+            _plotTimeDomain("Backward", STATE.quasi_backward, STATE.step_backward)
 
     def plotVoltageDomain():
         if STATE.subset.get() == "Forward":
@@ -196,9 +194,7 @@ def configure_gui(STATE):
         if STATE.subset.get() == "Forward":
             _plot3D("Forward", STATE.quasi_forward, STATE.step_forward, STATE)
         elif STATE.subset.get() == "Backward":
-            _plot3D(
-                "Backward", STATE.quasi_backward, STATE.step_backward, STATE
-            )
+            _plot3D("Backward", STATE.quasi_backward, STATE.step_backward, STATE)
 
     def calcGains():
 
@@ -587,14 +583,7 @@ def configure_gui(STATE):
 #
 
 
-columns = dict(
-    time=0,
-    battery=1,
-    autospeed=2,
-    volts=3,
-    encoder_pos=5,
-    encoder_vel=7,
-)
+columns = dict(time=0, battery=1, autospeed=2, volts=3, encoder_pos=5, encoder_vel=7,)
 
 # These are the indices of data stored in the json file
 TIME_COL = columns["time"]
@@ -635,10 +624,7 @@ def smoothDerivative(tm, value, n):
 def trim_quasi_testdata(data, STATE):
     adata = np.abs(data)
     truth = np.all(
-        [
-            adata[ENCODER_V_COL] > STATE.motion_threshold.get(),
-            adata[VOLTS_COL] > 0,
-        ],
+        [adata[ENCODER_V_COL] > STATE.motion_threshold.get(), adata[VOLTS_COL] > 0,],
         axis=0,
     )
 
@@ -725,9 +711,7 @@ def prepare_data(data, window, STATE):
     # ensure voltage sign matches velocity sign
 
     for x in JSON_DATA_KEYS:
-        data[x][VOLTS_COL] = np.copysign(
-            data[x][VOLTS_COL], data[x][ENCODER_V_COL]
-        )
+        data[x][VOLTS_COL] = np.copysign(data[x][VOLTS_COL], data[x][ENCODER_V_COL])
 
     # trim quasi data before computing acceleration
     sf_trim = trim_quasi_testdata(data["slow-forward"], STATE)
@@ -916,6 +900,7 @@ def calcFit(qu, step):
     rsquare = fit.rsquared
 
     return ks, kv, ka, rsquare
+
 
 def _calcGainsPos(kv, ka, qp, qv, effort, period):
 

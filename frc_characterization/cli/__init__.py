@@ -50,8 +50,10 @@ def loggerElevator(dir):
 def analyzerElevator(dir):
     elevator_analyzer.main(getcwd())
 
+
 def loggerFlywheel(dir):
     logger_gui.main(0, getcwd(), flywheel_logger.TestRunner)
+
 
 def analyzerFlywheel(dir):
     flywheel_analyzer.main(getcwd())

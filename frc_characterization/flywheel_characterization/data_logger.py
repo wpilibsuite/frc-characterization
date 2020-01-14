@@ -173,10 +173,7 @@ class TestRunner:
                 print(self.last_data)
                 raise
 
-            if (
-                abs(last_encoder - encoder) > 0.01
-                or abs(last_encoder - encoder) > 0.01
-            ):
+            if abs(last_encoder - encoder) > 0.01 or abs(last_encoder - encoder) > 0.01:
                 first_stationary_time = now
             elif now - first_stationary_time > 1:
                 logger.info("Flywheel has waited long enough, beginning test")
@@ -221,8 +218,8 @@ class TestRunner:
             self.STATE.postTask(
                 lambda: messagebox.showinfo(
                     "Running " + name,
-                    "Please enable the robot in autonomous mode, and then " +
-                    "disable it after you feel you've collected enough data.\n",
+                    "Please enable the robot in autonomous mode, and then "
+                    + "disable it after you feel you've collected enough data.\n",
                     parent=self.STATE.mainGUI,
                 )
             )
