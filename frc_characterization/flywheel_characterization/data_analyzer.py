@@ -36,10 +36,7 @@ class ProgramState:
         self.subset.set("All Combined")
 
         self.units = StringVar(self.mainGUI)
-        self.units.set("Feet")
-
-        self.wheel_diam = DoubleVar(self.mainGUI)
-        self.wheel_diam.set(".333")
+        self.units.set("Rotations")
 
         self.stored_data = None
 
@@ -91,7 +88,7 @@ class ProgramState:
         self.gain_units_preset.set("Default")
 
         self.loop_type = StringVar(self.mainGUI)
-        self.loop_type.set("Position")
+        self.loop_type.set("Velocity")
 
         self.kp = DoubleVar(self.mainGUI)
         self.kd = DoubleVar(self.mainGUI)
@@ -230,14 +227,6 @@ def configure_gui(STATE):
         if not STATE.controller_time_normalized.get():
             kd = kd / STATE.period.get()
 
-        # Get correct conversion factor for rotations
-        if STATE.units.get() == "Radians":
-            rotation = 2 * math.pi
-        elif STATE.units.get() == "Rotations":
-            rotation = 1
-        else:
-            rotation = STATE.wheel_diam.get() * math.pi
-
         # Convert to controller-native units
         if STATE.controller_type.get() == "Talon":
             kp = kp * rotation / (STATE.encoder_epr.get() * STATE.gearing.get())
@@ -314,16 +303,6 @@ def configure_gui(STATE):
             else:
                 slavePeriodEntry.configure(state="disabled")
 
-    def enableWheelDiam(*args):
-        if (
-            STATE.units.get() == "Feet"
-            or STATE.units.get() == "Inches"
-            or STATE.units.get() == "Meters"
-        ):
-            diamEntry.configure(state="normal")
-        else:
-            diamEntry.configure(state="disabled")
-
     def enableErrorBounds(*args):
         if STATE.loop_type.get() == "Position":
             qPEntry.configure(state="normal")
@@ -343,30 +322,18 @@ def configure_gui(STATE):
     fileEntry.grid(row=0, column=1, columnspan=3)
     fileEntry.configure(state="readonly")
 
+    # The only current option is rotations
+    # This made the implementation of everything easier
     Label(topFrame, text="Units:", width=10).grid(row=0, column=4)
-    unitChoices = {"Feet", "Inches", "Meters", "Radians", "Rotations"}
+    unitChoices = {"Rotations"}
     unitsMenu = OptionMenu(topFrame, STATE.units, *sorted(unitChoices))
     unitsMenu.configure(width=10)
     unitsMenu.grid(row=0, column=5, sticky="ew")
-    STATE.units.trace_add("write", enableWheelDiam)
-
-    Label(topFrame, text="Wheel Diameter (units):", anchor="e").grid(
-        row=1, column=3, columnspan=2, sticky="ew"
-    )
-    diamEntry = FloatEntry(topFrame, textvariable=STATE.wheel_diam)
-    diamEntry.grid(row=1, column=5)
 
     Label(topFrame, text="Subset:", width=15).grid(row=0, column=6)
     subsets = {
-        "All Combined",
-        "Forward Left",
-        "Forward Right",
-        "Forward Combined",
-        "Backward Left",
-        "Backward Right",
-        "Backward Combined",
-        "Left Combined",
-        "Right Combined",
+        "Forward",
+        "Backward",
     }
     dirMenu = OptionMenu(topFrame, STATE.subset, *sorted(subsets))
     dirMenu.configure(width=20)
@@ -583,7 +550,7 @@ def configure_gui(STATE):
 #
 
 
-columns = dict(time=0, battery=1, autospeed=2, volts=3, encoder_pos=5, encoder_vel=7,)
+columns = dict(time=0, battery=1, autospeed=2, volts=3, encoder_pos=4, encoder_vel=5)
 
 # These are the indices of data stored in the json file
 TIME_COL = columns["time"]

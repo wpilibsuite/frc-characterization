@@ -31,7 +31,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
-  static private double WHEEL_DIAMETER = ${diam};
   static private double ENCODER_EDGES_PER_REV = ${epr} / 4.;
 
   Joystick stick;
@@ -59,7 +58,7 @@ public class Robot extends TimedRobot {
     % endif
 
     SpeedController[] motors = new SpeedController[${len(ports) - 1}];
-    % for port in lports[1:]:
+    % for port in ports[1:]:
     motors[${loop.index}] = new ${controllers[loop.index+1]}(${port});
     % if inverted[loop.index+1]:
     motors[${loop.index}].setInverted(true);
