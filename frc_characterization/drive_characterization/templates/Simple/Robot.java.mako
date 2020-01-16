@@ -85,7 +85,7 @@ public class Robot extends TimedRobot {
     % endif
     % endfor
 
-    SpeedController[] rightMotors = new SpeedController[${len(lports) - 1}];
+    SpeedController[] rightMotors = new SpeedController[${len(rports) - 1}];
     % for port in rports[1:]:
     rightMotors[${loop.index}] = new ${rcontrollers[loop.index+1]}(${port});
     % if rinverted[loop.index+1]:
