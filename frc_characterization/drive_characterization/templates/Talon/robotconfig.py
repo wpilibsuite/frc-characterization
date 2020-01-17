@@ -32,7 +32,8 @@
     # Whatever you put into the constructor of your gyro
     # Could be:
     # "SPI.Port.kMXP" (MXP SPI port for NavX or ADXRS450),
-    # "I2C.Port.kOnboard" (Onboard I2C port for NavX)
+    # "SerialPort.Port.kMXP" (MXP Serial port for NavX),
+    # "I2C.Port.kOnboard" (Onboard I2C port for NavX),
     # "0" (Pigeon CAN ID or AnalogGyro channel),
     # "new WPI_TalonSRX(3)" (Pigeon on a Talon SRX),
     # "leftSlave" (Pigeon on the left slave Talon SRX/FX),
