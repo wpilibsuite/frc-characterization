@@ -80,9 +80,9 @@ public class Robot extends TimedRobot {
         (1 / GEARING);
 
     encoderPosition = ()
-        -> leftEncoder.getPosition() * encoderConstant;
+        -> encoder.getPosition() * encoderConstant;
     encoderRate = ()
-        -> leftEncoder.getVelocity() * encoderConstant / 60.;
+        -> encoder.getVelocity() * encoderConstant / 60.;
 
     // Reset encoders
     encoder.setPosition(0);
@@ -95,7 +95,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    drive.tankDrive(0, 0);
+    master.set(0);
   }
 
   @Override
@@ -137,8 +137,8 @@ public class Robot extends TimedRobot {
     // Retrieve values to send back before telling the motors to do something
     double now = Timer.getFPGATimestamp();
 
-    double position = leftEncoderPosition.get();
-    double rate = leftEncoderRate.get();
+    double position = encoderPosition.get();
+    double rate = encoderRate.get();
 
     double battery = RobotController.getBatteryVoltage();
 

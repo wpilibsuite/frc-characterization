@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
 
+  static private int ENCODER_EPR = ${epr};
   static private double GEARING = ${gearing};
   static private int PIDIDX = 0;
 
@@ -99,7 +100,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    drive.tankDrive(0, 0);
+    master.set(0);
   }
 
   @Override
@@ -119,7 +120,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    drive.arcadeDrive(-stick.getY(), stick.getX());
+    master.set(-stick.getY());
   }
 
   @Override

@@ -102,7 +102,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    drive.tankDrive(0, 0);
+    master.set(0);
   }
 
   @Override

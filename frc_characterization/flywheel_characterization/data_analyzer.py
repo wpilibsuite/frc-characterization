@@ -33,7 +33,7 @@ class ProgramState:
         self.motion_threshold.set(0.2)
 
         self.subset = StringVar(self.mainGUI)
-        self.subset.set("All Combined")
+        self.subset.set("Forward")
 
         self.units = StringVar(self.mainGUI)
         self.units.set("Rotations")
@@ -117,6 +117,13 @@ def configure_gui(STATE):
                 # -> transpose it so we can deal with it in columns
                 for k in JSON_DATA_KEYS:
                     data[k] = np.array(data[k]).transpose()
+
+                if len(data[JSON_DATA_KEYS[-1]][-1]) > len(columns):
+                    messagebox.showerror(
+                        "Error!",
+                        "You cannot import characterization data from a different mechanism.",
+                    )
+                    return
 
                 STATE.stored_data = data
 
