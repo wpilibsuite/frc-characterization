@@ -88,7 +88,7 @@ class ProgramState:
         self.gain_units_preset.set("Default")
 
         self.loop_type = StringVar(self.mainGUI)
-        self.loop_type.set("Velocity")
+        self.loop_type.set("Position")
 
         self.kp = DoubleVar(self.mainGUI)
         self.kd = DoubleVar(self.mainGUI)
@@ -118,7 +118,7 @@ def configure_gui(STATE):
                 for k in JSON_DATA_KEYS:
                     data[k] = np.array(data[k]).transpose()
 
-                if len(data[JSON_DATA_KEYS[-1]][-1]) > len(columns):
+                if len(data[JSON_DATA_KEYS[-1]]) > len(columns):
                     messagebox.showerror(
                         "Error!",
                         "You cannot import characterization data from a different mechanism.",
@@ -234,12 +234,23 @@ def configure_gui(STATE):
         if not STATE.controller_time_normalized.get():
             kd = kd / STATE.period.get()
 
+        # Get the correct conversion factor for rotations
+        # TODO: Support radians?
+        if STATE.units.get() == "Radians":
+            rotation = 2 * math.pi
+        elif STATE.units.get() == "Rotations":
+            rotation = 1
+
         # Convert to controller-native units
         if STATE.controller_type.get() == "Talon":
             kp = kp * rotation / (STATE.encoder_epr.get() * STATE.gearing.get())
             kd = kd * rotation / (STATE.encoder_epr.get() * STATE.gearing.get())
             if STATE.loop_type.get() == "Velocity":
                 kp = kp * 10
+        elif STATE.controller_type.get() == "Spark":
+            # SPARK MAX velocity is in RPM, not RPS
+            kp /= 60.0
+            kd /= 60.0
 
         STATE.kp.set(float("%.3g" % kp))
         STATE.kd.set(float("%.3g" % kd))
