@@ -12,6 +12,8 @@ import frc_characterization.drive_characterization.data_analyzer as drive_analyz
 import frc_characterization.drive_characterization.data_logger as drive_logger
 import frc_characterization.elevator_characterization.data_analyzer as elevator_analyzer
 import frc_characterization.elevator_characterization.data_logger as elevator_logger
+import frc_characterization.flywheel_characterization.data_analyzer as flywheel_analyzer
+import frc_characterization.flywheel_characterization.data_logger as flywheel_logger
 import frc_characterization.logger_gui as logger_gui
 import frc_characterization.newproject as newproject
 from consolemenu import SelectionMenu
@@ -49,6 +51,14 @@ def analyzerElevator(dir):
     elevator_analyzer.main(getcwd())
 
 
+def loggerFlywheel(dir):
+    logger_gui.main(0, getcwd(), flywheel_logger.TestRunner)
+
+
+def analyzerFlywheel(dir):
+    flywheel_analyzer.main(getcwd())
+
+
 tool_dict = {
     "drive": {
         "new": lambda dir: newProject(dir, frc_characterization.drive_characterization),
@@ -66,6 +76,13 @@ tool_dict = {
         ),
         "logger": loggerElevator,
         "analyzer": analyzerElevator,
+    },
+    "flywheel": {
+        "new": lambda dir: newProject(
+            dir, frc_characterization.flywheel_characterization
+        ),
+        "logger": loggerFlywheel,
+        "analyzer": analyzerFlywheel,
     },
 }
 
