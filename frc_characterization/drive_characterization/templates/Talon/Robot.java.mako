@@ -160,8 +160,14 @@ public class Robot extends TimedRobot {
     double encoderConstant =
         (1 / ENCODER_EDGES_PER_REV) * WHEEL_DIAMETER * Math.PI;
 
-    leftMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
-                                                PIDIDX, 10);
+    leftMaster.configSelectedFeedbackSensor(
+        % if lcontrollers[0] == "WPI_TalonFX":
+        FeedbackDevice.IntegratedSensor,
+        % else:
+        FeedbackDevice.QuadEncoder,
+        % endif
+        PIDIDX, 10
+    );
     leftEncoderPosition = ()
         -> leftMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
     leftEncoderRate = ()
@@ -169,8 +175,14 @@ public class Robot extends TimedRobot {
                10;
 
     % if rencoderinv is not None:
-    rightMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
-                                                 PIDIDX, 10);
+    rightMaster.configSelectedFeedbackSensor(
+        % if lcontrollers[0] == "WPI_TalonFX":
+        FeedbackDevice.IntegratedSensor,
+        % else:
+        FeedbackDevice.QuadEncoder,
+        % endif
+        PIDIDX, 10
+    );
     rightEncoderPosition = ()
         -> rightMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
     rightEncoderRate = ()
