@@ -25,7 +25,7 @@ from tkinter import StringVar, DoubleVar, BooleanVar
 import frc_characterization.logger_gui as logger_gui
 from frc_characterization.logger_gui import Test
 
-from frc_characterization.flywheel_characterization.data_analyzer import (
+from frc_characterization.simplemotor_characterization.data_analyzer import (
     AUTOSPEED_COL,
     ENCODER_P_COL,
 )

@@ -970,7 +970,7 @@ def main(dir):
 
     STATE = ProgramState(dir)
 
-    STATE.mainGUI.title("FRC Flywheel Characterization Tool")
+    STATE.mainGUI.title("FRC Simple Motor Characterization Tool")
 
     configure_gui(STATE)
     STATE.mainGUI.mainloop()
