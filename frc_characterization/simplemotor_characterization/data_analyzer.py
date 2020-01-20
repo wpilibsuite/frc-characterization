@@ -12,7 +12,12 @@ from tkinter import messagebox
 
 import control as cnt
 import frccontrol as frccnt
-import matplotlib.pyplot as plt
+import matplotlib
+
+# This fixes a crash on macOS Mojave by using the TkAgg backend
+# https://stackoverflow.com/a/34109240
+matplotlib.use("TkAgg")
+from matplotlib import pyplot as plt
 import numpy as np
 import statsmodels.api as sm
 from frc_characterization.utils import FloatEntry, IntEntry

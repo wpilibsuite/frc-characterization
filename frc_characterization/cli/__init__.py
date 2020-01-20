@@ -56,7 +56,7 @@ def loggerSimpleMotor(dir):
 
 
 def analyzerSimpleMotor(dir):
-    flywheel_analyzer.main(getcwd())
+    simplemotor_analyzer.main(getcwd())
 
 
 tool_dict = {
