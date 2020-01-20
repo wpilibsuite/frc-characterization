@@ -60,7 +60,7 @@ setuptools.setup(
         "frc_characterization.arm_characterization",
         "frc_characterization.drive_characterization",
         "frc_characterization.elevator_characterization",
-        "frc_characterization.flywheel_characterization",
+        "frc_characterization.simplemotor_characterization",
         "frc_characterization.cli",
         "frc_characterization.logger_gui",
         "frc_characterization.newproject",
