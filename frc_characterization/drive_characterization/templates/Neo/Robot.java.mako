@@ -146,7 +146,7 @@ public class Robot extends TimedRobot {
     //
 
     drive = new DifferentialDrive(leftMaster, rightMaster);
-
+    drive.setRightSideInverted(false);
     drive.setDeadband(0);
 
     //
