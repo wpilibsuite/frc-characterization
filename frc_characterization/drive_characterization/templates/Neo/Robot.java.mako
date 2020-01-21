@@ -84,7 +84,7 @@ public class Robot extends TimedRobot {
     leftEncoder = leftMaster.getEncoder();
 
     rightMaster = new CANSparkMax(${rports[0]}, MotorType.kBrushless);
-    % if linverted[0]:
+    % if rinverted[0]:
     rightMaster.setInverted(true);
     % else:
     rightMaster.setInverted(false);
