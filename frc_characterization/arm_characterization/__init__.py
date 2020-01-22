@@ -30,10 +30,10 @@ def genRobotCode(projectType, config):
                     offset=config["offset"],
                     units=config["units"],
                 )
-    elif projectType == "SparkMax":
+    elif projectType == "SparkMax (Brushed)":
         with resources.path(__name__, "templates") as path:
             with open(
-                os.path.join(path, "SparkMax", "Robot.java.mako"), "r"
+                os.path.join(path, "SparkMax_Brushed", "Robot.java.mako"), "r"
             ) as template:
                 return Template(template.read()).render(
                     epr=config["encoderEPR"],
@@ -44,9 +44,11 @@ def genRobotCode(projectType, config):
                     offset=config["offset"],
                     units=config["units"],
                 )
-    elif projectType == "Neo":
+    elif projectType == "SparkMax (Brushless/Neo)":
         with resources.path(__name__, "templates") as path:
-            with open(os.path.join(path, "Neo", "Robot.java.mako"), "r") as template:
+            with open(
+                os.path.join(path, "SparkMax_Brushless", "Robot.java.mako"), "r"
+            ) as template:
                 return Template(template.read()).render(
                     ports=config["motorPorts"],
                     gearing=config["gearing"],
