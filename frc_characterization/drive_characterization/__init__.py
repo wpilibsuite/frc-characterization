@@ -41,7 +41,7 @@ def genRobotCode(projectType, config):
                     gyro=config["gyroType"],
                     gyroport=config["gyroPort"],
                 )
-    elif projectType == "SparkMax (Brushed)":
+    elif projectType == "SparkMax_Brushed":
         with resources.path(__name__, "templates") as path:
             with open(
                 os.path.join(path, "SparkMax_Brushed", "Robot.java.mako"), "r"
@@ -59,7 +59,7 @@ def genRobotCode(projectType, config):
                     gyro=config["gyroType"],
                     gyroport=config["gyroPort"],
                 )
-    elif projectType == "SparkMax (Brushless/Neo)":
+    elif projectType == "SparkMax_Brushless":
         with resources.path(__name__, "templates") as path:
             with open(
                 os.path.join(path, "SparkMax_Brushless", "Robot.java.mako"), "r"
