@@ -26,10 +26,12 @@ import frc_characterization.robot as res
 
 def configureGUI(STATE, mech):
 
-    projectChoices = {"Simple": "Simple",
-                      "Talon": "Talon",
-                      "SparkMax (Brushed)": "SparkMax_Brushed",
-                      "SparkMax (Brushless/Neo)": "SparkMax_Brushless"}
+    projectChoices = {
+        "Simple": "Simple",
+        "Talon": "Talon",
+        "SparkMax (Brushed)": "SparkMax_Brushed",
+        "SparkMax (Brushless/Neo)": "SparkMax_Brushless",
+    }
 
     def getProjectLocation():
         file_path = filedialog.askdirectory(
@@ -58,7 +60,9 @@ def configureGUI(STATE, mech):
     def updateTemplatePath(*args):
         nonlocal templatePath
         with resources.path(mech, "templates") as path:
-            templatePath = os.path.join(path, projectChoices.get(STATE.project_type.get()))
+            templatePath = os.path.join(
+                path, projectChoices.get(STATE.project_type.get())
+            )
         getDefaultConfig()
 
     def updateConfigPath(*args):
@@ -88,13 +92,15 @@ def configureGUI(STATE, mech):
                 ) as robot:
                     robot.write(
                         mech.genRobotCode(
-                            projectChoices.get(STATE.project_type.get()), eval(STATE.config.get())
+                            projectChoices.get(STATE.project_type.get()),
+                            eval(STATE.config.get()),
                         )
                     )
                 with open(os.path.join(dst, "build.gradle"), "w+") as build:
                     build.write(
                         mech.genBuildGradle(
-                            projectChoices.get(STATE.project_type.get()), STATE.team_number.get()
+                            projectChoices.get(STATE.project_type.get()),
+                            STATE.team_number.get(),
                         )
                     )
         except FileExistsError:

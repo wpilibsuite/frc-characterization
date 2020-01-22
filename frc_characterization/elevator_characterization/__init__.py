@@ -43,7 +43,9 @@ def genRobotCode(projectType, config):
                 )
     elif projectType == "SparkMax (Brushless/Neo)":
         with resources.path(__name__, "templates") as path:
-            with open(os.path.join(path, "SparkMax_Brushless", "Robot.java.mako"), "r") as template:
+            with open(
+                os.path.join(path, "SparkMax_Brushless", "Robot.java.mako"), "r"
+            ) as template:
                 return Template(template.read()).render(
                     diam=config["pulleyDiameter"],
                     ports=config["motorPorts"],
