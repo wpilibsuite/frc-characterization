@@ -72,11 +72,16 @@ public class Robot extends TimedRobot {
 
     //
     // Configure encoder related functions -- getDistance and getrate should
-    // return revolutions and revolutions/s
+    // return units and units/s
     //
 
-    double encoderConstant =
-        (1 / GEARING);
+    % if units == 'Degrees':
+    double encoderConstant = (1 / GEARING) * 360.;
+    % elif units == 'Radians':
+    double encoderConstant = (1 / GEARING) * 2. * Math.PI;
+    % elif units == 'Rotations':
+    double encoderConstant = (1 / GEARING) * 1;
+    % endif
 
     CANEncoder encoder = master.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
 

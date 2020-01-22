@@ -1,4 +1,10 @@
 {
+    # Unit of analysis
+    # Options:
+    # 'Degrees'
+    # 'Radians'
+    # 'Rotations'
+    "units": "Rotations",
     # Ports for the flywheel motor(s)
     # If you only have 1 motor all the below arrays should only have one element
     # The first port is the one with the encoder attached

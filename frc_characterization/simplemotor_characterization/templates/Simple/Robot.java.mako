@@ -72,10 +72,18 @@ public class Robot extends TimedRobot {
 
     //
     // Configure encoder related functions -- getDistance and getrate should return
-    // revolutions and revolutions/s
+    // units and units/s
     //
 
     double encoderConstant = (1 / ENCODER_EDGES_PER_REV);
+
+    % if units == 'Degrees':
+    encoderConstant *= 360.;
+    % elif units == 'Radians':
+    encoderConstant *= 2. * Math.PI;
+    % elif units == 'Rotations':
+    encoderConstant *= 1;
+    % endif
 
     Encoder encoder = new Encoder(${encoderports[0]}, ${encoderports[1]});
     % if encoderinv:
