@@ -77,11 +77,16 @@ public class Robot extends TimedRobot {
 
     //
     // Configure encoder related functions -- getDistance and getrate should
-    // return revolutions and revolutions/s
+    // return units and units/s
     //
 
-    double encoderConstant =
-        (1 / ENCODER_EDGES_PER_REV);
+    % if units == 'Degrees':
+    double encoderConstant = (1 / ENCODER_EDGES_PER_REV) * 360.;
+    % elif units == 'Radians':
+    double encoderConstant = (1 / ENCODER_EDGES_PER_REV) * 2. * Math.PI;
+    % elif units == 'Rotations':
+    double encoderConstant = (1 / ENCODER_EDGES_PER_REV) * 1;
+    % endif
 
     master.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
                                                 PIDIDX, 10);

@@ -240,11 +240,12 @@ def configure_gui(STATE):
             kd = kd / STATE.period.get()
 
         # Get the correct conversion factor for rotations
-        # TODO: Support radians?
         if STATE.units.get() == "Radians":
             rotation = 2 * math.pi
         elif STATE.units.get() == "Rotations":
             rotation = 1
+        elif STATE.units.get() == "Degrees":
+            rotation = 360
 
         # Convert to controller-native units
         if STATE.controller_type.get() == "Talon":
@@ -344,7 +345,7 @@ def configure_gui(STATE):
     # The only current option is rotations
     # This made the implementation of everything easier
     Label(topFrame, text="Units:", width=10).grid(row=0, column=4)
-    unitChoices = {"Rotations"}
+    unitChoices = {"Rotations", "Degrees", "Radians"}
     unitsMenu = OptionMenu(topFrame, STATE.units, *sorted(unitChoices))
     unitsMenu.configure(width=10)
     unitsMenu.grid(row=0, column=5, sticky="ew")

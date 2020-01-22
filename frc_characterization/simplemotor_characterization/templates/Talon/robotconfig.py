@@ -1,4 +1,10 @@
 {
+    # Unit of analysis
+    # Options:
+    # 'Degrees'
+    # 'Radians'
+    # 'Rotations'
+    "units": "Rotations",
     # Class names of motor controllers used.
     # Options:
     # 'WPI_TalonSRX'
