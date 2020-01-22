@@ -25,6 +25,12 @@ import frc_characterization.robot as res
 
 
 def configureGUI(STATE, mech):
+
+    projectChoices = {"Simple": "Simple",
+                      "Talon": "Talon",
+                      "SparkMax (Brushed)": "SparkMax_Brushed",
+                      "SparkMax (Brushless/Neo)": "SparkMax_Brushless"}
+
     def getProjectLocation():
         file_path = filedialog.askdirectory(
             title="Choose the project location", initialdir=STATE.project_path.get()
@@ -52,7 +58,7 @@ def configureGUI(STATE, mech):
     def updateTemplatePath(*args):
         nonlocal templatePath
         with resources.path(mech, "templates") as path:
-            templatePath = os.path.join(path, STATE.project_type.get())
+            templatePath = os.path.join(path, projectChoices.get(STATE.project_type.get()))
         getDefaultConfig()
 
     def updateConfigPath(*args):
@@ -82,13 +88,13 @@ def configureGUI(STATE, mech):
                 ) as robot:
                     robot.write(
                         mech.genRobotCode(
-                            STATE.project_type.get(), eval(STATE.config.get())
+                            projectChoices.get(STATE.project_type.get()), eval(STATE.config.get())
                         )
                     )
                 with open(os.path.join(dst, "build.gradle"), "w+") as build:
                     build.write(
                         mech.genBuildGradle(
-                            STATE.project_type.get(), STATE.team_number.get()
+                            projectChoices.get(STATE.project_type.get()), STATE.team_number.get()
                         )
                     )
         except FileExistsError:
@@ -255,9 +261,8 @@ def configureGUI(STATE, mech):
         row=0, column=11, sticky="ew"
     )
 
-    projectChoices = ["Simple", "Talon", "SparkMax", "Neo"]
-    projTypeMenu = OptionMenu(topFrame, STATE.project_type, *projectChoices)
-    projTypeMenu.configure(width=10)
+    projTypeMenu = OptionMenu(topFrame, STATE.project_type, *projectChoices.keys())
+    projTypeMenu.configure(width=25)
     projTypeMenu.grid(row=0, column=12, sticky="ew")
     STATE.project_type.trace_add("write", updateTemplatePath)
 
