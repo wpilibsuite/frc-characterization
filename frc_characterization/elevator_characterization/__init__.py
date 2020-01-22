@@ -28,7 +28,7 @@ def genRobotCode(projectType, config):
                     controllers=config["controllerTypes"],
                     encoderinv=config["encoderInverted"],
                 )
-    elif projectType == "SparkMax (Brushed)":
+    elif projectType == "SparkMax_Brushed":
         with resources.path(__name__, "templates") as path:
             with open(
                 os.path.join(path, "SparkMax_Brushed", "Robot.java.mako"), "r"
@@ -41,7 +41,7 @@ def genRobotCode(projectType, config):
                     encoderinv=config["encoderInverted"],
                     gearing=config["gearing"],
                 )
-    elif projectType == "SparkMax (Brushless/Neo)":
+    elif projectType == "SparkMax_Brushless":
         with resources.path(__name__, "templates") as path:
             with open(
                 os.path.join(path, "SparkMax_Brushless", "Robot.java.mako"), "r"
