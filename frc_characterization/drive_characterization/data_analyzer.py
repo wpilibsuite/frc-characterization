@@ -516,17 +516,9 @@ def configure_gui(STATE):
             return 0.0
 
         # The below comes from solving ω=(vr−vl)/2r for 2r
-        diameter = (d_left - d_right) / d_angle
-
-        # If you get this you can flip left and right in the above equation to fix things
-        if diameter < 0:
-            messagebox.showerror(
-                "Warning",
-                "Your track width was negative. Either your gyro is returning "
-                + "clockwise positive angles, or your robot rotated clockwise."
-                + "Use counterclockwise positive angles (negate the angle in your code)"
-                + "and make your robot rotate counterclockwise.",
-            )
+        # Absolute values used to ensure the calculated value is always positive
+        # and to add robustness to sensor inversion
+        diameter = (abs(d_left) + abs(d_right)) / abs(d_angle)
 
         return diameter
 
