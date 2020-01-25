@@ -66,7 +66,7 @@ class ProgramState:
         self.max_effort.set(3)
 
         self.period = DoubleVar(self.mainGUI)
-        self.period.set(5)
+        self.period.set(0.02)
 
         self.max_controller_output = DoubleVar(self.mainGUI)
         self.max_controller_output.set(12)
