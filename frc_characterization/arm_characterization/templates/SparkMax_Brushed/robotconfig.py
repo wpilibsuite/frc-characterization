@@ -1,4 +1,6 @@
 {
+    # Warning: This project type is for BRUSHED motors ONLY!
+
     # Ports for the motors
     "motorPorts": [0],
     # NOTE: Inversions of the slaves (i.e. any motor *after* the first on

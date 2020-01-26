@@ -29,8 +29,8 @@ def configureGUI(STATE, mech):
     projectChoices = {
         "Simple": "Simple",
         "Talon": "Talon",
-        "SparkMax (Brushed)": "SparkMax_Brushed",
         "SparkMax (Brushless/Neo)": "SparkMax_Brushless",
+        "SparkMax (Brushed)": "SparkMax_Brushed",
     }
 
     def getProjectLocation():

@@ -1,4 +1,6 @@
 {
+    # Warning: This project type is for BRUSHED motors ONLY!
+
     # Unit of analysis
     # Options:
     # 'Degrees'
