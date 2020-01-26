@@ -1,5 +1,6 @@
 {
     # Warning: This project type is for BRUSHED motors ONLY!
+    # Using this with BRUSHLESS (NEO) motors can DAMAGE them PERMANENTLY!
     # Note: The first motor in the list of ports should be the one with an encoder
     # Ports for the left-side motors
     "leftMotorPorts": [0, 1],
