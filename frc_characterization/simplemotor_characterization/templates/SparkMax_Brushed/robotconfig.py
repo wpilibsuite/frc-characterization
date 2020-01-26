@@ -1,4 +1,6 @@
 {
+    # Warning: This project type is for BRUSHED motors ONLY!
+    # Using this with BRUSHLESS (NEO) motors can DAMAGE them PERMANENTLY!
     # Unit of analysis
     # Options:
     # 'Degrees'

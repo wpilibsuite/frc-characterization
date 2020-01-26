@@ -1,4 +1,5 @@
 {
+    # Warning: This project type is for BRUSHLESS motors ONLY!
     # Unit of analysis
     # Options:
     # 'Degrees'

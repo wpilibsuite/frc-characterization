@@ -1,4 +1,6 @@
 {
+    # Warning: This project type is for BRUSHED motors ONLY!
+    # Using this with BRUSHLESS (NEO) motors can DAMAGE them PERMANENTLY!
     # Ports for the motors
     "motorPorts": [0],
     # NOTE: Inversions of the slaves (i.e. any motor *after* the first on

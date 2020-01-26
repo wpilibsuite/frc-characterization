@@ -1,4 +1,5 @@
 {
+    # Warning: This project type is for BRUSHLESS motors ONLY!
     # Ports for the left-side motors
     "leftMotorPorts": [0, 1],
     # Ports for the right-side motors
