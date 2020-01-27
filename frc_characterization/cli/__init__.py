@@ -90,19 +90,25 @@ tool_dict = {
 def main():
 
     if len(argv) < 2:
-        menu = SelectionMenu(
-            list(tool_dict.keys()), "What type of mechanism are you characterizing?"
+        main_menu = SelectionMenu(
+            tool_dict.keys(), "What type of mechanism are you characterizing?",
         )
-        menu.show()
-        menu.join()
-        mech_type = list(tool_dict.keys())[menu.selected_option]
+        main_menu.show()
+        main_menu.join()
+        mech_type = main_menu.selected_item.text
 
-        menu = SelectionMenu(
-            list(list(tool_dict.values())[0].keys()), "What tool do you want to use?"
+        if main_menu.is_selected_item_exit():
+            exit()
+
+        submenu = SelectionMenu(
+            list(tool_dict.values())[0].keys(), "What tool do you want to use?",
         )
-        menu.show()
-        menu.join()
-        tool_type = list(list(tool_dict.values())[0].keys())[menu.selected_option]
+        submenu.show()
+        submenu.join()
+        tool_type = submenu.selected_item.text
+
+        if submenu.is_selected_item_exit():
+            exit()
 
         tool_dict[mech_type][tool_type](None)
     else:
