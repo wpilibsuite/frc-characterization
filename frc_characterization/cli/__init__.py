@@ -102,11 +102,9 @@ def main():
         for mechanism, tools in tool_dict.items():
             tool_menu = ConsoleMenu(f"Characterization Tools: {mechanism}")
             for tool, function in tools.items():
-                tool_menu.append_item(
-                    FunctionItem(tool, function, menu=tool_menu, should_exit=True)
-                )
+                tool_menu.append_item(FunctionItem(tool, function, menu=tool_menu))
 
-            menu.append_item(SubmenuItem(mechanism, tool_menu, menu, should_exit=True))
+            menu.append_item(SubmenuItem(mechanism, tool_menu, menu))
 
         menu.show()
 
