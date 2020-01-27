@@ -3,6 +3,7 @@
 import argparse
 from os import getcwd
 from sys import argv
+from functools import partial
 
 import argcomplete
 import frc_characterization
@@ -16,70 +17,74 @@ import frc_characterization.simplemotor_characterization.data_analyzer as simple
 import frc_characterization.simplemotor_characterization.data_logger as simplemotor_logger
 import frc_characterization.logger_gui as logger_gui
 import frc_characterization.newproject as newproject
-from consolemenu import SelectionMenu
+
+from consolemenu import ConsoleMenu
+from consolemenu.items import FunctionItem, SubmenuItem
 
 langs = ("java", "cpp", "python")
 
 controllers = ("spark", "talonsrx")
 
 
-def newProject(dir, mech):
-    newproject.main(mech)
+def newProject(mechanism, directory=None):
+    newproject.main(mechanism)
 
 
-def loggerArm(dir):
+def loggerArm(directory=None):
     logger_gui.main(0, getcwd(), arm_logger.TestRunner)
 
 
-def analyzerArm(dir):
+def analyzerArm(directory=None):
     arm_analyzer.main(getcwd())
 
 
-def loggerDrive(dir):
+def loggerDrive(directory=None):
     logger_gui.main(0, getcwd(), drive_logger.TestRunner)
 
 
-def analyzerDrive(dir):
+def analyzerDrive(directory=None):
     drive_analyzer.main(getcwd())
 
 
-def loggerElevator(dir):
+def loggerElevator(directory=None):
     logger_gui.main(0, getcwd(), elevator_logger.TestRunner)
 
 
-def analyzerElevator(dir):
+def analyzerElevator(directory=None):
     elevator_analyzer.main(getcwd())
 
 
-def loggerSimpleMotor(dir):
+def loggerSimpleMotor(directory=None):
     logger_gui.main(0, getcwd(), simplemotor_logger.TestRunner)
 
 
-def analyzerSimpleMotor(dir):
+def analyzerSimpleMotor(directory=None):
     simplemotor_analyzer.main(getcwd())
 
 
 tool_dict = {
     "drive": {
-        "new": lambda dir: newProject(dir, frc_characterization.drive_characterization),
+        "new": partial(
+            newProject, mechanism=frc_characterization.drive_characterization,
+        ),
         "logger": loggerDrive,
         "analyzer": analyzerDrive,
     },
     "arm": {
-        "new": lambda dir: newProject(dir, frc_characterization.arm_characterization),
+        "new": partial(newProject, mechanism=frc_characterization.arm_characterization),
         "logger": loggerArm,
         "analyzer": analyzerArm,
     },
     "elevator": {
-        "new": lambda dir: newProject(
-            dir, frc_characterization.elevator_characterization
+        "new": partial(
+            newProject, mechanism=frc_characterization.elevator_characterization,
         ),
         "logger": loggerElevator,
         "analyzer": analyzerElevator,
     },
     "simple-motor": {
-        "new": lambda dir: newProject(
-            dir, frc_characterization.simplemotor_characterization
+        "new": partial(
+            newProject, mechanism=frc_characterization.simplemotor_characterization,
         ),
         "logger": loggerSimpleMotor,
         "analyzer": analyzerSimpleMotor,
@@ -90,21 +95,21 @@ tool_dict = {
 def main():
 
     if len(argv) < 2:
-        menu = SelectionMenu(
-            list(tool_dict.keys()), "What type of mechanism are you characterizing?"
+        menu = ConsoleMenu(
+            "Mechanism Types", "Choose which mechanism you are characterizing"
         )
-        menu.show()
-        menu.join()
-        mech_type = list(tool_dict.keys())[menu.selected_option]
 
-        menu = SelectionMenu(
-            list(list(tool_dict.values())[0].keys()), "What tool do you want to use?"
-        )
-        menu.show()
-        menu.join()
-        tool_type = list(list(tool_dict.values())[0].keys())[menu.selected_option]
+        for mechanism, tools in tool_dict.items():
+            tool_menu = ConsoleMenu(f"Characterization Tools: {mechanism}")
+            for tool, function in tools.items():
+                tool_menu.append_item(
+                    FunctionItem(tool, function, menu=tool_menu, should_exit=True)
+                )
 
-        tool_dict[mech_type][tool_type](None)
+            menu.append_item(SubmenuItem(mechanism, tool_menu, menu, should_exit=True))
+
+        menu.show()
+
     else:
         parser = argparse.ArgumentParser(description="FRC characterization tools CLI")
         parser.add_argument(
