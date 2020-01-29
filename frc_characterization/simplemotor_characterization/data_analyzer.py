@@ -93,7 +93,7 @@ class ProgramState:
         self.gain_units_preset.set("Default")
 
         self.loop_type = StringVar(self.mainGUI)
-        self.loop_type.set("Position")
+        self.loop_type.set("Velocity")
 
         self.kp = DoubleVar(self.mainGUI)
         self.kd = DoubleVar(self.mainGUI)
@@ -513,6 +513,7 @@ def configure_gui(STATE):
     )
     qPEntry = FloatEntry(fbFrame, textvariable=STATE.qp, width=10)
     qPEntry.grid(row=1, column=4)
+    qPEntry.configure(state="disabled")
 
     Label(fbFrame, text="Max Acceptable Velocity Error (units/s):", anchor="e").grid(
         row=2, column=2, columnspan=2, sticky="ew"
