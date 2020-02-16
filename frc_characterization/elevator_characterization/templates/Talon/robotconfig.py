@@ -2,8 +2,9 @@
     # Class names of motor controllers used.
     # Options:
     # 'WPI_TalonSRX'
+    # 'WPI_TalonFX'
     # 'WPI_VictorSPX'
-    # Note: The first motor should always be a TalonSRX, as the VictorSPX
+    # Note: The first motor should always be a TalonSRX/FX, as the VictorSPX
     # does not support encoder connections.
     "controllerTypes": ["WPI_TalonSRX"],
     # Ports for the motors

@@ -88,8 +88,14 @@ public class Robot extends TimedRobot {
     double encoderConstant = (1 / ENCODER_EDGES_PER_REV) * 1;
     % endif
 
-    master.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,
-                                                PIDIDX, 10);
+    master.configSelectedFeedbackSensor(
+        % if controllers[0] == "WPI_TalonFX":
+        FeedbackDevice.IntegratedSensor,
+        % else:
+        FeedbackDevice.QuadEncoder,
+        % endif
+        PIDIDX, 10
+    );
     encoderPosition = ()
         -> master.getSelectedSensorPosition(PIDIDX) * encoderConstant;
     encoderRate = ()
