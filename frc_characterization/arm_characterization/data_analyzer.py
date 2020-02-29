@@ -867,7 +867,12 @@ def _plotVoltageDomain(direction, qu, step, STATE):
 
     # show fit line from multiple regression
     y = np.linspace(np.min(qu[PREPARED_POS_COL]), np.max(qu[PREPARED_POS_COL]))
-    plt.plot(kcos * np.cos(np.radians(y)), y)
+    if STATE.units.get() == "Degrees":
+        plt.plot(kcos * np.cos(np.radians(y)), y)
+    elif STATE.units.get() == "Radians":
+        plt.plot(kcos * np.cos(y), y)
+    else:
+        plt.plot(kcos * np.cos(math.pi * 2 * y), y)
 
     # Fix overlapping axis labels
     plt.tight_layout(pad=0.5)
