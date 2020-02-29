@@ -129,7 +129,7 @@ def main():
         argcomplete.autocomplete(parser)
 
         args = parser.parse_args()
-        tool_dict[args.mech_type][args.tool_type](args.project_directory)
+        tool_dict[args.mech_type][args.tool_type](directory=args.project_directory)
 
 
 if __name__ == "__main__":
