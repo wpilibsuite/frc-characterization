@@ -20,6 +20,7 @@ import os
 import queue
 import threading
 import time
+import numpy as np
 from tkinter import messagebox, Checkbutton, Label
 from tkinter import StringVar, DoubleVar, BooleanVar
 
@@ -36,6 +37,9 @@ from networktables import NetworkTables
 from networktables.util import ntproperty
 
 logger = logging.getLogger("logger")
+log_format = "%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s"
+
+logging.basicConfig(level=logging.INFO, format=log_format)
 
 # FMSControlData bitfields
 ENABLED_FIELD = 1 << 0
@@ -44,6 +48,8 @@ TEST_FIELD = 1 << 2
 EMERGENCY_STOP_FIELD = 1 << 3
 FMS_ATTACHED_FIELD = 1 << 4
 DS_ATTACHED_FIELD = 1 << 5
+timeout = 10
+num_columns = 10
 
 
 def translate_control_word(value):
@@ -79,9 +85,6 @@ class TestRunner:
         self.STATE.rotation_voltage = DoubleVar(self.STATE.mainGUI)
         self.STATE.rotation_voltage.set(2)
 
-        self.STATE.angular_mode = BooleanVar(self.STATE.mainGUI)
-        self.STATE.angular_mode.set(False)
-
         self.stored_data = {}
 
         self.queue = queue.Queue()
@@ -94,39 +97,6 @@ class TestRunner:
 
         # Last telemetry data received from the robot
         self.last_data = (0,) * 20
-
-    def injectGUIElements(self):
-        # Add an extra checkbox to the top frame
-        Label(self.STATE.topFrame, text="Angular Mode:", anchor="e").grid(
-            row=1, column=3, sticky="ew"
-        )
-        timestampEnabled = Checkbutton(
-            self.STATE.topFrame, variable=self.STATE.angular_mode
-        )
-        timestampEnabled.grid(row=1, column=4)
-
-    def getAdditionalTests(self, enableTestButtons):
-        return [
-            Test(
-                "Track Width",
-                lambda: threading.Thread(
-                    target=self.runTest,
-                    args=(
-                        "track-width",
-                        self.STATE.rotation_voltage.get(),
-                        0,
-                        lambda: (
-                            self.STATE.trw_completed.set("Completed"),
-                            enableTestButtons(),
-                        ),
-                        True,
-                    ),
-                ).start(),
-                self.STATE.trw_completed,
-                "Rotation Wheel voltage (V):",
-                self.STATE.rotation_voltage,
-            )
-        ]
 
     def connectionListener(self, connected, info):
         # set our robot to 'disabled' if the connection drops so that we can
@@ -163,10 +133,16 @@ class TestRunner:
                 self.queue.put(data)
 
         elif key == self.log_key:
-
+            logger.info("Data updated")
             self.last_data = value
 
-            if not self.discard_data:
+            # if not self.discard_data and self.mode != "disabled":
+            #     with self.lock:
+            #         self.data.append(value)
+            #         dlen = len(self.data)
+
+            if not self.discard_data and self.mode == "disabled":
+                logger.info("running disabled")
                 with self.lock:
                     self.data.append(value)
                     dlen = len(self.data)
@@ -247,7 +223,7 @@ class TestRunner:
 
                 NetworkTables.flush()
         finally:
-            self.discard_data = True
+            # self.discard_data = True
             self.autospeed = 0
 
     def runTest(self, name, initial_speed, ramp, finished, rotate=None):
@@ -255,17 +231,6 @@ class TestRunner:
             # Initialize the robot commanded speed to 0
             self.autospeed = 0
             self.discard_data = True
-
-            # print()
-            # print(name)
-            # print()
-            # print('Please enable the robot in autonomous mode.')
-            # print()
-            # print(
-            #     'WARNING: It will not automatically stop moving, so disable the robot'
-            # )
-            # print('before it hits something!')
-            # print('')
 
             self.STATE.postTask(
                 lambda: messagebox.showinfo(
@@ -282,25 +247,6 @@ class TestRunner:
             with self.lock:
                 self.lock.wait_for(lambda: self.mode == "auto")
 
-            data = self.wait_for_stationary()
-            if data is not None:
-                if data in ("connected", "disconnected"):
-                    self.STATE.postTask(
-                        lambda: messagebox.showerror(
-                            "Error!", "NT disconnected", parent=self.STATE.mainGUI
-                        )
-                    )
-                    return
-                else:
-                    self.STATE.postTask(
-                        lambda: messagebox.showerror(
-                            "Error!",
-                            "Robot exited autonomous mode before data could be sent?",
-                            parent=self.STATE.mainGUI,
-                        )
-                    )
-                    return
-
             # Ramp the voltage at the specified rate
             data = self.ramp_voltage_in_auto(initial_speed, ramp, rotate)
             if data in ("connected", "disconnected"):
@@ -310,6 +256,38 @@ class TestRunner:
                     )
                 )
                 return
+
+            # wait for robot to say it is disabled
+            with self.lock:
+                self.lock.wait_for(lambda: self.mode == "disabled")
+
+            # tries to retrieve disabled data
+            starttime = time.time()
+            while not self.data and time.time() - starttime < timeout:
+                # print("trying to recieve data again")
+                NetworkTables.flush()
+                time.sleep(0.1)
+
+            if not self.data:
+                logger.info("could not recieve data")
+                self.STATE.postTask(
+                    lambda: messagebox.showerror(
+                        "Timed out while trying to recieve NT data",
+                        "Maybe try running the test again?",
+                        parent=self.STATE.mainGUI,
+                    )
+                )
+                return
+            self.discard_data = True
+
+            # deserializes data: "1, 2, ..." -> [[1,2,...],...]
+            data = self.data[0].split(", ")  # turns the string sent into list
+            data = np.array(
+                [float(s) for s in data[0:-1]]
+            )  # turns the string values into floats
+            data = (
+                np.reshape(data, (-1, num_columns))
+            ).tolist()  # converts list to 2d array
 
             # output sanity check
             if len(data) < 3:
@@ -321,16 +299,20 @@ class TestRunner:
                     )
                 )
             else:
-                left_distance = data[-1][L_ENCODER_P_COL] - data[0][L_ENCODER_P_COL]
-                right_distance = data[-1][R_ENCODER_P_COL] - data[0][R_ENCODER_P_COL]
+                left_distance = (
+                    data[-1][L_ENCODER_P_COL] - data[0][L_ENCODER_P_COL]
+                ) * self.STATE.units_per_rot.get()
+                right_distance = (
+                    data[-1][R_ENCODER_P_COL] - data[0][R_ENCODER_P_COL]
+                ) * self.STATE.units_per_rot.get()
 
                 self.STATE.postTask(
                     lambda: messagebox.showinfo(
                         name + " Complete",
                         "The robot reported traveling the following distance:\n"
-                        + "Left:  %.3f units" % left_distance
+                        + "Left:  %.3f %s" % (left_distance, self.STATE.units.get())
                         + "\n"
-                        + "Right: %.3f units" % right_distance
+                        + "Right: %.3f %s" % (right_distance, self.STATE.units.get())
                         + "\n"
                         + "If that seems wrong, you should change the encoder calibration"
                         + "in the robot program or fix your encoders!",
@@ -347,8 +329,8 @@ class TestRunner:
             self.STATE.postTask(finished)
 
 
-def main(team, dir):
-    logger_gui.main(team, dir, TestRunner)
+def main(team, dir, units="Rotations", units_per_rot="1", test="Simple"):
+    logger_gui.main(team, dir, TestRunner, units, units_per_rot, test)
 
 
 if __name__ == "__main__":

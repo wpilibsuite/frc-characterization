@@ -18,20 +18,19 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
+import logging
+import math
 
-import frc_characterization.drive_characterization
-from frc_characterization.utils import IntEntry, TextExtension
+import frc_characterization
+from frc_characterization.utils import IntEntry, TextExtension, FloatEntry
 import frc_characterization.robot as res
 
+logger = logging.getLogger("logger")
+log_format = "%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s"
 
-def configureGUI(STATE, mech):
 
-    projectChoices = {
-        "Simple": "Simple",
-        "Talon": "Talon",
-        "SparkMax (Brushless/Neo)": "SparkMax_Brushless",
-        "SparkMax (Brushed)": "SparkMax_Brushed",
-    }
+def configureGUI(STATE):
+    mech = frc_characterization.logger_analyzer
 
     def getProjectLocation():
         file_path = filedialog.askdirectory(
@@ -60,9 +59,7 @@ def configureGUI(STATE, mech):
     def updateTemplatePath(*args):
         nonlocal templatePath
         with resources.path(mech, "templates") as path:
-            templatePath = os.path.join(
-                path, projectChoices.get(STATE.project_type.get())
-            )
+            templatePath = path
         getDefaultConfig()
 
     def updateConfigPath(*args):
@@ -92,14 +89,12 @@ def configureGUI(STATE, mech):
                 ) as robot:
                     robot.write(
                         mech.genRobotCode(
-                            projectChoices.get(STATE.project_type.get()),
                             eval(STATE.config.get()),
                         )
                     )
                 with open(os.path.join(dst, "build.gradle"), "w+") as build:
                     build.write(
                         mech.genBuildGradle(
-                            projectChoices.get(STATE.project_type.get()),
                             STATE.team_number.get(),
                         )
                     )
@@ -236,12 +231,33 @@ def configureGUI(STATE, mech):
                     "Deployment failed!\n" + "Check the console for more details.",
                     parent=window,
                 )
+            
 
     def runLogger():
-        mech.data_logger.main(STATE.team_number.get(), STATE.project_path.get())
+        mech.data_logger.main(
+            STATE.team_number.get(),
+            STATE.project_path.get(),
+            units=STATE.units.get(),
+            units_per_rot=STATE.units_per_rot.get(),
+            test=STATE.project_type.get(),
+        )
 
     def runAnalyzer():
         mech.data_analyzer.main(STATE.project_path.get())
+
+    def enableUnitPerRot(*args):
+        if isRotation(STATE.units.get()):
+            unitsRotationEntry.configure(state="readonly")
+            if STATE.units.get() == "Rotations":
+                STATE.units_per_rot.set(1)
+            elif STATE.units.get() == "Radians":
+                STATE.units_per_rot.set(2 * math.pi)
+        else:
+            unitsRotationEntry.configure(state="normal")
+            STATE.units_per_rot.set(0)
+
+    def isRotation(units):
+        return units == "Rotations" or units == "Degrees" or units == "Radians"
 
     templatePath = None
     updateTemplatePath()
@@ -267,10 +283,11 @@ def configureGUI(STATE, mech):
         row=0, column=11, sticky="ew"
     )
 
-    projTypeMenu = OptionMenu(topFrame, STATE.project_type, *projectChoices.keys())
+    testChoices = ["Simple", "Elevator", "Arm", "Drivetrain"]
+
+    projTypeMenu = OptionMenu(topFrame, STATE.project_type, *testChoices)
     projTypeMenu.configure(width=25)
     projTypeMenu.grid(row=0, column=12, sticky="ew")
-    STATE.project_type.trace_add("write", updateTemplatePath)
 
     Button(topFrame, text="Select Config File", command=getConfigPath).grid(
         row=1, column=0, sticky="ew"
@@ -284,10 +301,27 @@ def configureGUI(STATE, mech):
 
     readConfigButton = Button(topFrame, text="Read Config", command=readConfig)
     readConfigButton.grid(row=1, column=12, sticky="ew")
-
+        Label(topFrame, text="Units per Rotation:", anchor="e").grid(
+            row=2, column=4, sticky="ew"
+        )
+        
     Label(topFrame, text="Team Number:", anchor="e").grid(row=2, column=0, sticky="ew")
     teamNumberEntry = IntEntry(topFrame, textvariable=STATE.team_number)
     teamNumberEntry.grid(row=2, column=1, sticky="ew")
+
+    Label(topFrame, text="Unit Type:", anchor="e").grid(row=2, column=2, sticky="ew")
+    unitChoices = {"Feet", "Inches", "Meters", "Radians", "Rotations"}
+    unitMenu = OptionMenu(topFrame, STATE.units, *sorted(unitChoices))
+    unitMenu.configure(width=25)
+    unitMenu.grid(row=2, column=3, sticky="ew")
+    STATE.units.trace_add("write", enableUnitPerRot)
+
+    Label(topFrame, text="Units per Rotation:", anchor="e").grid(
+        row=2, column=4, sticky="ew"
+    )
+    unitsRotationEntry = FloatEntry(topFrame, textvariable=self.units_per_rot)
+    unitsRotationEntry.grid(row=2, column=5, sticky="ew")
+    unitsRotationEntry.configure(state="readonly")
 
     for child in topFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
@@ -317,7 +351,7 @@ def configureGUI(STATE, mech):
 
 
 class GuiState:
-    def __init__(self):
+    def __init__(self, testType):
         self.mainGUI = tkinter.Tk()
 
         self.project_path = StringVar(self.mainGUI)
@@ -327,17 +361,19 @@ class GuiState:
         self.config_path.set(os.path.join(os.getcwd(), "robotconfig.py"))
 
         self.project_type = StringVar(self.mainGUI)
-        self.project_type.set("Simple")
+        self.project_type.set(testType)
 
         self.config = StringVar(self.mainGUI)
 
         self.team_number = IntVar(self.mainGUI)
+        self.units = StringVar(self.mainGUI)
+        self.units_per_rot = DoubleVar(self.mainGUI)
 
 
-def main(mech):
-    STATE = GuiState()
+def main(testType):
+    STATE = GuiState(testType)
 
-    configureGUI(STATE, mech)
+    configureGUI(STATE)
     STATE.mainGUI.title("FRC Characterization New Project Tool")
 
     STATE.mainGUI.mainloop()
@@ -345,4 +381,4 @@ def main(mech):
 
 if __name__ == "__main__":
 
-    main(drive_characterization)
+    main("Drivetrain")
