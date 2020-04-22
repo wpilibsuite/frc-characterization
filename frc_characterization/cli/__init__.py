@@ -7,14 +7,8 @@ from functools import partial
 
 import argcomplete
 import frc_characterization
-import frc_characterization.arm_characterization.data_analyzer as arm_analyzer
-import frc_characterization.arm_characterization.data_logger as arm_logger
-import frc_characterization.drive_characterization.data_analyzer as drive_analyzer
-import frc_characterization.drive_characterization.data_logger as drive_logger
-import frc_characterization.elevator_characterization.data_analyzer as elevator_analyzer
-import frc_characterization.elevator_characterization.data_logger as elevator_logger
-import frc_characterization.simplemotor_characterization.data_analyzer as simplemotor_analyzer
-import frc_characterization.simplemotor_characterization.data_logger as simplemotor_logger
+import frc_characterization.logger_analyzer.data_analyzer as analyzer
+import frc_characterization.logger_analyzer.data_logger as logger
 import frc_characterization.logger_gui as logger_gui
 import frc_characterization.newproject as newproject
 
@@ -25,72 +19,76 @@ langs = ("java", "cpp", "python")
 
 controllers = ("spark", "talonsrx")
 
+# TODO make logger automatically set itself to testtype
+def newProject(testType, directory=None):
+    newproject.main(testType)
 
-def newProject(mechanism, directory=None):
-    newproject.main(mechanism)
+
+def getAnalyzer(directory=None):
+    analyzer.main(getcwd())
 
 
 def loggerArm(directory=None):
-    logger_gui.main(0, getcwd(), arm_logger.TestRunner)
+    logger_gui.main(0, getcwd(), logger.TestRunner, test="Arm")
 
 
 def analyzerArm(directory=None):
-    arm_analyzer.main(getcwd())
+    analyzer.main(getcwd())
 
 
 def loggerDrive(directory=None):
-    logger_gui.main(0, getcwd(), drive_logger.TestRunner)
+    logger_gui.main(0, getcwd(), logger.TestRunner, test="Drivetrain")
 
 
 def analyzerDrive(directory=None):
-    drive_analyzer.main(getcwd())
+    analyzer.main(getcwd())
 
 
 def loggerElevator(directory=None):
-    logger_gui.main(0, getcwd(), elevator_logger.TestRunner)
+    logger_gui.main(0, getcwd(), logger.TestRunner, test="Elevator")
 
 
 def analyzerElevator(directory=None):
-    elevator_analyzer.main(getcwd())
+    analyzer.main(getcwd())
 
 
 def loggerSimpleMotor(directory=None):
-    logger_gui.main(0, getcwd(), simplemotor_logger.TestRunner)
+    logger_gui.main(0, getcwd(), logger.TestRunner, test="Simple")
 
 
 def analyzerSimpleMotor(directory=None):
-    simplemotor_analyzer.main(getcwd())
+    analyzer.main(getcwd())
 
 
 tool_dict = {
     "drive": {
         "new": partial(
             newProject,
-            mechanism=frc_characterization.drive_characterization,
+            testType="Drivetrain",
         ),
         "logger": loggerDrive,
-        "analyzer": analyzerDrive,
+        "analyzer": getAnalyzer,
     },
     "arm": {
-        "new": partial(newProject, mechanism=frc_characterization.arm_characterization),
+        "new": partial(newProject, testType="Arm"),
         "logger": loggerArm,
-        "analyzer": analyzerArm,
+        "analyzer": getAnalyzer,
     },
     "elevator": {
         "new": partial(
             newProject,
-            mechanism=frc_characterization.elevator_characterization,
+            testType="Elevator",
         ),
         "logger": loggerElevator,
-        "analyzer": analyzerElevator,
+        "analyzer": getAnalyzer,
     },
     "simple-motor": {
         "new": partial(
             newProject,
-            mechanism=frc_characterization.simplemotor_characterization,
+            testType="Simple",
         ),
         "logger": loggerSimpleMotor,
-        "analyzer": analyzerSimpleMotor,
+        "analyzer": getAnalyzer,
     },
 }
 

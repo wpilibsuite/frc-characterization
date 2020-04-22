@@ -9,6 +9,9 @@ import tkinter
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
+import logging
+import pint
+import copy
 
 import control as cnt
 import frccontrol as frccnt
@@ -22,6 +25,11 @@ import numpy as np
 import statsmodels.api as sm
 from frc_characterization.utils import FloatEntry, IntEntry
 from mpl_toolkits.mplot3d import Axes3D
+
+logger = logging.getLogger("logger")
+log_format = "%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s"
+
+logging.basicConfig(level=logging.INFO, format=log_format)
 
 
 class ProgramState:
@@ -38,13 +46,9 @@ class ProgramState:
         self.motion_threshold.set(0.2)
 
         self.subset = StringVar(self.mainGUI)
-        self.subset.set("All Combined")
 
         self.units = StringVar(self.mainGUI)
         self.units.set("Feet")
-
-        self.wheel_diam = DoubleVar(self.mainGUI)
-        self.wheel_diam.set(".333")
 
         self.track_width = DoubleVar(self.mainGUI)
         self.track_width.set("N/A")
@@ -112,6 +116,14 @@ class ProgramState:
         self.kp = DoubleVar(self.mainGUI)
         self.kd = DoubleVar(self.mainGUI)
 
+        self.test = StringVar(self.mainGUI)
+        self.kg = DoubleVar(self.mainGUI)
+        self.kcos = DoubleVar(self.mainGUI)
+
+        self.units_per_rot = DoubleVar(self.mainGUI)
+
+        self.convert_gains = BooleanVar(self.mainGUI)
+
 
 # Set up main window
 
@@ -138,8 +150,20 @@ def configure_gui(STATE):
                     data[k] = np.array(data[k]).transpose()
 
                 STATE.stored_data = data
+                logger.info("Received Data!")
 
                 analyzeButton.configure(state="normal")
+                STATE.units.set(data["units"])
+                STATE.test.set(data["test"])
+                STATE.units_per_rot.set(float(data["unitsPerRotation"]))
+                logger.info(
+                    "Units: %s, Test: %s, Units per rotation: %.3f",
+                    STATE.units.get(),
+                    STATE.test.get(),
+                    STATE.units_per_rot.get(),
+                )
+                initialUnitEnable()
+                enableUnitsPerRot()
             except Exception as e:
                 messagebox.showerror(
                     "Error!",
@@ -156,7 +180,20 @@ def configure_gui(STATE):
             )
             return
 
+    # Run analysis:
     def runAnalysis():
+        # TODO Remove repetitive code blocks in Analysis methods
+        if STATE.test.get() == "Drivetrain":
+            runAnalysisDrive()
+        elif STATE.test.get() == "Elevator":
+            runAnalysisElevator()
+        elif STATE.test.get() == "Arm":
+            runAnalysisArm()
+        else:
+            runAnalysisSimple()
+        convertGains.configure(state="normal")
+
+    def runAnalysisDrive():
 
         (
             STATE.quasi_forward_l,
@@ -182,17 +219,26 @@ def configure_gui(STATE):
             return
 
         if STATE.subset.get() == "Forward Left":
-            ks, kv, ka, rsquare = calcFit(STATE.quasi_forward_l, STATE.step_forward_l)
+            ks, kv, ka, rsquare = calcFit(
+                STATE.quasi_forward_l, STATE.step_forward_l, STATE
+            )
         elif STATE.subset.get() == "Forward Right":
-            ks, kv, ka, rsquare = calcFit(STATE.quasi_forward_r, STATE.step_forward_r)
+            ks, kv, ka, rsquare = calcFit(
+                STATE.quasi_forward_r, STATE.step_forward_r, STATE
+            )
         elif STATE.subset.get() == "Backward Left":
-            ks, kv, ka, rsquare = calcFit(STATE.quasi_backward_l, STATE.step_backward_l)
+            ks, kv, ka, rsquare = calcFit(
+                STATE.quasi_backward_l, STATE.step_backward_l, STATE
+            )
         elif STATE.subset.get() == "Backward Right":
-            ks, kv, ka, rsquare = calcFit(STATE.quasi_backward_r, STATE.step_backward_r)
+            ks, kv, ka, rsquare = calcFit(
+                STATE.quasi_backward_r, STATE.step_backward_r, STATE
+            )
         elif STATE.subset.get() == "Forward Combined":
             ks, kv, ka, rsquare = calcFit(
                 np.concatenate((STATE.quasi_forward_l, STATE.quasi_forward_r), axis=1),
                 np.concatenate((STATE.step_forward_l, STATE.step_forward_r), axis=1),
+                STATE,
             )
         elif STATE.subset.get() == "Backward Combined":
             ks, kv, ka, rsquare = calcFit(
@@ -200,16 +246,19 @@ def configure_gui(STATE):
                     (STATE.quasi_backward_l, STATE.quasi_backward_r), axis=1
                 ),
                 np.concatenate((STATE.step_backward_l, STATE.step_backward_r), axis=1),
+                STATE,
             )
         elif STATE.subset.get() == "Left Combined":
             ks, kv, ka, rsquare = calcFit(
                 np.concatenate((STATE.quasi_forward_l, STATE.quasi_backward_l), axis=1),
                 np.concatenate((STATE.step_forward_l, STATE.step_backward_l), axis=1),
+                STATE,
             )
         elif STATE.subset.get() == "Right Combined":
             ks, kv, ka, rsquare = calcFit(
                 np.concatenate((STATE.quasi_forward_r, STATE.quasi_backward_r), axis=1),
                 np.concatenate((STATE.step_forward_r, STATE.step_backward_r), axis=1),
+                STATE,
             )
         else:
             ks, kv, ka, rsquare = calcFit(
@@ -231,6 +280,7 @@ def configure_gui(STATE):
                     ),
                     axis=1,
                 ),
+                STATE,
             )
 
         STATE.ks.set(float("%.3g" % ks))
@@ -250,7 +300,141 @@ def configure_gui(STATE):
         fancyPlotButton.configure(state="normal")
         calcGainsButton.configure(state="normal")
 
-    def plotTimeDomain():
+    def runAnalysisElevator():
+
+        (
+            STATE.quasi_forward,
+            STATE.quasi_backward,
+            STATE.step_forward,
+            STATE.step_backward,
+        ) = prepare_data(STATE.stored_data, window=STATE.window_size.get(), STATE=STATE)
+
+        if (
+            STATE.quasi_forward is None
+            or STATE.quasi_backward is None
+            or STATE.step_forward is None
+            or STATE.step_backward is None
+        ):
+            return
+
+        if STATE.direction.get() == "Forward":
+            kg, kfr, kv, ka, rsquare = calcFit(
+                STATE.quasi_forward, STATE.step_forward, STATE
+            )
+        elif STATE.direction.get() == "Backward":
+            kg, kfr, kv, ka, rsquare = calcFit(
+                STATE.quasi_backward, STATE.step_backward, STATE
+            )
+        else:
+            kg, kfr, kv, ka, rsquare = calcFit(
+                np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
+                STATE,
+            )
+
+        STATE.kg.set(float("%.3g" % kg))
+        STATE.kfr.set(float("%.3g" % kfr))
+        STATE.kv.set(float("%.3g" % kv))
+        STATE.ka.set(float("%.3g" % ka))
+        STATE.r_square.set(float("%.3g" % rsquare))
+
+        calcGains()
+
+        timePlotsButton.configure(state="normal")
+        voltPlotsButton.configure(state="normal")
+        fancyPlotButton.configure(state="normal")
+        calcGainsButton.configure(state="normal")
+
+    def runAnalysisArm():
+
+        (
+            STATE.quasi_forward,
+            STATE.quasi_backward,
+            STATE.step_forward,
+            STATE.step_backward,
+        ) = prepare_data(STATE.stored_data, window=STATE.window_size.get(), STATE=STATE)
+
+        if (
+            STATE.quasi_forward is None
+            or STATE.quasi_backward is None
+            or STATE.step_forward is None
+            or STATE.step_backward is None
+        ):
+            return
+
+        if STATE.direction.get() == "Forward":
+            ks, kv, ka, kcos, rsquare = calcFit(
+                STATE.quasi_forward, STATE.step_forward, STATE
+            )
+        elif STATE.direction.get() == "Backward":
+            ks, kv, ka, kcos, rsquare = calcFit(
+                STATE.quasi_backward, STATE.step_backward, STATE
+            )
+        else:
+            ks, kv, ka, kcos, rsquare = calcFit(
+                np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
+                STATE,
+            )
+
+        STATE.ks.set(float("%.3g" % ks))
+        STATE.kv.set(float("%.3g" % kv))
+        STATE.ka.set(float("%.3g" % ka))
+        STATE.kcos.set(float("%.3g" % kcos))
+        STATE.r_square.set(float("%.3g" % rsquare))
+
+        calcGains()
+
+        timePlotsButton.configure(state="normal")
+        voltPlotsButton.configure(state="normal")
+        fancyPlotButton.configure(state="normal")
+        calcGainsButton.configure(state="normal")
+
+    def runAnalysisSimple():
+
+        (
+            STATE.quasi_forward,
+            STATE.quasi_backward,
+            STATE.step_forward,
+            STATE.step_backward,
+        ) = prepare_data(STATE.stored_data, window=STATE.window_size.get(), STATE=STATE)
+
+        if (
+            STATE.quasi_forward is None
+            or STATE.quasi_backward is None
+            or STATE.step_forward is None
+            or STATE.step_backward is None
+        ):
+            return
+
+        if STATE.subset.get() == "Forward":
+            ks, kv, ka, rsquare = calcFit(
+                STATE.quasi_forward, STATE.step_forward, STATE
+            )
+        elif STATE.subset.get() == "Backward":
+            ks, kv, ka, rsquare = calcFit(
+                STATE.quasi_backward, STATE.step_backward, STATE
+            )
+        else:
+            ks, kv, ka, rsquare = calcFit(
+                np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
+                STATE,
+            )
+
+        STATE.ks.set(float("%.3g" % ks))
+        STATE.kv.set(float("%.3g" % kv))
+        STATE.ka.set(float("%.3g" % ka))
+        STATE.r_square.set(float("%.3g" % rsquare))
+
+        calcGains()
+
+        timePlotsButton.configure(state="normal")
+        voltPlotsButton.configure(state="normal")
+        fancyPlotButton.configure(state="normal")
+        calcGainsButton.configure(state="normal")
+
+    def plotTimeDomainDoubleSided():
         if STATE.subset.get() == "Forward Left":
             _plotTimeDomain("Forward Left", STATE.quasi_forward_l, STATE.step_forward_l)
         elif STATE.subset.get() == "Forward Right":
@@ -314,7 +498,44 @@ def configure_gui(STATE):
                 ),
             )
 
+    def plotTimeDomain():
+        if STATE.test.get() == "Drivetrain":
+            plotTimeDomainDoubleSided()
+        else:
+            if STATE.subset.get() == "Forward":
+                _plotTimeDomain("Forward", STATE.quasi_forward, STATE.step_forward)
+            elif STATE.subset.get() == "Backward":
+                _plotTimeDomain("Backward", STATE.quasi_backward, STATE.step_backward)
+            else:
+                _plotTimeDomain(
+                    "Combined",
+                    np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                    np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
+                )
+
     def plotVoltageDomain():
+        if STATE.test.get() == "Drivetrain":
+            logger.info("Running drive analysis")
+            plotVoltageDomainDoubleSided()
+        else:
+            logger.info("Running non-drive analysis")
+            if STATE.subset.get() == "Forward":
+                _plotVoltageDomain(
+                    "Forward", STATE.quasi_forward, STATE.step_forward, STATE
+                )
+            elif STATE.subset.get() == "Backward":
+                _plotVoltageDomain(
+                    "Backward", STATE.quasi_backward, STATE.step_backward, STATE
+                )
+            else:
+                _plotVoltageDomain(
+                    "Combined",
+                    np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                    np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
+                    STATE,
+                )
+
+    def plotVoltageDomainDoubleSided():
         if STATE.subset.get() == "Forward Left":
             _plotVoltageDomain(
                 "Forward Left", STATE.quasi_forward_l, STATE.step_forward_l, STATE
@@ -386,6 +607,22 @@ def configure_gui(STATE):
             )
 
     def plot3D():
+        if STATE.test.get() == "Drivetrain":
+            plot3DDoubleSided()
+        else:
+            if STATE.subset.get() == "Forward":
+                _plot3D("Forward", STATE.quasi_forward, STATE.step_forward, STATE)
+            elif STATE.subset.get() == "Backward":
+                _plot3D("Backward", STATE.quasi_backward, STATE.step_backward, STATE)
+            else:
+                _plot3D(
+                    "Combined",
+                    np.concatenate((STATE.quasi_forward, STATE.quasi_backward), axis=1),
+                    np.concatenate((STATE.step_forward, STATE.step_backward), axis=1),
+                    STATE,
+                )
+
+    def plot3DDoubleSided():
         if STATE.subset.get() == "Forward Left":
             _plot3D("Forward Left", STATE.quasi_forward_l, STATE.step_forward_l, STATE)
         elif STATE.subset.get() == "Forward Right":
@@ -496,12 +733,18 @@ def configure_gui(STATE):
         else:
             rotation = STATE.wheel_diam.get() * math.pi
 
-        # Convert to controller-native units
-        if STATE.controller_type.get() == "Talon":
-            kp = kp * rotation / (STATE.encoder_epr.get() * STATE.gearing.get())
-            kd = kd * rotation / (STATE.encoder_epr.get() * STATE.gearing.get())
-            if STATE.loop_type.get() == "Velocity":
-                kp = kp * 10
+        # Convert to controller-native units if desired
+        if STATE.convert_gains.get():
+            if STATE.controller_type.get() == "Talon":
+                kp = kp * rotation / (STATE.encoder_epr.get() * STATE.gearing.get())
+                kd = kd * rotation / (STATE.encoder_epr.get() * STATE.gearing.get())
+                if STATE.loop_type.get() == "Velocity":
+                    kp = kp * 10
+            if STATE.controller_type.get() == "Spark":
+                kp = kp / (STATE.gearing.get())
+                kd = kd / (STATE.gearing.get())
+                if STATE.loop_type.get() == "Velocity":
+                    kp = kp / 60
 
         STATE.kp.set(float("%.3g" % kp))
         STATE.kd.set(float("%.3g" % kd))
@@ -626,6 +869,13 @@ def configure_gui(STATE):
         }
 
         presets.get(STATE.gain_units_preset.get(), "Default")()
+        if (
+            "Talon" in STATE.gain_units_preset.get()
+            or "Spark" in STATE.gain_units_preset.get()
+        ):
+            STATE.convert_gains.set(True)
+        else:
+            STATE.convert_gains.set(False)
 
     def enableOffboard(*args):
         if STATE.controller_type.get() == "Onboard":
@@ -650,21 +900,86 @@ def configure_gui(STATE):
             else:
                 slavePeriodEntry.configure(state="disabled")
 
-    def enableWheelDiam(*args):
-        if (
-            STATE.units.get() == "Feet"
-            or STATE.units.get() == "Inches"
-            or STATE.units.get() == "Meters"
-        ):
+    def enableUnitsPerRot(*args):
+        if not isRotation(STATE.units.get()) and isRotation(STATE.stored_data["units"]):
+            logger.info("Allowing user to modify units per rot")
             diamEntry.configure(state="normal")
+            STATE.units_per_rot.set(0)  # reset the value
         else:
-            diamEntry.configure(state="disabled")
+            STATE.units_per_rot.set(
+                convertUnit(
+                    STATE.stored_data["units"],
+                    STATE.units.get(),
+                    STATE.stored_data["unitsPerRotation"],
+                )
+            )
+            diamEntry.configure(state="readonly")
+
+    def initialUnitEnable(*args):
+        diamEntry.configure(state="normal")
+        unitsMenu.configure(state="normal")
+
+    def getUnit(units):
+        ureg = pint.UnitRegistry()
+        if units == "Feet":
+            return ureg.foot
+        elif units == "Inches":
+            return ureg.inch
+        elif units == "Meters":
+            return ureg.meter
+        elif units == "Radians":
+            return "Radian"
+        elif units == "Rotations":
+            return "Rotation"
+        elif units == "Degrees":
+            return "Degree"
+
+    def convertUnit(initUnits, finalUnits, unitsPerRot):
+        initUnits = getUnit(initUnits)
+        finalUnits = getUnit(finalUnits)
+        if isinstance(finalUnits, str):
+            logger.info("Converting to rotational measure (fixed conversion)")
+            if finalUnits == "Rotation":
+                return 1
+            elif finalUnits == "Degree":
+                return 360
+            elif finalUnits == "Radian":
+                return round(2 * math.pi, 3)
+        else:
+            logger.info("Converting from %s to %s measure", initUnits, finalUnits)
+            dataUnitsPerRot = unitsPerRot * initUnits
+            return round(dataUnitsPerRot.to(finalUnits).magnitude, 3)
 
     def enableErrorBounds(*args):
         if STATE.loop_type.get() == "Position":
             qPEntry.configure(state="normal")
         else:
             qPEntry.configure(state="disabled")
+
+    def defineTestResults(*args):
+        trackWidthEntry.configure(state="disabled")
+        kGEntry.configure(state="disabled")
+        kCosEntry.configure(state="disabled")
+        if STATE.test.get() != "Drivetrain":
+            dirMenu = OptionMenu(topFrame, STATE.subset, *sorted(directions))
+        else:
+            dirMenu = OptionMenu(topFrame, STATE.subset, *sorted(subsets))
+        dirMenu.configure(width=20, state="normal")
+        dirMenu.grid(row=0, column=7)
+        STATE.subset.set("")
+        if STATE.test.get() == "Drivetrain" or STATE.test.get() == "Elevator":
+            diamEntry.configure(state="normal")
+            if STATE.test.get() == "Drivetrain":
+                trackWidthEntry.configure(state="readonly")
+            else:
+                kGEntry.configure(state="readonly")
+        else:
+            diamEntry.configure(state="disabled")
+            if STATE.test.get() == "Arm":
+                kCosEntry.configure(state="readonly")
+
+    def isRotation(units):
+        return units == "Rotations" or units == "Degrees" or units == "Radians"
 
     # TOP OF WINDOW (FILE SELECTION)
 
@@ -679,18 +994,12 @@ def configure_gui(STATE):
     fileEntry.grid(row=0, column=1, columnspan=3)
     fileEntry.configure(state="readonly")
 
-    Label(topFrame, text="Units:", width=10).grid(row=0, column=4)
-    unitChoices = {"Feet", "Inches", "Meters", "Radians", "Rotations"}
-    unitsMenu = OptionMenu(topFrame, STATE.units, *sorted(unitChoices))
-    unitsMenu.configure(width=10)
-    unitsMenu.grid(row=0, column=5, sticky="ew")
-    STATE.units.trace_add("write", enableWheelDiam)
-
-    Label(topFrame, text="Wheel Diameter (units):", anchor="e").grid(
+    Label(topFrame, text="Units per rotation:", anchor="e").grid(
         row=1, column=3, columnspan=2, sticky="ew"
     )
-    diamEntry = FloatEntry(topFrame, textvariable=STATE.wheel_diam)
+    diamEntry = FloatEntry(topFrame, textvariable=STATE.units_per_rot)
     diamEntry.grid(row=1, column=5)
+    diamEntry.configure(state="disabled")
 
     Label(topFrame, text="Subset:", width=15).grid(row=0, column=6)
     subsets = {
@@ -704,9 +1013,30 @@ def configure_gui(STATE):
         "Left Combined",
         "Right Combined",
     }
-    dirMenu = OptionMenu(topFrame, STATE.subset, *sorted(subsets))
-    dirMenu.configure(width=20)
+    directions = {"Combined", "Forward", "Backward"}
+    dirMenu = OptionMenu(topFrame, STATE.subset, *sorted(directions))
+    dirMenu.configure(width=20, state="disabled")
     dirMenu.grid(row=0, column=7)
+
+    Label(topFrame, text="Test:", width=15).grid(row=1, column=6)
+    # test_subsets = {
+    #     "Drivetrain",
+    #     "Arm",
+    #     "Elevator",
+    #     "Simple"
+    # }
+    testMenu = FloatEntry(topFrame, textvariable=STATE.test, width=10)
+    testMenu.configure(width=10, state="readonly")
+    testMenu.grid(row=1, column=7)
+    STATE.test.trace_add("write", defineTestResults)
+
+    Label(topFrame, text="Units:", width=10).grid(row=0, column=4)
+    unitChoices = {"Feet", "Inches", "Meters", "Radians", "Rotations", "Degrees"}
+    unitsMenu = OptionMenu(topFrame, STATE.units, *sorted(unitChoices))
+    unitsMenu.configure(width=10)
+    unitsMenu.grid(row=0, column=5, sticky="ew")
+    unitsMenu.configure(state="disabled")
+    STATE.units.trace_add("write", enableUnitsPerRot)
 
     for child in topFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
@@ -761,25 +1091,35 @@ def configure_gui(STATE):
     kSEntry.grid(row=1, column=4)
     kSEntry.configure(state="readonly")
 
-    Label(ffFrame, text="kV:", anchor="e").grid(row=2, column=3, sticky="ew")
+    Label(ffFrame, text="kG:", anchor="e").grid(row=2, column=3, sticky="ew")
+    kGEntry = FloatEntry(ffFrame, textvariable=STATE.kg, width=10)
+    kGEntry.grid(row=2, column=4)
+    kGEntry.configure(state="disabled")
+
+    Label(ffFrame, text="kCos:", anchor="e").grid(row=3, column=3, sticky="ew")
+    kCosEntry = FloatEntry(ffFrame, textvariable=STATE.kcos, width=10)
+    kCosEntry.grid(row=3, column=4)
+    kCosEntry.configure(state="disabled")
+
+    Label(ffFrame, text="kV:", anchor="e").grid(row=4, column=3, sticky="ew")
     kVEntry = FloatEntry(ffFrame, textvariable=STATE.kv, width=10)
-    kVEntry.grid(row=2, column=4)
+    kVEntry.grid(row=4, column=4)
     kVEntry.configure(state="readonly")
 
-    Label(ffFrame, text="kA:", anchor="e").grid(row=3, column=3, sticky="ew")
+    Label(ffFrame, text="kA:", anchor="e").grid(row=5, column=3, sticky="ew")
     kAEntry = FloatEntry(ffFrame, textvariable=STATE.ka, width=10)
-    kAEntry.grid(row=3, column=4)
+    kAEntry.grid(row=5, column=4)
     kAEntry.configure(state="readonly")
 
-    Label(ffFrame, text="r-squared:", anchor="e").grid(row=4, column=3, sticky="ew")
+    Label(ffFrame, text="r-squared:", anchor="e").grid(row=6, column=3, sticky="ew")
     rSquareEntry = FloatEntry(ffFrame, textvariable=STATE.r_square, width=10)
-    rSquareEntry.grid(row=4, column=4)
+    rSquareEntry.grid(row=6, column=4)
     rSquareEntry.configure(state="readonly")
 
-    Label(ffFrame, text="Track Width:", anchor="e").grid(row=5, column=3, sticky="ew")
+    Label(ffFrame, text="Track Width:", anchor="e").grid(row=7, column=3, sticky="ew")
     trackWidthEntry = FloatEntry(ffFrame, textvariable=STATE.track_width, width=10)
-    trackWidthEntry.grid(row=5, column=4)
-    trackWidthEntry.configure(state="readonly")
+    trackWidthEntry.grid(row=7, column=4)
+    trackWidthEntry.configure(state="disabled")
 
     for child in ffFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
@@ -926,6 +1266,11 @@ def configure_gui(STATE):
         fbFrame, textvariable=STATE.kd, width=10, state="readonly"
     ).grid(row=9, column=3)
 
+    Label(fbFrame, text="Convert Gains:", anchor="e").grid(row=8, column=4, sticky="ew")
+    convertGains = Checkbutton(fbFrame, variable=STATE.convert_gains)
+    convertGains.grid(row=8, column=5)
+    convertGains.configure(state="disabled")
+
     for child in fbFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
 
@@ -967,6 +1312,7 @@ PREPARED_V_COL = 1
 PREPARED_POS_COL = 2
 PREPARED_VEL_COL = 3
 PREPARED_ACC_COL = 4
+PREPARED_COS_COL = 5
 
 PREPARED_MAX_COL = PREPARED_ACC_COL
 
@@ -989,17 +1335,27 @@ def smoothDerivative(tm, value, n):
     return np.pad(x, (int(np.ceil(n / 2.0)), int(np.floor(n / 2.0))), mode="constant")
 
 
+# Create one for one sided and one for 2 sided
 def trim_quasi_testdata(data, STATE):
     adata = np.abs(data)
-    truth = np.all(
-        [
-            adata[L_ENCODER_V_COL] > STATE.motion_threshold.get(),
-            adata[L_VOLTS_COL] > 0,
-            adata[R_ENCODER_V_COL] > STATE.motion_threshold.get(),
-            adata[R_VOLTS_COL] > 0,
-        ],
-        axis=0,
-    )
+    if STATE.test.get() == "Drivetrain":
+        truth = np.all(
+            [
+                adata[L_ENCODER_V_COL] > STATE.motion_threshold.get(),
+                adata[L_VOLTS_COL] > 0,
+                adata[R_ENCODER_V_COL] > STATE.motion_threshold.get(),
+                adata[R_VOLTS_COL] > 0,
+            ],
+            axis=0,
+        )
+    else:
+        truth = np.all(
+            [
+                adata[L_ENCODER_V_COL] > STATE.motion_threshold.get(),
+                adata[L_VOLTS_COL] > 0,
+            ],
+            axis=0,
+        )
 
     temp = data.transpose()[truth].transpose()
 
@@ -1021,7 +1377,7 @@ def trim_step_testdata(data):
     return data[:, max_accel_idx + 1 :]
 
 
-def compute_accel(data, window):
+def compute_accelDrive(data, window):
     """
     Returned data columns correspond to PREPARED_*
     """
@@ -1061,7 +1417,7 @@ def compute_accel(data, window):
     return l, r
 
 
-def prepare_data(data, window, STATE):
+def compute_accel(data, window):
     """
     Firstly, data should be 'trimmed' to exclude any data points at which the
     robot was not being commanded to do anything.
@@ -1093,8 +1449,63 @@ def prepare_data(data, window, STATE):
     coefficient of acceleration).
     """
 
-    # ensure voltage sign matches velocity sign
+    # deal with incomplete data
+    if len(data[TIME_COL]) < window * 2:
+        messagebox.showinfo(
+            "Error!",
+            "Not enough data points to compute acceleration. "
+            + "Try running with a smaller window setting or a smaller threshold.",
+        )
+        return None
 
+    # Compute left/right acceleration
+    acc = smoothDerivative(data[TIME_COL], data[L_ENCODER_V_COL], window)
+
+    dat = np.vstack(
+        (
+            data[TIME_COL],
+            data[L_VOLTS_COL],
+            data[L_ENCODER_P_COL],
+            data[L_ENCODER_V_COL],
+            acc,
+        )
+    )
+
+    return dat
+
+
+def prepare_dataDrive(data, window, STATE):
+    """
+    Firstly, data should be 'trimmed' to exclude any data points at which the
+    robot was not being commanded to do anything.
+
+    Secondly, robot acceleration should be calculated from robot velocity and time.
+    We have found it effective to do this by taking the slope of the secant line
+    of velocity over a 60ms (3 standard loop iterations) window.
+
+    Thirdly, data from the quasi-static test should be trimmed to exclude the
+    initial period in which the robot is not moving due to static friction
+    Fourthly, data from the step-voltage acceleration tests must be trimmed to
+    remove the initial 'ramp-up' period that exists due to motor inductance; this
+    can be done by simply removing all data points before maximum acceleration is
+    reached.
+
+    Finally, the data can be analyzed: pool your trimmed data into four data sets
+    - one for each side of the robot (left or right) and each direction (forwards
+    or backwards).
+
+    For each set, run a linear regression of voltage seen at the motor
+    (or battery voltage if you do not have Talon SRXs) versus velocity and
+    acceleration.
+
+    Voltage should be in units of volts, velocity in units of feet per second,
+    and acceleration in units of feet per second squared.
+
+    Each data pool will then yield three parameters -
+    intercept, Kv (the regression coefficient of velocity), and Ka (the regression
+    coefficient of acceleration).
+    """
+    # ensure voltage sign matches velocity sign and converts rotation measurements into proper units
     for x in JSON_DATA_KEYS:
         data[x][L_VOLTS_COL] = np.copysign(
             data[x][L_VOLTS_COL], data[x][L_ENCODER_V_COL]
@@ -1102,6 +1513,18 @@ def prepare_data(data, window, STATE):
         data[x][R_VOLTS_COL] = np.copysign(
             data[x][R_VOLTS_COL], data[x][R_ENCODER_V_COL]
         )
+        data[x][R_ENCODER_V_COL] = (
+            np.array(data[x][R_ENCODER_V_COL]) * STATE.units_per_rot.get()
+        ).tolist()
+        data[x][L_ENCODER_V_COL] = (
+            np.array(data[x][L_ENCODER_V_COL]) * STATE.units_per_rot.get()
+        ).tolist()
+        data[x][R_ENCODER_P_COL] = (
+            np.array(data[x][R_ENCODER_V_COL]) * STATE.units_per_rot.get()
+        ).tolist()
+        data[x][L_ENCODER_P_COL] = (
+            np.array(data[x][L_ENCODER_V_COL]) * STATE.units_per_rot.get()
+        ).tolist()
 
     # trim quasi data before computing acceleration
     sf_trim = trim_quasi_testdata(data["slow-forward"], STATE)
@@ -1110,15 +1533,15 @@ def prepare_data(data, window, STATE):
     if sf_trim is None or sb_trim is None:
         return [None] * 8
 
-    sf_l, sf_r = compute_accel(sf_trim, window)
-    sb_l, sb_r = compute_accel(sb_trim, window)
+    sf_l, sf_r = compute_accelDrive(sf_trim, window)
+    sb_l, sb_r = compute_accelDrive(sb_trim, window)
 
     if sf_l is None or sf_r is None or sb_l is None or sb_r is None:
         return [None] * 8
 
     # trim step data after computing acceleration
-    ff_l, ff_r = compute_accel(data["fast-forward"], window)
-    fb_l, fb_r = compute_accel(data["fast-backward"], window)
+    ff_l, ff_r = compute_accelDrive(data["fast-forward"], window)
+    fb_l, fb_r = compute_accelDrive(data["fast-backward"], window)
 
     if ff_l is None or ff_r is None or fb_l is None or fb_r is None:
         return [None] * 8
@@ -1131,9 +1554,86 @@ def prepare_data(data, window, STATE):
     return sf_l, sb_l, ff_l, fb_l, sf_r, sb_r, ff_r, fb_r
 
 
-def ols(x1, x2, y):
+def prepare_data(ogData, window, STATE):
+    """
+    Firstly, data should be 'trimmed' to exclude any data points at which the
+    robot was not being commanded to do anything.
+
+    Secondly, robot acceleration should be calculated from robot velocity and time.
+    We have found it effective to do this by taking the slope of the secant line
+    of velocity over a 60ms (3 standard loop iterations) window.
+
+    Thirdly, data from the quasi-static test should be trimmed to exclude the
+    initial period in which the robot is not moving due to static friction
+    Fourthly, data from the step-voltage acceleration tests must be trimmed to
+    remove the initial 'ramp-up' period that exists due to motor inductance; this
+    can be done by simply removing all data points before maximum acceleration is
+    reached.
+
+    Finally, the data can be analyzed: pool your trimmed data into four data sets
+    - one for each side of the robot (left or right) and each direction (forwards
+    or backwards).
+
+    For each set, run a linear regression of voltage seen at the motor
+    (or battery voltage if you do not have Talon SRXs) versus velocity and
+    acceleration.
+
+    Voltage should be in units of volts, velocity in units of feet per second,
+    and acceleration in units of feet per second squared.
+
+    Each data pool will then yield three parameters -
+    intercept, Kv (the regression coefficient of velocity), and Ka (the regression
+    coefficient of acceleration).
+    """
+    # create a copy so original data doesn't get changed
+    data = copy.deepcopy(ogData)
+    if STATE.test.get() == "Drivetrain":
+        return prepare_dataDrive(data, window, STATE)
+    else:
+        # Ensure voltage points in same direction as velocity
+        for x in JSON_DATA_KEYS:
+            data[x][L_VOLTS_COL] = np.copysign(
+                data[x][L_VOLTS_COL], data[x][L_ENCODER_V_COL]
+            )
+            data[x][L_ENCODER_V_COL] = (
+                np.array(data[x][L_ENCODER_V_COL]) * STATE.units_per_rot.get()
+            ).tolist()
+            data[x][L_ENCODER_P_COL] = (
+                np.array(data[x][L_ENCODER_V_COL]) * STATE.units_per_rot.get()
+            ).tolist()
+
+        # trim quasi data before computing acceleration
+        sf_trim = trim_quasi_testdata(data["slow-forward"], STATE)
+        sb_trim = trim_quasi_testdata(data["slow-backward"], STATE)
+
+        if sf_trim is None or sb_trim is None:
+            return None, None, None, None
+
+        sf = compute_accel(sf_trim, window)
+        sb = compute_accel(sb_trim, window)
+
+        if sf is None or sb is None:
+            return None, None, None, None
+
+        # trim step data after computing acceleration
+        ff = compute_accel(data["fast-forward"], window)
+        fb = compute_accel(data["fast-backward"], window)
+
+        if ff is None or fb is None:
+            return None, None, None, None
+
+        ff = trim_step_testdata(ff)
+        fb = trim_step_testdata(fb)
+
+        return sf, sb, ff, fb
+
+
+def ols(x1, x2, x3, y):
     """multivariate linear regression using ordinary least squares"""
-    x = np.array((np.sign(x1), x1, x2)).T
+    if x3:
+        x = np.array((np.sign(x1), x1, x2, x3)).T
+    else:
+        x = np.array((np.sign(x1), x1, x2)).T
     model = sm.OLS(y, x)
     return model.fit()
 
@@ -1200,6 +1700,9 @@ def _plotVoltageDomain(subset, qu, step, STATE):
     ka = STATE.ka.get()
     r_square = STATE.r_square.get()
 
+    kcos = STATE.kcos.get()
+    kg = STATE.kg.get()
+
     plt.figure(subset + " Voltage-Domain Plots")
 
     # quasistatic vel vs. vel-causing voltage
@@ -1207,14 +1710,36 @@ def _plotVoltageDomain(subset, qu, step, STATE):
     ax.set_xlabel("Velocity-Portion Voltage")
     ax.set_ylabel("Velocity")
     ax.set_title("Quasistatic velocity vs velocity-portion voltage")
-    plt.scatter(
-        qu[PREPARED_V_COL]
-        - ks * np.sign(qu[PREPARED_VEL_COL])
-        - ka * qu[PREPARED_ACC_COL],
-        qu[PREPARED_VEL_COL],
-        marker=".",
-        c="#000000",
-    )
+
+    if STATE.test.get() == "Elevator":
+        plt.scatter(
+            qu[PREPARED_V_COL]
+            - kg
+            - ks * np.sign(qu[PREPARED_VEL_COL])
+            - ka * qu[PREPARED_ACC_COL],
+            qu[PREPARED_VEL_COL],
+            marker=".",
+            c="#000000",
+        )
+    elif STATE.test.get() == "Arm":
+        plt.scatter(
+            qu[PREPARED_V_COL]
+            - ks * np.sign(qu[PREPARED_VEL_COL])
+            - ka * qu[PREPARED_ACC_COL]
+            - kcos * qu[PREPARED_COS_COL],
+            qu[PREPARED_VEL_COL],
+            marker=".",
+            c="#000000",
+        )
+    else:
+        plt.scatter(
+            qu[PREPARED_V_COL]
+            - ks * np.sign(qu[PREPARED_VEL_COL])
+            - ka * qu[PREPARED_ACC_COL],
+            qu[PREPARED_VEL_COL],
+            marker=".",
+            c="#000000",
+        )
 
     # show fit line from multiple regression
     y = np.linspace(np.min(qu[PREPARED_VEL_COL]), np.max(qu[PREPARED_VEL_COL]))
@@ -1225,14 +1750,36 @@ def _plotVoltageDomain(subset, qu, step, STATE):
     ax.set_xlabel("Acceleration-Portion Voltage")
     ax.set_ylabel("Acceleration")
     ax.set_title("Dynamic acceleration vs acceleration-portion voltage")
-    plt.scatter(
-        step[PREPARED_V_COL]
-        - ks * np.sign(step[PREPARED_VEL_COL])
-        - kv * step[PREPARED_VEL_COL],
-        step[PREPARED_ACC_COL],
-        marker=".",
-        c="#000000",
-    )
+
+    if STATE.test.get() == "Elevator":
+        plt.scatter(
+            step[PREPARED_V_COL]
+            - kg
+            - ks * np.sign(step[PREPARED_VEL_COL])
+            - kv * step[PREPARED_VEL_COL],
+            step[PREPARED_ACC_COL],
+            marker=".",
+            c="#000000",
+        )
+    elif STATE.test.get() == "Arm":
+        plt.scatter(
+            step[PREPARED_V_COL]
+            - ks * np.sign(step[PREPARED_VEL_COL])
+            - kv * step[PREPARED_VEL_COL]
+            - kcos * step[PREPARED_COS_COL],
+            step[PREPARED_ACC_COL],
+            marker=".",
+            c="#000000",
+        )
+    else:
+        plt.scatter(
+            step[PREPARED_V_COL]
+            - ks * np.sign(step[PREPARED_VEL_COL])
+            - kv * step[PREPARED_VEL_COL],
+            step[PREPARED_ACC_COL],
+            marker=".",
+            c="#000000",
+        )
 
     # show fit line from multiple regression
     y = np.linspace(np.min(step[PREPARED_ACC_COL]), np.max(step[PREPARED_ACC_COL]))
@@ -1240,6 +1787,47 @@ def _plotVoltageDomain(subset, qu, step, STATE):
 
     # Fix overlapping axis labels
     plt.tight_layout(pad=0.5)
+
+    # Supplemental graphs (Elevator and Arm)
+    if STATE.test.get() == "Elevator" or STATE.test.get() == "Arm":
+        ax = plt.subplot(111)
+        # show fit line from multiple regression
+        y = np.linspace(np.min(qu[PREPARED_POS_COL]), np.max(qu[PREPARED_POS_COL]))
+
+        if STATE.test.get() == "Elevator":
+            ax.set_xlabel("Friction-loss voltage")
+            ax.set_ylabel("Velocity")
+            ax.set_title("Quasistatic velocity vs friction-loss voltage")
+            plt.scatter(
+                qu[PREPARED_V_COL]
+                - kg
+                - kv * qu[PREPARED_VEL_COL]
+                - ka * qu[PREPARED_ACC_COL],
+                qu[PREPARED_VEL_COL],
+                marker=".",
+                c="#000000",
+            )
+            plt.plot(ks * np.sign(y), y)
+        else:
+            ax.set_xlabel("Gravity (cosine)-Portion Voltage")
+            ax.set_ylabel("Angle")
+            ax.set_title("Quasistatic angle vs gravity-portion voltage")
+            plt.scatter(
+                qu[PREPARED_V_COL]
+                - ks * np.sign(qu[PREPARED_VEL_COL])
+                - kv * qu[PREPARED_VEL_COL]
+                - ka * qu[PREPARED_ACC_COL],
+                qu[PREPARED_POS_COL],
+                marker=".",
+                c="#000000",
+            )
+            if STATE.units.get() == "Degrees":
+                plt.plot(kcos * np.cos(np.radians(y)), y)
+            elif STATE.units.get() == "Radians":
+                plt.plot(kcos * np.cos(y), y)
+            else:
+                plt.plot(kcos * np.cos(math.pi * 2 * y), y)
+        plt.tight_layout(pad=0.5)
 
     plt.show()
 
@@ -1255,6 +1843,7 @@ def _plot3D(subset, qu, step, STATE):
     kv = STATE.kv.get()
     ka = STATE.ka.get()
     kcos = STATE.kcos.get()
+    kg = STATE.kg.get()
     r_square = STATE.r_square.get()
 
     # Interactive 3d plot of voltage over entire vel-accel plane
@@ -1267,31 +1856,55 @@ def _plot3D(subset, qu, step, STATE):
     ax.set_xlabel("Velocity")
     ax.set_ylabel("Acceleration")
     ax.set_zlabel("Voltage")
-    ax.set_title("Voltage vs velocity and acceleration")
-    ax.scatter(vel, accel, volts)
 
     # Show best fit plane
     vv, aa = np.meshgrid(
         np.linspace(np.min(vel), np.max(vel)), np.linspace(np.min(accel), np.max(accel))
     )
-    ax.plot_surface(
-        vv, aa, ks * np.sign(vv) + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1]
-    )
+    if STATE.test.get() == "Elevator":
+        ax.set_title("Friction-adjusted Voltage vs velocity and acceleration")
+        ax.scatter(vel, accel, volts - ks * np.sign(vel))
+        ax.plot_surface(vv, aa, kg + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1])
+    elif STATE.test.get() == "Arm":
+        cos = np.concatenate((qu[PREPARED_COS_COL], step[PREPARED_COS_COL]))
+        ax.set_title("Cosine-adjusted Voltage vs velocity and acceleration")
+        ax.scatter(vel, accel, volts - kcos * cos)
+        ax.plot_surface(
+            vv, aa, ks * np.sign(vv) + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1]
+        )
+    else:
+        ax.set_title("Voltage vs velocity and acceleration")
+        ax.scatter(vel, accel, volts)
+        ax.plot_surface(
+            vv, aa, ks * np.sign(vv) + kv * vv + ka * aa, alpha=0.2, color=[0, 1, 1]
+        )
 
     plt.show()
 
 
-def calcFit(qu, step):
+def calcFit(qu, step, STATE):
     vel = np.concatenate((qu[PREPARED_VEL_COL], step[PREPARED_VEL_COL]))
     accel = np.concatenate((qu[PREPARED_ACC_COL], step[PREPARED_ACC_COL]))
     volts = np.concatenate((qu[PREPARED_V_COL], step[PREPARED_V_COL]))
     time = np.concatenate((qu[PREPARED_TM_COL], step[PREPARED_TM_COL]))
 
-    fit = ols(vel, accel, volts)
-    ks, kv, ka = fit.params
-    rsquare = fit.rsquared
+    if STATE.test.get() == "Elevator":
+        fit = ols(vel, accel, np.ones(vel.size), volts)
+        ks, kv, ka, kg = fit.params
+        rsquare = fit.rsquared
+        return kg, ks, kv, ka, rsquare
+    elif STATE.test.get() == "Arm":
+        cos = np.concatenate((qu[PREPARED_COS_COL], step[PREPARED_COS_COL]))
+        fit = ols(vel, accel, cos, volts)
+        ks, kv, ka, kcos = fit.params
+        rsquare = fit.rsquared
+        return ks, kv, ka, kcos, rsquare
+    else:
+        fit = ols(vel, accel, None, volts)
+        ks, kv, ka = fit.params
+        rsquare = fit.rsquared
 
-    return ks, kv, ka, rsquare
+        return ks, kv, ka, rsquare
 
 
 def _calcGainsPos(kv, ka, qp, qv, effort, period, position_delay):
