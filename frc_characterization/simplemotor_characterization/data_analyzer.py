@@ -268,6 +268,23 @@ def configure_gui(STATE):
                 0 if STATE.loop_type.get() == "Position" else delay
             )
 
+        # A number of motor controllers use moving average filters; these are types of FIR filters.
+        # A moving average filter with a window size of N is a FIR filter with N taps.
+        # The average delay (in taps) of an arbitrary FIR filter with N taps is (N-1)/2.
+        # All of the delays below assume that 1 T takes 1 ms.
+        #
+        # Proof:
+        # N taps with delays of 0 .. N - 1 T
+        #
+        # average delay = (sum 0 .. N - 1) / N T
+        # = (sum 1 .. N - 1) / N T
+        #
+        # note: sum 1 .. n = n(n + 1) / 2
+        #
+        # = (N - 1)((N - 1) + 1) / (2N) T
+        # = (N - 1)N / (2N) T
+        # = (N - 1)/2 T
+
         presets = {
             "Default": lambda: (
                 STATE.max_controller_output.set(12),
@@ -281,7 +298,7 @@ def configure_gui(STATE):
                 STATE.period.set(0.02),
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Onboard"),
-                # Note that the user will need to remember to set this if the onboard controller is getting delayed measurements
+                # Note that the user will need to remember to set this if the onboard controller is getting delayed measurements.
                 setMeasurementDelay(0),
             ),
             "WPILib (Pre-2020)": lambda: (
@@ -289,7 +306,7 @@ def configure_gui(STATE):
                 STATE.period.set(0.05),
                 STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set("Onboard"),
-                # Note that the user will need to remember to set this if the onboard controller is getting delayed measurements
+                # Note that the user will need to remember to set this if the onboard controller is getting delayed measurements.
                 setMeasurementDelay(0),
             ),
             "Talon FX": lambda: (
@@ -298,13 +315,16 @@ def configure_gui(STATE):
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Talon"),
                 # https://phoenix-documentation.readthedocs.io/en/latest/ch14_MCSensor.html#changing-velocity-measurement-parameters
-                setMeasurementDelay(164),
+                # 100 ms sampling period + a moving average window size of 64 (i.e. a 64-tap FIR) = 100 ms + (64-1)/2 ms = 131.5 ms.
+                # See above for more info on moving average delays.
+                setMeasurementDelay(131.5),
             ),
             "Talon SRX (2020-)": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Talon"),
+                # No known filtering/delay (other than CAN latency)
                 setMeasurementDelay(0),
             ),
             "Talon SRX (Pre-2020)": lambda: (
@@ -312,15 +332,17 @@ def configure_gui(STATE):
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set("Talon"),
-                STATE.measurement_delay.set(0),
+                # No known filtering/delay (other than CAN latency)
+                setMeasurementDelay(0),
             ),
             "Spark MAX (brushless)": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set("Spark"),
-                # According to a Rev employee on the FRC Discord
-                setMeasurementDelay(40),
+                # According to a Rev employee on the FRC Discord the window size is 40 so delay = (40-1)/2 ms = 19.5 ms.
+                # See above for more info on moving average delays.
+                setMeasurementDelay(19.5),
             ),
             "Spark MAX (brushed)": lambda: (
                 STATE.max_controller_output.set(1),
@@ -328,7 +350,9 @@ def configure_gui(STATE):
                 STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set("Spark"),
                 # https://www.revrobotics.com/content/sw/max/sw-docs/cpp/classrev_1_1_c_a_n_encoder.html#a7e6ce792bc0c0558fb944771df572e6a
-                setMeasurementDelay(64),
+                # 64-tap FIR = (64-1)/2 ms = 31.5 ms delay.
+                # See above for more info on moving average delays.
+                setMeasurementDelay(31.5),
             ),
         }
 
@@ -479,8 +503,8 @@ def configure_gui(STATE):
         "WPILib (2020-)",
         "WPILib (Pre-2020)",
         "Talon FX",
-        "Talon (2020-)",
-        "Talon (Pre-2020)",
+        "Talon SRX (2020-)",
+        "Talon SRX (Pre-2020)",
         "Spark MAX (brushless)",
         "Spark MAX (brushed)",
     }

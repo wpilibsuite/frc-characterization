@@ -282,6 +282,7 @@ def configure_gui(STATE):
 
     def presetGains(*args):
 
+        # Note that all the delays are zero because the elevator characterizer only runs in position mode and most motor controllers do not have non-CAN (i.e. filtering) delay in position mode
         presets = {
             "Default": lambda: (
                 STATE.max_controller_output.set(12),
@@ -332,8 +333,7 @@ def configure_gui(STATE):
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set("Spark"),
-                # According to a Rev employee on the FRC Discord
-                STATE.measurement_delay.set(40),
+                STATE.measurement_delay.set(0),
             ),
             "Spark MAX (brushed)": lambda: (
                 STATE.max_controller_output.set(1),
@@ -503,8 +503,8 @@ def configure_gui(STATE):
         "WPILib (2020-)",
         "WPILib (Pre-2020)",
         "Talon FX",
-        "Talon (2020-)",
-        "Talon (Pre-2020)",
+        "Talon SRX (2020-)",
+        "Talon SRX (Pre-2020)",
         "Spark MAX (brushless)",
         "Spark MAX (brushed)",
     }
