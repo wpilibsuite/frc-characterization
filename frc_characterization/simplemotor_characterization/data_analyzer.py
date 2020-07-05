@@ -315,25 +315,29 @@ def configure_gui(STATE):
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Talon"),
                 # https://phoenix-documentation.readthedocs.io/en/latest/ch14_MCSensor.html#changing-velocity-measurement-parameters
-                # 100 ms sampling period + a moving average window size of 64 (i.e. a 64-tap FIR) = 100 ms + (64-1)/2 ms = 131.5 ms.
+                # 100 ms sampling period + a moving average window size of 64 (i.e. a 64-tap FIR) = 100/2 ms + (64-1)/2 ms = 81.5 ms.
                 # See above for more info on moving average delays.
-                setMeasurementDelay(131.5),
+                setMeasurementDelay(81.5),
             ),
             "Talon SRX (2020-)": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Talon"),
-                # No known filtering/delay (other than CAN latency)
-                setMeasurementDelay(0),
+                # https://phoenix-documentation.readthedocs.io/en/latest/ch14_MCSensor.html#changing-velocity-measurement-parameters
+                # 100 ms sampling period + a moving average window size of 64 (i.e. a 64-tap FIR) = 100/2 ms + (64-1)/2 ms = 81.5 ms.
+                # See above for more info on moving average delays.
+                setMeasurementDelay(81.5),
             ),
             "Talon SRX (Pre-2020)": lambda: (
                 STATE.max_controller_output.set(1023),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set("Talon"),
-                # No known filtering/delay (other than CAN latency)
-                setMeasurementDelay(0),
+                # https://phoenix-documentation.readthedocs.io/en/latest/ch14_MCSensor.html#changing-velocity-measurement-parameters
+                # 100 ms sampling period + a moving average window size of 64 (i.e. a 64-tap FIR) = 100/2 ms + (64-1)/2 ms = 81.5 ms.
+                # See above for more info on moving average delays.
+                setMeasurementDelay(81.5),
             ),
             "Spark MAX (brushless)": lambda: (
                 STATE.max_controller_output.set(1),
