@@ -68,10 +68,10 @@ class ProgramState:
         self.r_square = DoubleVar(self.mainGUI)
 
         self.qp = DoubleVar(self.mainGUI)
-        self.qp.set(0.1)
+        self.qp.set(1)
 
         self.qv = DoubleVar(self.mainGUI)
-        self.qv.set(0.2)
+        self.qv.set(1.5)
 
         self.max_effort = DoubleVar(self.mainGUI)
         self.max_effort.set(7)
@@ -84,6 +84,9 @@ class ProgramState:
 
         self.controller_time_normalized = BooleanVar(self.mainGUI)
         self.controller_time_normalized.set(True)
+
+        self.measurement_delay = DoubleVar(self.mainGUI)
+        self.measurement_delay.set(0)
 
         self.gearing = DoubleVar(self.mainGUI)
         self.gearing.set(1)
@@ -465,6 +468,7 @@ def configure_gui(STATE):
                 STATE.qv.get(),
                 STATE.max_effort.get(),
                 period,
+                STATE.measurement_delay.get(),
             )
         else:
             kp, kd = _calcGainsVel(
@@ -473,6 +477,7 @@ def configure_gui(STATE):
                 STATE.qv.get(),
                 STATE.max_effort.get(),
                 period,
+                STATE.measurement_delay.get(),
             )
 
         # Scale gains to output
@@ -523,6 +528,27 @@ def configure_gui(STATE):
         return diameter
 
     def presetGains(*args):
+        def setMeasurementDelay(delay):
+            STATE.measurement_delay.set(
+                0 if STATE.loop_type.get() == "Position" else delay
+            )
+
+        # A number of motor controllers use moving average filters; these are types of FIR filters.
+        # A moving average filter with a window size of N is a FIR filter with N taps.
+        # The average delay (in taps) of an arbitrary FIR filter with N taps is (N-1)/2.
+        # All of the delays below assume that 1 T takes 1 ms.
+        #
+        # Proof:
+        # N taps with delays of 0 .. N - 1 T
+        #
+        # average delay = (sum 0 .. N - 1) / N T
+        # = (sum 1 .. N - 1) / N T
+        #
+        # note: sum 1 .. n = n(n + 1) / 2
+        #
+        # = (N - 1)((N - 1) + 1) / (2N) T
+        # = (N - 1)N / (2N) T
+        # = (N - 1)/2 T
 
         presets = {
             "Default": lambda: (
@@ -530,36 +556,72 @@ def configure_gui(STATE):
                 STATE.period.set(0.02),
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Onboard"),
+                setMeasurementDelay(0),
             ),
             "WPILib (2020-)": lambda: (
                 STATE.max_controller_output.set(12),
                 STATE.period.set(0.02),
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Onboard"),
+                # Note that the user will need to remember to set this if the onboard controller is getting delayed measurements.
+                setMeasurementDelay(0),
             ),
             "WPILib (Pre-2020)": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.05),
                 STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set("Onboard"),
+                # Note that the user will need to remember to set this if the onboard controller is getting delayed measurements.
+                setMeasurementDelay(0),
             ),
-            "Talon (2020-)": lambda: (
+            "Talon FX": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(True),
                 STATE.controller_type.set("Talon"),
+                # https://phoenix-documentation.readthedocs.io/en/latest/ch14_MCSensor.html#changing-velocity-measurement-parameters
+                # 100 ms sampling period + a moving average window size of 64 (i.e. a 64-tap FIR) = 100/2 ms + (64-1)/2 ms = 81.5 ms.
+                # See above for more info on moving average delays.
+                setMeasurementDelay(81.5),
             ),
-            "Talon (Pre-2020)": lambda: (
+            "Talon SRX (2020-)": lambda: (
+                STATE.max_controller_output.set(1),
+                STATE.period.set(0.001),
+                STATE.controller_time_normalized.set(True),
+                STATE.controller_type.set("Talon"),
+                # https://phoenix-documentation.readthedocs.io/en/latest/ch14_MCSensor.html#changing-velocity-measurement-parameters
+                # 100 ms sampling period + a moving average window size of 64 (i.e. a 64-tap FIR) = 100/2 ms + (64-1)/2 ms = 81.5 ms.
+                # See above for more info on moving average delays.
+                setMeasurementDelay(81.5),
+            ),
+            "Talon SRX (Pre-2020)": lambda: (
                 STATE.max_controller_output.set(1023),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set("Talon"),
+                # https://phoenix-documentation.readthedocs.io/en/latest/ch14_MCSensor.html#changing-velocity-measurement-parameters
+                # 100 ms sampling period + a moving average window size of 64 (i.e. a 64-tap FIR) = 100/2 ms + (64-1)/2 ms = 81.5 ms.
+                # See above for more info on moving average delays.
+                setMeasurementDelay(81.5),
             ),
-            "Spark MAX": lambda: (
+            "Spark MAX (brushless)": lambda: (
                 STATE.max_controller_output.set(1),
                 STATE.period.set(0.001),
                 STATE.controller_time_normalized.set(False),
                 STATE.controller_type.set("Spark"),
+                # According to a Rev employee on the FRC Discord the window size is 40 so delay = (40-1)/2 ms = 19.5 ms.
+                # See above for more info on moving average delays.
+                setMeasurementDelay(19.5),
+            ),
+            "Spark MAX (brushed)": lambda: (
+                STATE.max_controller_output.set(1),
+                STATE.period.set(0.001),
+                STATE.controller_time_normalized.set(False),
+                STATE.controller_type.set("Spark"),
+                # https://www.revrobotics.com/content/sw/max/sw-docs/cpp/classrev_1_1_c_a_n_encoder.html#a7e6ce792bc0c0558fb944771df572e6a
+                # 64-tap FIR = (64-1)/2 ms = 31.5 ms delay.
+                # See above for more info on moving average delays.
+                setMeasurementDelay(31.5),
             ),
         }
 
@@ -736,9 +798,11 @@ def configure_gui(STATE):
         "Default",
         "WPILib (2020-)",
         "WPILib (Pre-2020)",
-        "Talon (2020-)",
-        "Talon (Pre-2020)",
-        "Spark MAX",
+        "Talon FX",
+        "Talon SRX (2020-)",
+        "Talon SRX (Pre-2020)",
+        "Spark MAX (brushless)",
+        "Spark MAX (brushed)",
     }
     presetMenu = OptionMenu(fbFrame, STATE.gain_units_preset, *sorted(presetChoices))
     presetMenu.grid(row=1, column=1)
@@ -775,29 +839,35 @@ def configure_gui(STATE):
     controllerTypeMenu.grid(row=5, column=1)
     STATE.controller_type.trace_add("write", enableOffboard)
 
-    Label(fbFrame, text="Post-Encoder Gearing:", anchor="e").grid(
+    Label(fbFrame, text="Measurement delay (ms):", anchor="e").grid(
         row=6, column=0, sticky="ew"
+    )
+    velocityDelay = FloatEntry(fbFrame, textvariable=STATE.measurement_delay, width=10)
+    velocityDelay.grid(row=6, column=1)
+
+    Label(fbFrame, text="Post-Encoder Gearing:", anchor="e").grid(
+        row=7, column=0, sticky="ew"
     )
     gearingEntry = FloatEntry(fbFrame, textvariable=STATE.gearing, width=10)
     gearingEntry.configure(state="disabled")
-    gearingEntry.grid(row=6, column=1)
+    gearingEntry.grid(row=7, column=1)
 
-    Label(fbFrame, text="Encoder EPR:", anchor="e").grid(row=7, column=0, sticky="ew")
+    Label(fbFrame, text="Encoder EPR:", anchor="e").grid(row=8, column=0, sticky="ew")
     eprEntry = IntEntry(fbFrame, textvariable=STATE.encoder_epr, width=10)
     eprEntry.configure(state="disabled")
-    eprEntry.grid(row=7, column=1)
+    eprEntry.grid(row=8, column=1)
 
-    Label(fbFrame, text="Has Slave:", anchor="e").grid(row=8, column=0, sticky="ew")
+    Label(fbFrame, text="Has Slave:", anchor="e").grid(row=9, column=0, sticky="ew")
     hasSlave = Checkbutton(fbFrame, variable=STATE.has_slave)
-    hasSlave.grid(row=8, column=1)
+    hasSlave.grid(row=9, column=1)
     hasSlave.configure(state="disabled")
     STATE.has_slave.trace_add("write", enableOffboard)
 
     Label(fbFrame, text="Slave Update Period (s):", anchor="e").grid(
-        row=9, column=0, sticky="ew"
+        row=10, column=0, sticky="ew"
     )
     slavePeriodEntry = FloatEntry(fbFrame, textvariable=STATE.slave_period, width=10)
-    slavePeriodEntry.grid(row=9, column=1)
+    slavePeriodEntry.grid(row=10, column=1)
     slavePeriodEntry.configure(state="disabled")
 
     Label(fbFrame, text="Max Acceptable Position Error (units):", anchor="e").grid(
@@ -827,6 +897,9 @@ def configure_gui(STATE):
     loopTypeMenu.configure(width=8)
     loopTypeMenu.grid(row=4, column=4)
     STATE.loop_type.trace_add("write", enableErrorBounds)
+    # We reset everything to the selected preset when the user changes the loop type
+    # This prevents people from forgetting to change measurement delays
+    STATE.loop_type.trace_add("write", presetGains)
 
     Label(fbFrame, text="kV:", anchor="e").grid(row=5, column=2, sticky="ew")
     kVFBEntry = FloatEntry(fbFrame, textvariable=STATE.kv, width=10)
@@ -1221,7 +1294,7 @@ def calcFit(qu, step):
     return ks, kv, ka, rsquare
 
 
-def _calcGainsPos(kv, ka, qp, qv, effort, period):
+def _calcGainsPos(kv, ka, qp, qv, effort, period, position_delay):
 
     # If acceleration requires no effort, velocity becomes an input for position
     # control. We choose an appropriate model in this case to avoid numerical
@@ -1254,6 +1327,22 @@ def _calcGainsPos(kv, ka, qp, qv, effort, period):
     R = np.diag(1.0 / np.square(r))
     K = frccnt.lqr(dsys, Q, R)
 
+    if position_delay > 0:
+        # This corrects the gain to compensate for measurement delay, which
+        # can be quite large as a result of filtering for some motor
+        # controller and sensor combinations. Note that this will result in
+        # an overly conservative (i.e. non-optimal) gain, because we need to
+        # have a time-varying control gain to give the system an initial kick
+        # in the right direction. The state will converge to zero and the
+        # controller gain will converge to the steady-state one the tool outputs.
+        #
+        # See E.4.2 in
+        #   https://file.tavsys.net/control/controls-engineering-in-frc.pdf
+        delay_in_seconds = position_delay / 1000  # ms -> s
+        K = K @ np.linalg.matrix_power(
+            dsys.A - dsys.B @ K, round(delay_in_seconds / period)
+        )
+
     # With the alternate model, `kp = kv * K[0, 0]` is used because the gain
     # produced by LQR is for velocity. We can use the feedforward equation
     # `u = kv * v` to convert velocity to voltage. `kd = 0` because velocity
@@ -1268,7 +1357,7 @@ def _calcGainsPos(kv, ka, qp, qv, effort, period):
     return kp, kd
 
 
-def _calcGainsVel(kv, ka, qv, effort, period):
+def _calcGainsVel(kv, ka, qv, effort, period, velocity_delay):
 
     # If acceleration for velocity control requires no effort, the feedback
     # control gains approach zero. We special-case it here because numerical
@@ -1293,6 +1382,22 @@ def _calcGainsVel(kv, ka, qv, effort, period):
     Q = np.diag(1.0 / np.square(q))
     R = np.diag(1.0 / np.square(r))
     K = frccnt.lqr(dsys, Q, R)
+
+    if velocity_delay > 0:
+        # This corrects the gain to compensate for measurement delay, which
+        # can be quite large as a result of filtering for some motor
+        # controller and sensor combinations. Note that this will result in
+        # an overly conservative (i.e. non-optimal) gain, because we need to
+        # have a time-varying control gain to give the system an initial kick
+        # in the right direction. The state will converge to zero and the
+        # controller gain will converge to the steady-state one the tool outputs.
+        #
+        # See E.4.2 in
+        #   https://file.tavsys.net/control/controls-engineering-in-frc.pdf
+        delay_in_seconds = velocity_delay / 1000  # ms -> s
+        K = K @ np.linalg.matrix_power(
+            dsys.A - dsys.B @ K, round(delay_in_seconds / period)
+        )
 
     kp = K[0, 0]
     kd = 0
