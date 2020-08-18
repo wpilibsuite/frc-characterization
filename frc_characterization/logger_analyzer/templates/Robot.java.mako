@@ -53,12 +53,16 @@ import java.util.ArrayList;
 
 public class Robot extends TimedRobot {
 
+  % if "SparkMax" in control:
+  static private int ENCODER_EDGES_PER_REV = ${epr} / 4;
+  % else:
   static private double ENCODER_EDGES_PER_REV = ${epr} / 4.;
+  % endif
   static private int PIDIDX = 0;
   static private int ENCODER_EPR = ${epr};
   static private double GEARING = ${gearing};
   
-  % if control == "SparkMax_Brushless" and integrated:
+  % if "SparkMax" in control:
   private double encoderConstant = (1 / GEARING);
   % else:
   private double encoderConstant = (1 / GEARING) * (1 / ENCODER_EDGES_PER_REV);
@@ -92,8 +96,10 @@ public class Robot extends TimedRobot {
   double startTime = 0;
   double priorAutospeed = 0;
 
+  double[] numberArray = new double[10];
+  ArrayList<Double> entries = new ArrayList<Double>();
   public Robot() {
-    super(.01);
+    super(.005);
   }
 
   public enum Sides {
@@ -112,6 +118,7 @@ public class Robot extends TimedRobot {
     ${motor} motor = new ${motor}(port);
         % if control == "Talon":
     // setup talon
+    motor.configFactoryDefault();
     motor.setNeutralMode(NeutralMode.Brake);
         % endif    
     % else:
@@ -122,8 +129,8 @@ public class Robot extends TimedRobot {
     // setup Brushless spark
     CANSparkMax motor = new CANSparkMax(port, MotorType.kBrushless);
           % endif
-    motor.setIdleMode(IdleMode.kBrake);
-           
+    motor.restoreFactoryDefaults(); 
+    motor.setIdleMode(IdleMode.kBrake);  
     % endif
     motor.setInverted(inverted);
     
@@ -149,7 +156,7 @@ public class Robot extends TimedRobot {
       % if integrated and "Brushless" in control:
     CANEncoder encoder = motor.getEncoder();
       % else:
-    CANEncoder encoder = motor.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
+    CANEncoder encoder = motor.getEncoder(EncoderType.kQuadrature, ENCODER_EDGES_PER_REV);
       % endif
     % endif
 
@@ -187,8 +194,8 @@ public class Robot extends TimedRobot {
 
           % endif
         % else:
-          % if "Brushless" not in control:
-        encoder.setInverted(${str(rencoderinv).lower()});
+          % if "Brushless" in controlType and not useIntegrated:
+        encoder.setInverted(${str(rightEncoderInverted).lower()});
           % endif
         rightEncoderPosition = ()
           -> encoder.getPosition() * encoderConstant;
@@ -220,8 +227,8 @@ public class Robot extends TimedRobot {
 
           % endif
         % else:
-        % if "Brushless" not in control:
-        encoder.setInverted(${str(encoderinv).lower()});
+          % if "Brushless" in controlType and not useIntegrated:
+        encoder.setInverted(${str(encoderInverted).lower()});
           % endif
         leftEncoderPosition = ()
           -> encoder.getPosition() * encoderConstant;
@@ -254,10 +261,14 @@ public class Robot extends TimedRobot {
     // create left motor
     ${controller[0]} leftMotor = setup${controller[0]}(${ports[0]}, Sides.LEFT, ${str(inverted[0]).lower()});
 
-    % if control != "Simple":
-      % for port in ports[1:]: # add slaves if there are any
-    ${controller[loop.index + 1]} leftSlaveID${port} = setup${controller[loop.index + 1]}(${port}, Sides.SLAVE, ${str(inverted[loop.index + 1]).lower()});
-    leftSlaveID${port}.follow(leftMotor);
+    % if controlType != "Simple":
+      % for port in motorPorts[1:]: # add followers if there are any
+    ${controllerTypes[loop.index + 1]} leftFollowerID${port} = setup${controllerTypes[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(motorsInverted[loop.index + 1]).lower()});
+        % if "SparkMax" in controlType:
+    leftFollowerID${port}.follow(leftMotor, ${str(motorsInverted[loop.index + 1]).lower()});
+        % else: 
+    leftFollowerID${port}.follow(leftMotor);
+        % endif
       % endfor
     % else:
       % if len(ports) > 1:
@@ -273,12 +284,16 @@ public class Robot extends TimedRobot {
       % endif
     % endif
 
-    % if rightports: # setup right side (if it exists)
-    ${rightcontroller[0]} rightMotor = setup${rightcontroller[0]}(${rightports[0]}, Sides.RIGHT, ${str(rightinverted[0]).lower()});
-      % if control != "Simple":
-        % for port in rightports[1:]:
-    ${rightcontroller[loop.index + 1]} rightSlaveID${port} = setup${rightcontroller[loop.index + 1]}(${port}, Sides.SLAVE, ${str(rightinverted[loop.index + 1]).lower()});
-    rightSlaveID${port}.follow(rightMotor);  
+    % if rightMotorPorts: # setup right side (if it exists)
+    ${rightControllerTypes[0]} rightMotor = setup${rightControllerTypes[0]}(${rightMotorPorts[0]}, Sides.RIGHT, ${str(rightMotorsInverted[0]).lower()});
+      % if controlType != "Simple":
+        % for port in rightMotorPorts[1:]:
+    ${rightControllerTypes[loop.index + 1]} rightFollowerID${port} = setup${rightControllerTypes[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(rightMotorsInverted[loop.index + 1]).lower()});
+          % if "SparkMax" in controlType:
+    rightFollowerID${port}.follow(rightMotor, ${str(rightMotorsInverted[loop.index + 1]).lower()});
+          % else:      
+    rightFollowerID${port}.follow(rightMotor);
+          % endif  
         % endfor
     drive = new DifferentialDrive(leftMotor, rightMotor);
       % else:
@@ -341,16 +356,20 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledInit() {
+    double elapsedTime = Timer.getFPGATimestamp() - startTime;
     System.out.println("Robot disabled");
     % if rightports:
     drive.tankDrive(0, 0);
     % else:
     masterMotor.set(0);
     % endif
-    double elapsedTime = Timer.getFPGATimestamp() - startTime;
+    // data processing step
+    data = entries.toString();
+    data = data.substring(1, data.length() - 1) + ", ";
+    telemetryEntry.setString(data);
+    entries.clear();
     System.out.println("Robot disabled");
     System.out.println("Collected : " + counter + " in " + elapsedTime + " seconds");
-    telemetryEntry.setString(data);
     data = "";
   }
 
@@ -427,7 +446,6 @@ public class Robot extends TimedRobot {
     % else:
     masterMotor.set(autospeed);
     % endif
-    Number[] numberArray = new Number[10];
 
     numberArray[0] = now;
     numberArray[1] = battery;
@@ -441,8 +459,8 @@ public class Robot extends TimedRobot {
     numberArray[9] = gyroAngleRadians.get();
 
     // Add data to a string that is uploaded to NT
-    for (Number num : numberArray) {
-      data += num + ", ";
+    for (double num : numberArray) {
+      entries.add(num);
     }
     counter++;
   }
