@@ -73,9 +73,9 @@ public class Robot extends TimedRobot {
   DifferentialDrive drive;
   % else:
     % if control == "Simple":
-  SpeedControllerGroup masterMotor;
+  SpeedControllerGroup leaderMotor;
     % else:
-  ${controller[0]} masterMotor;
+  ${controller[0]} leaderMotor;
     % endif
   % endif
 
@@ -105,7 +105,7 @@ public class Robot extends TimedRobot {
   public enum Sides {
     LEFT,
     RIGHT,
-    SLAVE
+    FOLLOWER
   }
 
   // TODO add a method to invert encoders for motor:
@@ -134,8 +134,8 @@ public class Robot extends TimedRobot {
     % endif
     motor.setInverted(inverted);
     
-    // setup encoder if motor isn't a slave
-    if (side != Sides.SLAVE) {
+    // setup encoder if motor isn't a follower
+    if (side != Sides.FOLLOWER) {
     % if "SparkMax" not in control:
         
       % if control == "Talon":
@@ -274,7 +274,7 @@ public class Robot extends TimedRobot {
       % if len(ports) > 1:
     ArrayList<SpeedController> leftMotors = new ArrayList<SpeedController>();
       % for port in ports[1:]:
-    leftMotors.add(setup${controller[loop.index + 1]}(${port}, Sides.SLAVE, ${str(inverted[loop.index + 1]).lower()}));
+    leftMotors.add(setup${controller[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(inverted[loop.index + 1]).lower()}));
       % endfor
     SpeedController[] leftMotorControllers = new SpeedController[leftMotors.size()];
     leftMotorControllers = leftMotors.toArray(leftMotorControllers);
@@ -300,7 +300,7 @@ public class Robot extends TimedRobot {
         % if rightports:
     ArrayList<SpeedController> rightMotors = new ArrayList<SpeedController>();
           % for port in rightports[1:]:
-    rightMotors.add(setup${rightcontroller[loop.index + 1]}(${port}, Sides.SLAVE, ${str(rightinverted[loop.index + 1]).lower()}));
+    rightMotors.add(setup${rightcontroller[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(rightinverted[loop.index + 1]).lower()}));
           % endfor
     SpeedController[] rightMotorControllers = new SpeedController[rightMotors.size()];
     rightMotorControllers = rightMotors.toArray(rightMotorControllers);
@@ -315,9 +315,9 @@ public class Robot extends TimedRobot {
     rightEncoderPosition = leftEncoderPosition;
     rightEncoderRate = leftEncoderRate;
       % if control != "Simple":
-    masterMotor = leftMotor;
+    leaderMotor = leftMotor;
       % else:
-    masterMotor = new SpeedControllerGroup(leftMotor, leftMotorControllers);
+    leaderMotor = new SpeedControllerGroup(leftMotor, leftMotorControllers);
       % endif
     % endif
     //
@@ -361,7 +361,7 @@ public class Robot extends TimedRobot {
     % if rightports:
     drive.tankDrive(0, 0);
     % else:
-    masterMotor.set(0);
+    leaderMotor.set(0);
     % endif
     // data processing step
     data = entries.toString();
@@ -396,7 +396,7 @@ public class Robot extends TimedRobot {
     % if rightports:
     drive.arcadeDrive(-stick.getY(), stick.getX());
     % else:
-    masterMotor.set(-stick.getY());
+    leaderMotor.set(-stick.getY());
     % endif
   }
 
@@ -444,7 +444,7 @@ public class Robot extends TimedRobot {
       false
     );
     % else:
-    masterMotor.set(autospeed);
+    leaderMotor.set(autospeed);
     % endif
 
     numberArray[0] = now;

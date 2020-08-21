@@ -101,11 +101,11 @@ class ProgramState:
         self.encoder_epr = IntVar(self.mainGUI)
         self.encoder_epr.set(4096)
 
-        self.has_slave = BooleanVar(self.mainGUI)
-        self.has_slave.set(False)
+        self.has_follower = BooleanVar(self.mainGUI)
+        self.has_follower.set(False)
 
-        self.slave_period = DoubleVar(self.mainGUI)
-        self.slave_period.set(0.01)
+        self.follower_period = DoubleVar(self.mainGUI)
+        self.follower_period.set(0.01)
 
         self.gain_units_preset = StringVar(self.mainGUI)
         self.gain_units_preset.set("Default")
@@ -693,8 +693,8 @@ def configure_gui(STATE):
 
         period = (
             STATE.period.get()
-            if not STATE.has_slave.get()
-            else STATE.slave_period.get()
+            if not STATE.has_follower.get()
+            else STATE.follower_period.get()
         )
 
         if STATE.loop_type.get() == "Position":
@@ -881,24 +881,24 @@ def configure_gui(STATE):
         if STATE.controller_type.get() == "Onboard":
             gearingEntry.configure(state="disabled")
             eprEntry.configure(state="disabled")
-            hasSlave.configure(state="disabled")
-            slavePeriodEntry.configure(state="disabled")
+            hasFollower.configure(state="disabled")
+            followerPeriodEntry.configure(state="disabled")
         elif STATE.controller_type.get() == "Talon":
             gearingEntry.configure(state="normal")
             eprEntry.configure(state="normal")
-            hasSlave.configure(state="normal")
-            if STATE.has_slave.get():
-                slavePeriodEntry.configure(state="normal")
+            hasFollower.configure(state="normal")
+            if STATE.has_follower.get():
+                followerPeriodEntry.configure(state="normal")
             else:
-                slavePeriodEntry.configure(state="disabled")
+                followerPeriodEntry.configure(state="disabled")
         else:
             gearingEntry.configure(state="disabled")
             eprEntry.configure(state="disabled")
-            hasSlave.configure(state="normal")
-            if STATE.has_slave.get():
-                slavePeriodEntry.configure(state="normal")
+            hasFollower.configure(state="normal")
+            if STATE.has_follower.get():
+                followerPeriodEntry.configure(state="normal")
             else:
-                slavePeriodEntry.configure(state="disabled")
+                followerPeriodEntry.configure(state="disabled")
 
     def enableUnitsPerRot(*args):
         if not isRotation(STATE.units.get()) and isRotation(STATE.stored_data["units"]):
@@ -1197,18 +1197,20 @@ def configure_gui(STATE):
     eprEntry.configure(state="disabled")
     eprEntry.grid(row=8, column=1)
 
-    Label(fbFrame, text="Has Slave:", anchor="e").grid(row=9, column=0, sticky="ew")
-    hasSlave = Checkbutton(fbFrame, variable=STATE.has_slave)
-    hasSlave.grid(row=9, column=1)
-    hasSlave.configure(state="disabled")
-    STATE.has_slave.trace_add("write", enableOffboard)
+    Label(fbFrame, text="Has Follower:", anchor="e").grid(row=9, column=0, sticky="ew")
+    hasFollower = Checkbutton(fbFrame, variable=STATE.has_follower)
+    hasFollower.grid(row=9, column=1)
+    hasFollower.configure(state="disabled")
+    STATE.has_follower.trace_add("write", enableOffboard)
 
-    Label(fbFrame, text="Slave Update Period (s):", anchor="e").grid(
+    Label(fbFrame, text="Follower Update Period (s):", anchor="e").grid(
         row=10, column=0, sticky="ew"
     )
-    slavePeriodEntry = FloatEntry(fbFrame, textvariable=STATE.slave_period, width=10)
-    slavePeriodEntry.grid(row=10, column=1)
-    slavePeriodEntry.configure(state="disabled")
+    followerPeriodEntry = FloatEntry(
+        fbFrame, textvariable=STATE.follower_period, width=10
+    )
+    followerPeriodEntry.grid(row=10, column=1)
+    followerPeriodEntry.configure(state="disabled")
 
     Label(fbFrame, text="Max Acceptable Position Error (units):", anchor="e").grid(
         row=1, column=2, columnspan=2, sticky="ew"
