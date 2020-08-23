@@ -24,10 +24,11 @@ import numpy as np
 from tkinter import messagebox, Checkbutton, Label
 from tkinter import StringVar, DoubleVar, BooleanVar
 
+from frc_characterization.newproject import Tests, Units
 import frc_characterization.logger_gui as logger_gui
 from frc_characterization.logger_gui import Test
 
-from frc_characterization.drive_characterization.data_analyzer import (
+from frc_characterization.logger_analyzer.data_analyzer import (
     AUTOSPEED_COL,
     L_ENCODER_P_COL,
     R_ENCODER_P_COL,
@@ -37,9 +38,6 @@ from networktables import NetworkTables
 from networktables.util import ntproperty
 
 logger = logging.getLogger("logger")
-log_format = "%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s"
-
-logging.basicConfig(level=logging.INFO, format=log_format)
 
 # FMSControlData bitfields
 ENABLED_FIELD = 1 << 0
@@ -136,11 +134,6 @@ class TestRunner:
             logger.info("Data updated")
             self.last_data = value
 
-            # if not self.discard_data and self.mode != "disabled":
-            #     with self.lock:
-            #         self.data.append(value)
-            #         dlen = len(self.data)
-
             if not self.discard_data and self.mode == "disabled":
                 logger.info("running disabled")
                 with self.lock:
@@ -223,7 +216,6 @@ class TestRunner:
 
                 NetworkTables.flush()
         finally:
-            # self.discard_data = True
             self.autospeed = 0
 
     def runTest(self, name, initial_speed, ramp, finished, rotate=None):
@@ -231,7 +223,6 @@ class TestRunner:
             # Initialize the robot commanded speed to 0
             self.autospeed = 0
             self.discard_data = True
-
             self.STATE.postTask(
                 lambda: messagebox.showinfo(
                     "Running " + name,
@@ -264,7 +255,6 @@ class TestRunner:
             # tries to retrieve disabled data
             starttime = time.time()
             while not self.data and time.time() - starttime < timeout:
-                # print("trying to recieve data again")
                 NetworkTables.flush()
                 time.sleep(0.1)
 
@@ -323,13 +313,11 @@ class TestRunner:
             self.stored_data[name] = data
 
         finally:
-
             self.autospeed = 0
-
             self.STATE.postTask(finished)
 
 
-def main(team, dir, units="Rotations", units_per_rot="1", test="Simple"):
+def main(team, dir, units=Units.ROTATIONS, units_per_rot=1, test=Tests.SIMPLE_MOTOR):
     logger_gui.main(team, dir, TestRunner, units, units_per_rot, test)
 
 

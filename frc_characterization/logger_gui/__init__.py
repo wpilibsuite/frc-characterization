@@ -11,6 +11,7 @@ from tkinter import *
 import logging
 
 from networktables import NetworkTables
+from frc_characterization.newproject import Tests, Units
 from frc_characterization.utils import FloatEntry, IntEntry
 
 # GUI SETUP
@@ -69,6 +70,9 @@ class Test:
 
     def isCompleted(self):
         return self._status_text_val.get() == "Completed"
+
+    def getName(self):
+        return self._button_text
 
 
 def configure_gui(STATE, RUNNER):
@@ -132,12 +136,15 @@ def configure_gui(STATE, RUNNER):
 
     def enableTestButtons():
         all_completed = True
-        for step in tests[:-1]:
-            step.enable()
-            all_completed &= step.isCompleted()
-        # Don't have to do trackwidth if not drivetrain
-        if STATE.test == "Drivetrain":
-            all_completed &= tests[-1].isCompleted()
+        for step in tests:
+            # Don't have to do trackwidth if not drivetrain
+            if step.getName() != "Trackwidth":
+                step.enable()
+                all_completed &= step.isCompleted()
+            else:
+                if STATE.test.get() == "Drivetrain":
+                    step.enable()
+                    all_completed &= step.isCompleted()
 
         if all_completed:
             saveButton.configure(state="normal")
@@ -202,10 +209,7 @@ def configure_gui(STATE, RUNNER):
                 "track-width",
                 STATE.rotation_voltage.get(),
                 0,
-                lambda: (
-                    STATE.trw_completed.set("Completed"),
-                    enableTestButtons(),
-                ),
+                lambda: (STATE.trw_completed.set("Completed"), enableTestButtons()),
                 True,
             ),
         ).start()
@@ -213,11 +217,17 @@ def configure_gui(STATE, RUNNER):
     def changeTests(*args):
         # disable/enable trackwidth test
         if tests:
+            track_width_index = 0
+            for i in range(len(tests)):
+                if tests[i].getName() == "Trackwidth":
+                    track_width_index = i
+                    break
+            track_width = tests[track_width_index]
             if STATE.test.get() != "Drivetrain":
-                tests[-1].disable()
+                track_width.disable()
                 angularEnabled.configure(state="disabled")
             else:
-                tests[-1].enable()
+                track_width.enable()
                 angularEnabled.configure(state="normal")
 
     # TOP OF WINDOW (FILE SELECTION)
@@ -243,8 +253,10 @@ def configure_gui(STATE, RUNNER):
     timestampEnabled.grid(row=1, column=2)
 
     Label(topFrame, text="Test Type:", anchor="e").grid(row=1, column=3, sticky="ew")
-    testTypes = {"Arm", "Simple", "Drivetrain", "Elevator"}
-    testTypeMenu = OptionMenu(topFrame, STATE.test, *sorted(testTypes))
+
+    testTypeMenu = OptionMenu(
+        topFrame, STATE.test, *sorted(test.value for test in Tests)
+    )
     testTypeMenu.grid(row=1, column=4)
     testTypeMenu.configure(state="disabled")
     STATE.test.trace_add("write", changeTests)
@@ -253,12 +265,6 @@ def configure_gui(STATE, RUNNER):
     angularEnabled = Checkbutton(topFrame, variable=STATE.angular_mode)
     angularEnabled.grid(row=2, column=4)
     angularEnabled.configure(state="disabled")
-
-    # Label(topFrame, text="Units:", width=10).grid(row=2, column=1)
-    # unitChoices = {"Feet", "Inches", "Meters", "Radians", "Rotations"}
-    # unitsMenu = OptionMenu(topFrame, STATE.units, *sorted(unitChoices))
-    # unitsMenu.configure(width=10)
-    # unitsMenu.grid(row=2, column=2, sticky="ew")
 
     for child in topFrame.winfo_children():
         child.grid_configure(padx=1, pady=1)
@@ -317,7 +323,14 @@ def configure_gui(STATE, RUNNER):
 
 
 class GuiState:
-    def __init__(self, team, dir, unit="Rotations", units_per_rot=1, test="Simple"):
+    def __init__(
+        self,
+        team,
+        dir,
+        unit=Units.ROTATIONS,
+        units_per_rot=1,
+        test=Tests.SIMPLE_MOTOR,
+    ):
         self.mainGUI = tkinter.Tk()
 
         self.file_path = StringVar(self.mainGUI)
@@ -356,13 +369,13 @@ class GuiState:
         self.connect_handle = None
 
         self.test = StringVar(self.mainGUI)
-        self.test.set(test)
+        self.test.set(test.value)
 
         self.angular_mode = BooleanVar(self.mainGUI)
         self.angular_mode.set(False)
 
         self.units = StringVar(self.mainGUI)
-        self.units.set(unit)
+        self.units.set(unit.value)
 
         self.units_per_rot = DoubleVar(self.mainGUI)
         self.units_per_rot.set(units_per_rot)
@@ -384,7 +397,14 @@ class GuiState:
             return False
 
 
-def main(team, dir, runner, unit="Rotations", units_per_rot=1, test="Simple"):
+def main(
+    team,
+    dir,
+    runner,
+    unit=Units.ROTATIONS,
+    units_per_rot=1,
+    test=Tests.SIMPLE_MOTOR,
+):
 
     STATE = GuiState(team, dir, unit, units_per_rot, test)
     RUNNER = runner(STATE)
@@ -397,14 +417,6 @@ def main(team, dir, runner, unit="Rotations", units_per_rot=1, test="Simple"):
 
 
 if __name__ == "__main__":
-    from drive_characterization.data_logger import TestRunner
+    from frc_characterization.logger_analyzer.data_logger import TestRunner
 
     main(0, os.getcwd(), TestRunner)
-
-    # log_datefmt = '%H:%M:%S'
-    # log_format = '%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s'
-
-    # logging.basicConfig(level=logging.INFO, datefmt=log_datefmt, format=log_format)
-
-    # dl = DataLogger()
-    # dl.run()
