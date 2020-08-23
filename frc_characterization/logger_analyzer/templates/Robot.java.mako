@@ -53,29 +53,29 @@ import java.util.ArrayList;
 
 public class Robot extends TimedRobot {
 
-  % if "SparkMax" in control:
-  static private int ENCODER_EDGES_PER_REV = ${epr} / 4;
+  % if "SparkMax" in controlType:
+  static private int ENCODER_EDGES_PER_REV = ${encoderEPR} / 4;
   % else:
-  static private double ENCODER_EDGES_PER_REV = ${epr} / 4.;
+  static private double ENCODER_EDGES_PER_REV = ${encoderEPR} / 4.;
   % endif
   static private int PIDIDX = 0;
-  static private int ENCODER_EPR = ${epr};
+  static private int ENCODER_EPR = ${encoderEPR};
   static private double GEARING = ${gearing};
   
-  % if "SparkMax" in control:
+  % if "SparkMax" in controlType:
   private double encoderConstant = (1 / GEARING);
   % else:
   private double encoderConstant = (1 / GEARING) * (1 / ENCODER_EDGES_PER_REV);
   % endif
 
   Joystick stick;
-  % if rightports:
+  % if rightMotorPorts:
   DifferentialDrive drive;
   % else:
-    % if control == "Simple":
+    % if controlType == "Simple":
   SpeedControllerGroup leaderMotor;
     % else:
-  ${controller[0]} leaderMotor;
+  ${controllerTypes[0]} leaderMotor;
     % endif
   % endif
 
@@ -111,18 +111,18 @@ public class Robot extends TimedRobot {
   // TODO add a method to invert encoders for motor:
 
   // methods to create and setup motors (reduce redundancy)
-  % for motor in list(dict.fromkeys(controller + rightcontroller)):
+  % for motor in list(dict.fromkeys(controllerTypes + rightControllerTypes)):
   public ${motor} setup${motor}(int port, Sides side, boolean inverted) {
     // create new motor and set neutral modes (if needed)
-    % if "SparkMax" not in control:
+    % if "SparkMax" not in controlType:
     ${motor} motor = new ${motor}(port);
-        % if control == "Talon":
+        % if controlType == "Talon":
     // setup talon
     motor.configFactoryDefault();
     motor.setNeutralMode(NeutralMode.Brake);
         % endif    
     % else:
-          % if "Brushed" in control:
+          % if "Brushed" in controlType:
     // setup Brushed spark
     CANSparkMax motor = new CANSparkMax(port, MotorType.kBrushed);
           % else:
@@ -136,11 +136,11 @@ public class Robot extends TimedRobot {
     
     // setup encoder if motor isn't a follower
     if (side != Sides.FOLLOWER) {
-    % if "SparkMax" not in control:
+    % if "SparkMax" not in controlType:
         
-      % if control == "Talon":
+      % if controlType == "Talon":
       motor.configSelectedFeedbackSensor(
-          % if controller[0] == "WPI_TalonFX":
+          % if controllerTypes[0] == "WPI_TalonFX":
             FeedbackDevice.IntegratedSensor,
           % else:
             FeedbackDevice.QuadEncoder,
@@ -153,7 +153,7 @@ public class Robot extends TimedRobot {
       % endif
             
     % else:
-      % if integrated and "Brushless" in control:
+      % if useIntegrated and "Brushless" in controlType:
     CANEncoder encoder = motor.getEncoder();
       % else:
     CANEncoder encoder = motor.getEncoder(EncoderType.kQuadrature, ENCODER_EDGES_PER_REV);
@@ -165,15 +165,15 @@ public class Robot extends TimedRobot {
     switch (side) {
       // setup encoder and data collecting methods
 
-      % if rightports: #SPARK MAX DOESN"T BRUSHLESS DOESN"T LIKE INVERTING
+      % if rightMotorPorts: #SPARK MAX DOESN"T BRUSHLESS DOESN"T LIKE INVERTING
       case RIGHT:
         // set right side methods = encoder methods
 
-        % if "SparkMax" not in control:
+        % if "SparkMax" not in controlType:
 
-          % if control == "Talon":
+          % if controlType == "Talon":
           
-        motor.setSensorPhase(${str(rencoderinv).lower()});
+        motor.setSensorPhase(${str(rightEncoderInverted).lower()});
           
           
         
@@ -185,8 +185,8 @@ public class Robot extends TimedRobot {
 
           % else:
         
-        encoder = new Encoder(${rencoderports[0]}, ${rencoderports[1]});
-        encoder.setReverseDirection(${str(rencoderinv).lower()});
+        encoder = new Encoder(${rightEncoderPorts[0]}, ${rightEncoderPorts[1]});
+        encoder.setReverseDirection(${str(rightEncoderInverted).lower()});
 
         encoder.setDistancePerPulse(encoderConstant);
         rightEncoderPosition = encoder::getDistance;
@@ -207,10 +207,10 @@ public class Robot extends TimedRobot {
         break;
       % endif
       case LEFT:
-         % if "SparkMax" not in control:
+         % if "SparkMax" not in controlType:
 
-          % if control == "Talon":
-        motor.setSensorPhase(${str(encoderinv).lower()});
+          % if controlType == "Talon":
+        motor.setSensorPhase(${str(encoderInverted).lower()});
         
         leftEncoderPosition = ()
           -> motor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
@@ -219,8 +219,8 @@ public class Robot extends TimedRobot {
                10;
 
           % else:
-        encoder = new Encoder(${encoderports[0]}, ${encoderports[1]});
-        encoder.setReverseDirection(${str(encoderinv).lower()});
+        encoder = new Encoder(${encoderPorts[0]}, ${encoderPorts[1]});
+        encoder.setReverseDirection(${str(encoderInverted).lower()});
         encoder.setDistancePerPulse(encoderConstant);
         leftEncoderPosition = encoder::getDistance;
         leftEncoderRate = encoder::getRate;
@@ -259,7 +259,7 @@ public class Robot extends TimedRobot {
     stick = new Joystick(0);
     
     // create left motor
-    ${controller[0]} leftMotor = setup${controller[0]}(${ports[0]}, Sides.LEFT, ${str(inverted[0]).lower()});
+    ${controllerTypes[0]} leftMotor = setup${controllerTypes[0]}(${motorPorts[0]}, Sides.LEFT, ${str(motorsInverted[0]).lower()});
 
     % if controlType != "Simple":
       % for port in motorPorts[1:]: # add followers if there are any
@@ -271,10 +271,10 @@ public class Robot extends TimedRobot {
         % endif
       % endfor
     % else:
-      % if len(ports) > 1:
+      % if len(motorPorts) > 1:
     ArrayList<SpeedController> leftMotors = new ArrayList<SpeedController>();
-      % for port in ports[1:]:
-    leftMotors.add(setup${controller[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(inverted[loop.index + 1]).lower()}));
+      % for port in motorPorts[1:]:
+    leftMotors.add(setup${controllerTypes[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(motorsInverted[loop.index + 1]).lower()}));
       % endfor
     SpeedController[] leftMotorControllers = new SpeedController[leftMotors.size()];
     leftMotorControllers = leftMotors.toArray(leftMotorControllers);
@@ -297,10 +297,10 @@ public class Robot extends TimedRobot {
         % endfor
     drive = new DifferentialDrive(leftMotor, rightMotor);
       % else:
-        % if rightports:
+        % if rightMotorPorts:
     ArrayList<SpeedController> rightMotors = new ArrayList<SpeedController>();
-          % for port in rightports[1:]:
-    rightMotors.add(setup${rightcontroller[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(rightinverted[loop.index + 1]).lower()}));
+          % for port in rightMotorPorts[1:]:
+    rightMotors.add(setup${rightcontrollerTypes[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(rightMotorsInverted[loop.index + 1]).lower()}));
           % endfor
     SpeedController[] rightMotorControllers = new SpeedController[rightMotors.size()];
     rightMotorControllers = rightMotors.toArray(rightMotorControllers);
@@ -314,7 +314,7 @@ public class Robot extends TimedRobot {
     % else:
     rightEncoderPosition = leftEncoderPosition;
     rightEncoderRate = leftEncoderRate;
-      % if control != "Simple":
+      % if controlType != "Simple":
     leaderMotor = leftMotor;
       % else:
     leaderMotor = new SpeedControllerGroup(leftMotor, leftMotorControllers);
@@ -324,21 +324,21 @@ public class Robot extends TimedRobot {
     // Configure gyro
     //
 
-    % if gyro:
+    % if gyroType:
       // Note that the angle from the NavX and all implementors of wpilib Gyro
       // must be negated because getAngle returns a clockwise positive angle
-      % if gyro == "ADXRS450":
-    Gyro gyro = new ADXRS450_Gyro(${gyroport});
+      % if gyroType == "ADXRS450":
+    Gyro gyro = new ADXRS450_Gyro(${gyroPort});
     gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
-      % elif gyro == "AnalogGyro":
-    Gyro gyro = new AnalogGyro(${gyroport});
+      % elif gyroType == "AnalogGyro":
+    Gyro gyro = new AnalogGyro(${gyroPort});
     gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
-      % elif gyro == "NavX":
-    AHRS navx = new AHRS(${gyroport});
+      % elif gyroType == "NavX":
+    AHRS navx = new AHRS(${gyroPort});
     gyroAngleRadians = () -> -1 * Math.toRadians(navx.getAngle());
-      % elif gyro == "Pigeon":
+      % elif gyroType == "Pigeon":
     // Uncomment for Pigeon
-    PigeonIMU pigeon = new PigeonIMU(${gyroport});
+    PigeonIMU pigeon = new PigeonIMU(${gyroPort});
     gyroAngleRadians = () -> {
       // Allocating a new array every loop is bad but concise
       double[] xyz = new double[3];
@@ -358,7 +358,7 @@ public class Robot extends TimedRobot {
   public void disabledInit() {
     double elapsedTime = Timer.getFPGATimestamp() - startTime;
     System.out.println("Robot disabled");
-    % if rightports:
+    % if rightMotorPorts:
     drive.tankDrive(0, 0);
     % else:
     leaderMotor.set(0);
@@ -393,7 +393,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    % if rightports:
+    % if rightMotorPorts:
     drive.arcadeDrive(-stick.getY(), stick.getX());
     % else:
     leaderMotor.set(-stick.getY());
@@ -438,7 +438,7 @@ public class Robot extends TimedRobot {
     priorAutospeed = autospeed;
 
     // command motors to do things
-    % if rightports:
+    % if rightMotorPorts:
     drive.tankDrive(
       (rotateEntry.getBoolean(false) ? -1 : 1) * autospeed, autospeed,
       false

@@ -11,6 +11,7 @@ import frc_characterization.logger_analyzer.data_analyzer as analyzer
 import frc_characterization.logger_analyzer.data_logger as logger
 import frc_characterization.logger_gui as logger_gui
 import frc_characterization.newproject as newproject
+from frc_characterization.newproject import Tests
 
 from consolemenu import ConsoleMenu
 from consolemenu.items import FunctionItem, SubmenuItem
@@ -19,76 +20,39 @@ langs = ("java", "cpp", "python")
 
 controllers = ("spark", "talonsrx")
 
-# TODO make logger automatically set itself to testtype
-def newProject(testType, directory=None):
+
+def new_project(testType, directory=None):
     newproject.main(testType)
 
 
-def getAnalyzer(directory=None):
-    analyzer.main(getcwd())
+def get_analyzer(directory=None):
+    analyzer.main(directory or getcwd())
 
 
-def loggerArm(directory=None):
-    logger_gui.main(0, getcwd(), logger.TestRunner, test="Arm")
-
-
-def analyzerArm(directory=None):
-    analyzer.main(getcwd())
-
-
-def loggerDrive(directory=None):
-    logger_gui.main(0, getcwd(), logger.TestRunner, test="Drivetrain")
-
-
-def analyzerDrive(directory=None):
-    analyzer.main(getcwd())
-
-
-def loggerElevator(directory=None):
-    logger_gui.main(0, getcwd(), logger.TestRunner, test="Elevator")
-
-
-def analyzerElevator(directory=None):
-    analyzer.main(getcwd())
-
-
-def loggerSimpleMotor(directory=None):
-    logger_gui.main(0, getcwd(), logger.TestRunner, test="Simple")
-
-
-def analyzerSimpleMotor(directory=None):
-    analyzer.main(getcwd())
+def get_logger(testType, directory=None):
+    logger_gui.main(0, directory or getcwd(), logger.TestRunner, test=testType)
 
 
 tool_dict = {
     "drive": {
-        "new": partial(
-            newProject,
-            testType="Drivetrain",
-        ),
-        "logger": loggerDrive,
-        "analyzer": getAnalyzer,
+        "new": partial(new_project, testType=Tests.DRIVETRAIN),
+        "logger": partial(get_logger, testType=Tests.DRIVETRAIN),
+        "analyzer": get_analyzer,
     },
     "arm": {
-        "new": partial(newProject, testType="Arm"),
-        "logger": loggerArm,
-        "analyzer": getAnalyzer,
+        "new": partial(new_project, testType=Tests.ARM),
+        "logger": partial(get_logger, testType=Tests.ARM),
+        "analyzer": get_analyzer,
     },
     "elevator": {
-        "new": partial(
-            newProject,
-            testType="Elevator",
-        ),
-        "logger": loggerElevator,
-        "analyzer": getAnalyzer,
+        "new": partial(new_project, testType=Tests.ELEVATOR),
+        "logger": partial(get_logger, testType=Tests.ELEVATOR),
+        "analyzer": get_analyzer,
     },
     "simple-motor": {
-        "new": partial(
-            newProject,
-            testType="Simple",
-        ),
-        "logger": loggerSimpleMotor,
-        "analyzer": getAnalyzer,
+        "new": partial(new_project, testType=Tests.SIMPLE_MOTOR),
+        "logger": partial(get_logger, testType=Tests.SIMPLE_MOTOR),
+        "analyzer": get_analyzer,
     },
 }
 
