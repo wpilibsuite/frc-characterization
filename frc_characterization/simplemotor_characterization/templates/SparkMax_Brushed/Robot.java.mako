@@ -53,6 +53,7 @@ public class Robot extends TimedRobot {
     stick = new Joystick(0);
 
     master = new CANSparkMax(${ports[0]}, MotorType.kBrushed);
+    master.restoreFactoryDefaults();
     % if inverted[0]:
     master.setInverted(true);
     % else:
@@ -62,6 +63,7 @@ public class Robot extends TimedRobot {
 
     % for port in ports[1:]:
     CANSparkMax slave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
+    slave${loop.index}.restoreFactoryDefaults();
     % if inverted[loop.index+1]:
     slave${loop.index}.follow(master, true);
     % else:
