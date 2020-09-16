@@ -36,7 +36,7 @@ public class Robot extends TimedRobot {
 
   Joystick stick;
 
-  ${controllers[0]} armMaster;
+  ${controllers[0]} armLeader;
 
   Supplier<Double> encoderPosition;
   Supplier<Double> encoderRate;
@@ -55,18 +55,18 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    armMaster = new ${controllers[0]}(${ports[0]});
+    armLeader = new ${controllers[0]}(${ports[0]});
     % if inverted[0]:
-    armMaster.setInverted(true);
+    armLeader.setInverted(true);
     % else:
-    armMaster.setInverted(false);
+    armLeader.setInverted(false);
     % endif
     % if encoderinv:
-    armMaster.setSensorPhase(true);
+    armLeader.setSensorPhase(true);
     % else:
-    armMaster.setSensorPhase(false);
+    armLeader.setSensorPhase(false);
     % endif
-    armMaster.setNeutralMode(NeutralMode.Brake);
+    armLeader.setNeutralMode(NeutralMode.Brake);
 
     % for port in ports[1:]:
     ${controllers[loop.index+1]} armFollower${loop.index} = new ${controllers[loop.index+1]}(${port});
@@ -76,7 +76,7 @@ public class Robot extends TimedRobot {
     armFollower${loop.index}.setInverted(false);
     % endif
     armFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
-    armFollower${loop.index}.follow(armMaster);
+    armFollower${loop.index}.follow(armLeader);
     % endfor
 
     //
@@ -94,7 +94,7 @@ public class Robot extends TimedRobot {
     double encoderConstant = 1;
     % endif
 
-    armMaster.configSelectedFeedbackSensor(
+    armLeader.configSelectedFeedbackSensor(
         % if controllers[0] == "WPI_TalonFX":
         FeedbackDevice.IntegratedSensor,
         % else:
@@ -103,13 +103,13 @@ public class Robot extends TimedRobot {
         PIDIDX, 10
     );
     encoderPosition = ()
-        -> armMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant +
+        -> armLeader.getSelectedSensorPosition(PIDIDX) * encoderConstant +
                OFFSET;
     encoderRate =
-        () -> armMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
+        () -> armLeader.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
 
     // Reset encoders
-    armMaster.setSelectedSensorPosition(0);
+    armLeader.setSelectedSensorPosition(0);
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
@@ -119,7 +119,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    armMaster.set(0);
+    armLeader.set(0);
   }
 
   @Override
@@ -139,7 +139,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    armMaster.set(-stick.getY());
+    armLeader.set(-stick.getY());
   }
 
   @Override
@@ -166,14 +166,14 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double motorVolts = armMaster.getMotorOutputVoltage();
+    double motorVolts = armLeader.getMotorOutputVoltage();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
 
     // command motors to do things
-    armMaster.set(autospeed);
+    armLeader.set(autospeed);
 
     // send telemetry data array back to NT
     numberArray[0] = now;

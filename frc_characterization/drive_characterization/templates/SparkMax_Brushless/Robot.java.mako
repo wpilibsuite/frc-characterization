@@ -45,8 +45,8 @@ public class Robot extends TimedRobot {
   Joystick stick;
   DifferentialDrive drive;
 
-  CANSparkMax leftMaster;
-  CANSparkMax rightMaster;
+  CANSparkMax leftLeader;
+  CANSparkMax rightLeader;
 
   CANEncoder leftEncoder;
   CANEncoder rightEncoder;
@@ -73,32 +73,32 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    leftMaster = new CANSparkMax(${lports[0]}, MotorType.kBrushless);
+    leftLeader = new CANSparkMax(${lports[0]}, MotorType.kBrushless);
     % if linverted[0]:
-    leftMaster.setInverted(true);
+    leftLeader.setInverted(true);
     % else:
-    leftMaster.setInverted(false);
+    leftLeader.setInverted(false);
     % endif
-    leftMaster.setIdleMode(IdleMode.kBrake);
+    leftLeader.setIdleMode(IdleMode.kBrake);
 
-    leftEncoder = leftMaster.getEncoder();
+    leftEncoder = leftLeader.getEncoder();
 
-    rightMaster = new CANSparkMax(${rports[0]}, MotorType.kBrushless);
+    rightLeader = new CANSparkMax(${rports[0]}, MotorType.kBrushless);
     % if rinverted[0]:
-    rightMaster.setInverted(true);
+    rightLeader.setInverted(true);
     % else:
-    rightMaster.setInverted(false);
+    rightLeader.setInverted(false);
     % endif
-    rightMaster.setIdleMode(IdleMode.kBrake);
+    rightLeader.setIdleMode(IdleMode.kBrake);
 
-    rightEncoder = rightMaster.getEncoder();
+    rightEncoder = rightLeader.getEncoder();
 
     % for port in lports[1:]:
     CANSparkMax leftFollower${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
     % if linverted[loop.index+1]:
-    leftFollower${loop.index}.follow(leftMaster, true);
+    leftFollower${loop.index}.follow(leftLeader, true);
     % else:
-    leftFollower${loop.index}.follow(leftMaster);
+    leftFollower${loop.index}.follow(leftLeader);
     % endif
     leftFollower${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
@@ -106,9 +106,9 @@ public class Robot extends TimedRobot {
     % for port in rports[1:]:
     CANSparkMax rightFollower${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
     % if rinverted[loop.index+1]:
-    rightFollower${loop.index}.follow(rightMaster, true);
+    rightFollower${loop.index}.follow(rightLeader, true);
     % else:
-    rightFollower${loop.index}.follow(rightMaster);
+    rightFollower${loop.index}.follow(rightLeader);
     % endif
     rightFollower${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
@@ -145,7 +145,7 @@ public class Robot extends TimedRobot {
     // Configure drivetrain movement
     //
 
-    drive = new DifferentialDrive(leftMaster, rightMaster);
+    drive = new DifferentialDrive(leftLeader, rightLeader);
 
     drive.setDeadband(0);
 
@@ -231,8 +231,8 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double leftMotorVolts = leftMaster.getBusVoltage() * leftMaster.getAppliedOutput();
-    double rightMotorVolts = rightMaster.getBusVoltage() * rightMaster.getAppliedOutput();
+    double leftMotorVolts = leftLeader.getBusVoltage() * leftLeader.getAppliedOutput();
+    double rightMotorVolts = rightLeader.getBusVoltage() * rightLeader.getAppliedOutput();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);

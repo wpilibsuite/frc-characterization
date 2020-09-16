@@ -37,7 +37,7 @@ public class Robot extends TimedRobot {
 
   Joystick stick;
 
-  CANSparkMax armMaster;
+  CANSparkMax armLeader;
 
   Supplier<Double> encoderPosition;
   Supplier<Double> encoderRate;
@@ -56,13 +56,13 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    armMaster = new CANSparkMax(${ports[0]}, MotorType.kBrushed);
+    armLeader = new CANSparkMax(${ports[0]}, MotorType.kBrushed);
     % if inverted[0]:
-    armMaster.setInverted(true);
+    armLeader.setInverted(true);
     % else:
-    armMaster.setInverted(false);
+    armLeader.setInverted(false);
     % endif
-    armMaster.setIdleMode(IdleMode.kBrake);
+    armLeader.setIdleMode(IdleMode.kBrake);
 
     % for port in ports[1:]:
     CANSparkMax armFollower${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
@@ -72,7 +72,7 @@ public class Robot extends TimedRobot {
     armFollower${loop.index}.setInverted(false);
     % endif
     armFollower${loop.index}.setIdleMode(IdleMode.kBrake);
-    armFollower${loop.index}.follow(armMaster);
+    armFollower${loop.index}.follow(armLeader);
     % endfor
 
     //
@@ -90,7 +90,7 @@ public class Robot extends TimedRobot {
     double encoderConstant = 1;
     % endif
 
-    CANEncoder encoder = armMaster.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
+    CANEncoder encoder = armLeader.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
 
     % if encoderinv:
     encoder.setInverted(true);
@@ -113,7 +113,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    armMaster.set(0);
+    armLeader.set(0);
   }
 
   @Override
@@ -133,7 +133,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    armMaster.set(-stick.getY());
+    armLeader.set(-stick.getY());
   }
 
   @Override
@@ -160,14 +160,14 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double motorVolts = armMaster.getBusVoltage() * armMaster.getAppliedOutput();
+    double motorVolts = armLeader.getBusVoltage() * armLeader.getAppliedOutput();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
 
     // command motors to do things
-    armMaster.set(autospeed);
+    armLeader.set(autospeed);
 
     // send telemetry data array back to NT
     numberArray[0] = now;
