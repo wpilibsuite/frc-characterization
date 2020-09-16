@@ -57,6 +57,7 @@ public class Robot extends TimedRobot {
     stick = new Joystick(0);
 
     armMaster = new CANSparkMax(${ports[0]}, MotorType.kBrushless);
+    armMaster.restoreFactoryDefaults();
     % if inverted[0]:
     armMaster.setInverted(true);
     % else:
@@ -68,6 +69,7 @@ public class Robot extends TimedRobot {
 
     % for port in ports[1:]:
     CANSparkMax armSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
+    armSlave${loop.index}.restoreFactoryDefaults();
     % if inverted[loop.index+1]:
     armSlave${loop.index}.setInverted(true);
     % else:
