@@ -65,7 +65,8 @@ def analyzerSimpleMotor(directory=None):
 tool_dict = {
     "drive": {
         "new": partial(
-            newProject, mechanism=frc_characterization.drive_characterization,
+            newProject,
+            mechanism=frc_characterization.drive_characterization,
         ),
         "logger": loggerDrive,
         "analyzer": analyzerDrive,
@@ -77,14 +78,16 @@ tool_dict = {
     },
     "elevator": {
         "new": partial(
-            newProject, mechanism=frc_characterization.elevator_characterization,
+            newProject,
+            mechanism=frc_characterization.elevator_characterization,
         ),
         "logger": loggerElevator,
         "analyzer": analyzerElevator,
     },
     "simple-motor": {
         "new": partial(
-            newProject, mechanism=frc_characterization.simplemotor_characterization,
+            newProject,
+            mechanism=frc_characterization.simplemotor_characterization,
         ),
         "logger": loggerSimpleMotor,
         "analyzer": analyzerSimpleMotor,

@@ -977,9 +977,9 @@ JSON_DATA_KEYS = ["slow-forward", "slow-backward", "fast-forward", "fast-backwar
 
 def smoothDerivative(tm, value, n):
     """
-        :param tm: time column
-        :param value: Value to take the derivative of
-        :param n: smoothing parameter
+    :param tm: time column
+    :param value: Value to take the derivative of
+    :param n: smoothing parameter
     """
     dlen = len(value)
     dt = tm[n:dlen] - tm[: (dlen - n)]
@@ -1023,7 +1023,7 @@ def trim_step_testdata(data):
 
 def compute_accel(data, window):
     """
-        Returned data columns correspond to PREPARED_*
+    Returned data columns correspond to PREPARED_*
     """
 
     # deal with incomplete data
@@ -1063,34 +1063,34 @@ def compute_accel(data, window):
 
 def prepare_data(data, window, STATE):
     """
-        Firstly, data should be 'trimmed' to exclude any data points at which the
-        robot was not being commanded to do anything.
+    Firstly, data should be 'trimmed' to exclude any data points at which the
+    robot was not being commanded to do anything.
 
-        Secondly, robot acceleration should be calculated from robot velocity and time.
-        We have found it effective to do this by taking the slope of the secant line
-        of velocity over a 60ms (3 standard loop iterations) window.
+    Secondly, robot acceleration should be calculated from robot velocity and time.
+    We have found it effective to do this by taking the slope of the secant line
+    of velocity over a 60ms (3 standard loop iterations) window.
 
-        Thirdly, data from the quasi-static test should be trimmed to exclude the
-        initial period in which the robot is not moving due to static friction
-        Fourthly, data from the step-voltage acceleration tests must be trimmed to
-        remove the initial 'ramp-up' period that exists due to motor inductance; this
-        can be done by simply removing all data points before maximum acceleration is
-        reached.
+    Thirdly, data from the quasi-static test should be trimmed to exclude the
+    initial period in which the robot is not moving due to static friction
+    Fourthly, data from the step-voltage acceleration tests must be trimmed to
+    remove the initial 'ramp-up' period that exists due to motor inductance; this
+    can be done by simply removing all data points before maximum acceleration is
+    reached.
 
-        Finally, the data can be analyzed: pool your trimmed data into four data sets
-        - one for each side of the robot (left or right) and each direction (forwards
-        or backwards).
+    Finally, the data can be analyzed: pool your trimmed data into four data sets
+    - one for each side of the robot (left or right) and each direction (forwards
+    or backwards).
 
-        For each set, run a linear regression of voltage seen at the motor
-        (or battery voltage if you do not have Talon SRXs) versus velocity and
-        acceleration.
+    For each set, run a linear regression of voltage seen at the motor
+    (or battery voltage if you do not have Talon SRXs) versus velocity and
+    acceleration.
 
-        Voltage should be in units of volts, velocity in units of feet per second,
-        and acceleration in units of feet per second squared.
+    Voltage should be in units of volts, velocity in units of feet per second,
+    and acceleration in units of feet per second squared.
 
-        Each data pool will then yield three parameters -
-        intercept, Kv (the regression coefficient of velocity), and Ka (the regression
-        coefficient of acceleration).
+    Each data pool will then yield three parameters -
+    intercept, Kv (the regression coefficient of velocity), and Ka (the regression
+    coefficient of acceleration).
     """
 
     # ensure voltage sign matches velocity sign
