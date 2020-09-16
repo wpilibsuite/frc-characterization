@@ -66,7 +66,7 @@ public class Robot extends TimedRobot {
     % if inverted[loop.index+1]:
     slave${loop.index}.follow(master, true);
     % else:
-    slave${loop.index}.follow(master);
+    slave${loop.index}.follow(master, false);
     % endif
     slave${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor

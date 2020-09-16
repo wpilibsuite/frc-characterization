@@ -68,12 +68,11 @@ public class Robot extends TimedRobot {
     % for port in ports[1:]:
     CANSparkMax elevatorSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
     % if inverted[loop.index+1]:
-    elevatorSlave${loop.index}.setInverted(true);
+    elevatorSlave${loop.index}.follow(elevatorMaster, true);
     % else:
-    elevatorSlave${loop.index}.setInverted(false);
+    elevatorSlave${loop.index}.follow(elevatorMaster, false);
     % endif
     elevatorSlave${loop.index}.setIdleMode(IdleMode.kBrake);
-    elevatorSlave${loop.index}.follow(elevatorMaster);
     % endfor
 
     //

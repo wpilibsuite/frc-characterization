@@ -93,7 +93,7 @@ public class Robot extends TimedRobot {
     % if linverted[loop.index+1]:
     leftSlave${loop.index}.follow(leftMaster, true);
     % else:
-    leftSlave${loop.index}.follow(leftMaster);
+    leftSlave${loop.index}.follow(leftMaster, false);
     % endif
     leftSlave${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
@@ -103,7 +103,7 @@ public class Robot extends TimedRobot {
     % if rinverted[loop.index+1]:
     rightSlave${loop.index}.follow(rightMaster, true);
     % else:
-    rightSlave${loop.index}.follow(rightMaster);
+    rightSlave${loop.index}.follow(rightMaster, false);
     % endif
     rightSlave${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
