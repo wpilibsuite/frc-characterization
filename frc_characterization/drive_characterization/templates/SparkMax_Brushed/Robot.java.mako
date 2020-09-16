@@ -73,6 +73,7 @@ public class Robot extends TimedRobot {
     stick = new Joystick(0);
 
     leftMaster = new CANSparkMax(${lports[0]}, MotorType.kBrushed);
+    leftMaster.restoreFactoryDefaults();
     % if linverted[0]:
     leftMaster.setInverted(true);
     % else:
@@ -81,6 +82,7 @@ public class Robot extends TimedRobot {
     leftMaster.setIdleMode(IdleMode.kBrake);
 
     rightMaster = new CANSparkMax(${rports[0]}, MotorType.kBrushed);
+    rightMaster.restoreFactoryDefaults();
     % if rinverted[0]:
     rightMaster.setInverted(true);
     % else:
@@ -90,6 +92,7 @@ public class Robot extends TimedRobot {
 
     % for port in lports[1:]:
     CANSparkMax leftSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
+    leftSlave${loop.index}.restoreFactoryDefaults();
     % if linverted[loop.index+1]:
     leftSlave${loop.index}.follow(leftMaster, true);
     % else:
@@ -100,6 +103,7 @@ public class Robot extends TimedRobot {
 
     % for port in rports[1:]:
     CANSparkMax rightSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
+    rightSlave${loop.index}.restoreFactoryDefaults();
     % if rinverted[loop.index+1]:
     rightSlave${loop.index}.follow(rightMaster, true);
     % else:
