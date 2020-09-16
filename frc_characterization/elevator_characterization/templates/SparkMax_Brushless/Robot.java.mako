@@ -35,7 +35,7 @@ public class Robot extends TimedRobot {
 
   Joystick stick;
 
-  CANSparkMax elevatorLeader;
+  CANSparkMax elevatorMaster;
   CANEncoder elevatorEncoder;
 
   Supplier<Double> encoderPosition;
@@ -55,15 +55,15 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    elevatorLeader = new CANSparkMax(${ports[0]}, MotorType.kBrushless);
+    elevatorMaster = new CANSparkMax(${ports[0]}, MotorType.kBrushless);
     % if inverted[0]:
-    elevatorLeader.setInverted(true);
+    elevatorMaster.setInverted(true);
     % else:
-    elevatorLeader.setInverted(false);
+    elevatorMaster.setInverted(false);
     % endif
-    elevatorLeader.setIdleMode(IdleMode.kBrake);
+    elevatorMaster.setIdleMode(IdleMode.kBrake);
 
-    elevatorEncoder = elevatorLeader.getEncoder();
+    elevatorEncoder = elevatorMaster.getEncoder();
 
     % for port in ports[1:]:
     CANSparkMax elevatorFollower${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
@@ -73,7 +73,7 @@ public class Robot extends TimedRobot {
     elevatorFollower${loop.index}.setInverted(false);
     % endif
     elevatorFollower${loop.index}.setIdleMode(IdleMode.kBrake);
-    elevatorFollower${loop.index}.follow(elevatorLeader);
+    elevatorFollower${loop.index}.follow(elevatorMaster);
     % endfor
 
     //
@@ -99,7 +99,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    elevatorLeader.set(0);
+    elevatorMaster.set(0);
   }
 
   @Override
@@ -119,7 +119,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    elevatorLeader.set(-stick.getY());
+    elevatorMaster.set(-stick.getY());
   }
 
   @Override
@@ -146,14 +146,14 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double motorVolts = elevatorLeader.getBusVoltage() * elevatorLeader.getAppliedOutput();
+    double motorVolts = elevatorMaster.getBusVoltage() * elevatorMaster.getAppliedOutput();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
 
     // command motors to do things
-    elevatorLeader.set(autospeed);
+    elevatorMaster.set(autospeed);
 
     // send telemetry data array back to NT
     numberArray[0] = now;

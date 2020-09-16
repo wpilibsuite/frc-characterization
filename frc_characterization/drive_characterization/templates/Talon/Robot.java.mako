@@ -43,8 +43,8 @@ public class Robot extends TimedRobot {
   Joystick stick;
   DifferentialDrive drive;
 
-  ${lcontrollers[0]} leftLeader;
-  ${rcontrollers[0]} rightLeader;
+  ${lcontrollers[0]} leftMaster;
+  ${rcontrollers[0]} rightMaster;
 
   Supplier<Double> leftEncoderPosition;
   Supplier<Double> leftEncoderRate;
@@ -68,31 +68,31 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    leftLeader = new ${lcontrollers[0]}(${lports[0]});
+    leftMaster = new ${lcontrollers[0]}(${lports[0]});
     % if linverted[0]:
-    leftLeader.setInverted(true);
+    leftMaster.setInverted(true);
     % else:
-    leftLeader.setInverted(false);
+    leftMaster.setInverted(false);
     % endif
     % if lencoderinv:
-    leftLeader.setSensorPhase(true);
+    leftMaster.setSensorPhase(true);
     % else:
-    leftLeader.setSensorPhase(false);
+    leftMaster.setSensorPhase(false);
     % endif
-    leftLeader.setNeutralMode(NeutralMode.Brake);
+    leftMaster.setNeutralMode(NeutralMode.Brake);
 
-    rightLeader = new ${rcontrollers[0]}(${rports[0]});
+    rightMaster = new ${rcontrollers[0]}(${rports[0]});
     % if rinverted[0]:
-    rightLeader.setInverted(true);
+    rightMaster.setInverted(true);
     % else:
-    rightLeader.setInverted(false);
+    rightMaster.setInverted(false);
     % endif
     % if rencoderinv:
-    rightLeader.setSensorPhase(true);
+    rightMaster.setSensorPhase(true);
     % else:
-    rightLeader.setSensorPhase(false);
+    rightMaster.setSensorPhase(false);
     % endif
-    rightLeader.setNeutralMode(NeutralMode.Brake);
+    rightMaster.setNeutralMode(NeutralMode.Brake);
 
     % for port in lports[1:]:
     ${lcontrollers[loop.index+1]} leftFollower${loop.index} = new ${lcontrollers[loop.index+1]}(${port});
@@ -101,7 +101,7 @@ public class Robot extends TimedRobot {
     % else:
     leftFollower${loop.index}.setInverted(false);
     % endif
-    leftFollower${loop.index}.follow(leftLeader);
+    leftFollower${loop.index}.follow(leftMaster);
     leftFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
     % endfor
 
@@ -112,7 +112,7 @@ public class Robot extends TimedRobot {
     % else:
     rightFollower${loop.index}.setInverted(false);
     % endif
-    rightFollower${loop.index}.follow(rightLeader);
+    rightFollower${loop.index}.follow(rightMaster);
     rightFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
     % endfor
 
@@ -148,7 +148,7 @@ public class Robot extends TimedRobot {
     // Configure drivetrain movement
     //
 
-    drive = new DifferentialDrive(leftLeader, rightLeader);
+    drive = new DifferentialDrive(leftMaster, rightMaster);
 
     drive.setDeadband(0);
 
@@ -160,7 +160,7 @@ public class Robot extends TimedRobot {
     double encoderConstant =
         (1 / ENCODER_EDGES_PER_REV) * WHEEL_DIAMETER * Math.PI;
 
-    leftLeader.configSelectedFeedbackSensor(
+    leftMaster.configSelectedFeedbackSensor(
         % if lcontrollers[0] == "WPI_TalonFX":
         FeedbackDevice.IntegratedSensor,
         % else:
@@ -169,13 +169,13 @@ public class Robot extends TimedRobot {
         PIDIDX, 10
     );
     leftEncoderPosition = ()
-        -> leftLeader.getSelectedSensorPosition(PIDIDX) * encoderConstant;
+        -> leftMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
     leftEncoderRate = ()
-        -> leftLeader.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
+        -> leftMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
                10;
 
     % if rencoderinv is not None:
-    rightLeader.configSelectedFeedbackSensor(
+    rightMaster.configSelectedFeedbackSensor(
         % if lcontrollers[0] == "WPI_TalonFX":
         FeedbackDevice.IntegratedSensor,
         % else:
@@ -184,9 +184,9 @@ public class Robot extends TimedRobot {
         PIDIDX, 10
     );
     rightEncoderPosition = ()
-        -> rightLeader.getSelectedSensorPosition(PIDIDX) * encoderConstant;
+        -> rightMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
     rightEncoderRate = ()
-        -> rightLeader.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
+        -> rightMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
                10;
     % else:
     rightEncoderPosition = leftEncoderPosition;
@@ -194,8 +194,8 @@ public class Robot extends TimedRobot {
     % endif
 
     // Reset encoders
-    leftLeader.setSelectedSensorPosition(0);
-    rightLeader.setSelectedSensorPosition(0);
+    leftMaster.setSelectedSensorPosition(0);
+    rightMaster.setSelectedSensorPosition(0);
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
@@ -257,8 +257,8 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double leftMotorVolts = leftLeader.getMotorOutputVoltage();
-    double rightMotorVolts = rightLeader.getMotorOutputVoltage();
+    double leftMotorVolts = leftMaster.getMotorOutputVoltage();
+    double rightMotorVolts = rightMaster.getMotorOutputVoltage();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);

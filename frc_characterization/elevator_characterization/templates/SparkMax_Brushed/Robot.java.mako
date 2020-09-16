@@ -37,7 +37,7 @@ public class Robot extends TimedRobot {
 
   Joystick stick;
 
-  CANSparkMax elevatorLeader;
+  CANSparkMax elevatorMaster;
 
   Supplier<Double> encoderPosition;
   Supplier<Double> encoderRate;
@@ -56,13 +56,13 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    elevatorLeader = new CANSparkMax(${ports[0]}, MotorType.kBrushed);
+    elevatorMaster = new CANSparkMax(${ports[0]}, MotorType.kBrushed);
     % if inverted[0]:
-    elevatorLeader.setInverted(true);
+    elevatorMaster.setInverted(true);
     % else:
-    elevatorLeader.setInverted(false);
+    elevatorMaster.setInverted(false);
     % endif
-    elevatorLeader.setIdleMode(IdleMode.kBrake);
+    elevatorMaster.setIdleMode(IdleMode.kBrake);
 
     % for port in ports[1:]:
     CANSparkMax elevatorFollower${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
@@ -72,7 +72,7 @@ public class Robot extends TimedRobot {
     elevatorFollower${loop.index}.setInverted(false);
     % endif
     elevatorFollower${loop.index}.setIdleMode(IdleMode.kBrake);
-    elevatorFollower${loop.index}.follow(elevatorLeader);
+    elevatorFollower${loop.index}.follow(elevatorMaster);
     % endfor
 
     //
@@ -82,7 +82,7 @@ public class Robot extends TimedRobot {
 
     double encoderConstant = (1 / GEARING) * PULLEY_DIAMETER * Math.PI;
 
-    CANEncoder encoder = elevatorLeader.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
+    CANEncoder encoder = elevatorMaster.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
 
     % if encoderinv:
     encoder.setInverted(true);
@@ -104,7 +104,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    elevatorLeader.set(0);
+    elevatorMaster.set(0);
   }
 
   @Override
@@ -124,7 +124,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    elevatorLeader.set(-stick.getY());
+    elevatorMaster.set(-stick.getY());
   }
 
   @Override
@@ -151,14 +151,14 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double motorVolts = elevatorLeader.getBusVoltage() * elevatorLeader.getAppliedOutput();
+    double motorVolts = elevatorMaster.getBusVoltage() * elevatorMaster.getAppliedOutput();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
 
     // command motors to do things
-    elevatorLeader.set(autospeed);
+    elevatorMaster.set(autospeed);
 
     // send telemetry data array back to NT
     numberArray[0] = now;

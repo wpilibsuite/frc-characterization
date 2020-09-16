@@ -35,7 +35,7 @@ public class Robot extends TimedRobot {
 
   Joystick stick;
 
-  CANSparkMax armLeader;
+  CANSparkMax armMaster;
 
   CANEncoder armEncoder;
 
@@ -56,15 +56,15 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    armLeader = new CANSparkMax(${ports[0]}, MotorType.kBrushless);
+    armMaster = new CANSparkMax(${ports[0]}, MotorType.kBrushless);
     % if inverted[0]:
-    armLeader.setInverted(true);
+    armMaster.setInverted(true);
     % else:
-    armLeader.setInverted(false);
+    armMaster.setInverted(false);
     % endif
-    armLeader.setIdleMode(IdleMode.kBrake);
+    armMaster.setIdleMode(IdleMode.kBrake);
 
-    armEncoder = armLeader.getEncoder();
+    armEncoder = armMaster.getEncoder();
 
     % for port in ports[1:]:
     CANSparkMax armFollower${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
@@ -74,7 +74,7 @@ public class Robot extends TimedRobot {
     armFollower${loop.index}.setInverted(false);
     % endif
     armFollower${loop.index}.setIdleMode(IdleMode.kBrake);
-    armFollower${loop.index}.follow(armLeader);
+    armFollower${loop.index}.follow(armMaster);
     % endfor
 
     //
@@ -109,7 +109,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    armLeader.set(0);
+    armMaster.set(0);
   }
 
   @Override
@@ -129,7 +129,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    armLeader.set(-stick.getY());
+    armMaster.set(-stick.getY());
   }
 
   @Override
@@ -156,14 +156,14 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double motorVolts = armLeader.getBusVoltage() * armLeader.getAppliedOutput();
+    double motorVolts = armMaster.getBusVoltage() * armMaster.getAppliedOutput();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
 
     // command motors to do things
-    armLeader.set(autospeed);
+    armMaster.set(autospeed);
 
     // send telemetry data array back to NT
     numberArray[0] = now;
