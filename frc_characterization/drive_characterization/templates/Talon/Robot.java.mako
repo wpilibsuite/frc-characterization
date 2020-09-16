@@ -95,25 +95,25 @@ public class Robot extends TimedRobot {
     rightMaster.setNeutralMode(NeutralMode.Brake);
 
     % for port in lports[1:]:
-    ${lcontrollers[loop.index+1]} leftSlave${loop.index} = new ${lcontrollers[loop.index+1]}(${port});
+    ${lcontrollers[loop.index+1]} leftFollower${loop.index} = new ${lcontrollers[loop.index+1]}(${port});
     % if linverted[loop.index+1]:
-    leftSlave${loop.index}.setInverted(true);
+    leftFollower${loop.index}.setInverted(true);
     % else:
-    leftSlave${loop.index}.setInverted(false);
+    leftFollower${loop.index}.setInverted(false);
     % endif
-    leftSlave${loop.index}.follow(leftMaster);
-    leftSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
+    leftFollower${loop.index}.follow(leftMaster);
+    leftFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
     % endfor
 
     % for port in rports[1:]:
-    ${rcontrollers[loop.index+1]} rightSlave${loop.index} = new ${rcontrollers[loop.index+1]}(${port});
+    ${rcontrollers[loop.index+1]} rightFollower${loop.index} = new ${rcontrollers[loop.index+1]}(${port});
     % if rinverted[loop.index+1]:
-    rightSlave${loop.index}.setInverted(true);
+    rightFollower${loop.index}.setInverted(true);
     % else:
-    rightSlave${loop.index}.setInverted(false);
+    rightFollower${loop.index}.setInverted(false);
     % endif
-    rightSlave${loop.index}.follow(rightMaster);
-    rightSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
+    rightFollower${loop.index}.follow(rightMaster);
+    rightFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
     % endfor
 
     //

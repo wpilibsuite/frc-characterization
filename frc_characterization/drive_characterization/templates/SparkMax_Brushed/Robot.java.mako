@@ -89,23 +89,23 @@ public class Robot extends TimedRobot {
     rightMaster.setIdleMode(IdleMode.kBrake);
 
     % for port in lports[1:]:
-    CANSparkMax leftSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
+    CANSparkMax leftFollower${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
     % if linverted[loop.index+1]:
-    leftSlave${loop.index}.follow(leftMaster, true);
+    leftFollower${loop.index}.follow(leftMaster, true);
     % else:
-    leftSlave${loop.index}.follow(leftMaster);
+    leftFollower${loop.index}.follow(leftMaster);
     % endif
-    leftSlave${loop.index}.setIdleMode(IdleMode.kBrake);
+    leftFollower${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
 
     % for port in rports[1:]:
-    CANSparkMax rightSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
+    CANSparkMax rightFollower${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
     % if rinverted[loop.index+1]:
-    rightSlave${loop.index}.follow(rightMaster, true);
+    rightFollower${loop.index}.follow(rightMaster, true);
     % else:
-    rightSlave${loop.index}.follow(rightMaster);
+    rightFollower${loop.index}.follow(rightMaster);
     % endif
-    rightSlave${loop.index}.setIdleMode(IdleMode.kBrake);
+    rightFollower${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
 
     //

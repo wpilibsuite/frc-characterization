@@ -69,14 +69,14 @@ public class Robot extends TimedRobot {
     armMaster.setNeutralMode(NeutralMode.Brake);
 
     % for port in ports[1:]:
-    ${controllers[loop.index+1]} armSlave${loop.index} = new ${controllers[loop.index+1]}(${port});
+    ${controllers[loop.index+1]} armFollower${loop.index} = new ${controllers[loop.index+1]}(${port});
     % if inverted[loop.index+1]:
-    armSlave${loop.index}.setInverted(true);
+    armFollower${loop.index}.setInverted(true);
     % else:
-    armSlave${loop.index}.setInverted(false);
+    armFollower${loop.index}.setInverted(false);
     % endif
-    armSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
-    armSlave${loop.index}.follow(armMaster);
+    armFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
+    armFollower${loop.index}.follow(armMaster);
     % endfor
 
     //

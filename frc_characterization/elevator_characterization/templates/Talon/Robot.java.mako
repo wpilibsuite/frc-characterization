@@ -67,14 +67,14 @@ public class Robot extends TimedRobot {
     elevatorMaster.setNeutralMode(NeutralMode.Brake);
 
     % for port in ports[1:]:
-    ${controllers[loop.index+1]} elevatorSlave${loop.index} = new ${controllers[loop.index+1]}(${port});
+    ${controllers[loop.index+1]} elevatorFollower${loop.index} = new ${controllers[loop.index+1]}(${port});
     % if inverted[loop.index+1]:
-    elevatorSlave${loop.index}.setInverted(true);
+    elevatorFollower${loop.index}.setInverted(true);
     % else:
-    elevatorSlave${loop.index}.setInverted(false);
+    elevatorFollower${loop.index}.setInverted(false);
     % endif
-    elevatorSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
-    elevatorSlave${loop.index}.follow(elevatorMaster);
+    elevatorFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
+    elevatorFollower${loop.index}.follow(elevatorMaster);
     % endfor
 
     //
