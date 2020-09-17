@@ -6,8 +6,8 @@
     "leftMotorPorts": [0, 1],
     # Ports for the right-side motors
     "rightMotorPorts": [2, 3],
-    # Note: Inversions of the slaves (i.e. any motor *after* the first on
-    # each side of the drive) are *with respect to their master*.  This is
+    # Note: Inversions of the followers (i.e. any motor *after* the first on
+    # each side of the drive) are *with respect to their leader*.  This is
     # different from the other project types!
     # Inversions for the left-side motors
     "leftMotorsInverted": [False, False],
