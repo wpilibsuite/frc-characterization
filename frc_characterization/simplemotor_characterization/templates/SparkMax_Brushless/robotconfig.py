@@ -11,7 +11,7 @@
     # The first port is the port for the motor whose encoder will be used
     "motorPorts": [0, 1],
     # Note: Inversions of the slaves (i.e. any motor *after* the first) are
-    # *with respect to their master*. This is different from the other poject types!
+    # *with respect to their master*. This is different from the other project types!
     # Inversions for the flywheel motor(s)
     "motorsInverted": [False, False],
     # The total gear reduction between the motor and the wheels, expressed as
