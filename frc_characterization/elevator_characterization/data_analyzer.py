@@ -570,7 +570,9 @@ def configure_gui(STATE):
     Label(fbFrame, text="Follower Update Period (s):", anchor="e").grid(
         row=10, column=0, sticky="ew"
     )
-    followerPeriodEntry = FloatEntry(fbFrame, textvariable=STATE.follower_period, width=10)
+    followerPeriodEntry = FloatEntry(
+        fbFrame, textvariable=STATE.follower_period, width=10
+    )
     followerPeriodEntry.grid(row=10, column=1)
     followerPeriodEntry.configure(state="disabled")
 
