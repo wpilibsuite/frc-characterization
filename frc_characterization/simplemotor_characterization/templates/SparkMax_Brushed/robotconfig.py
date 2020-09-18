@@ -12,7 +12,7 @@
     # The first port is the one with the encoder attached
     "motorPorts": [0, 1],
     # Note: Inversions of the slaves (i.e. any motor *after* the first) are
-    # *with respect to their master*. This is different from the other poject types!
+    # *with respect to their master*. This is different from the other project types!
     # Inversions for the flywheel motor(s)
     "motorsInverted": [False, False],
     # Encoder edges-per-revolution (*NOT* cycles per revolution!)
