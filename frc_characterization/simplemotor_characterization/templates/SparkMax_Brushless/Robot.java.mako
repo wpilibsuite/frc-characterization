@@ -31,7 +31,7 @@ public class Robot extends TimedRobot {
 
   Joystick stick;
 
-  CANSparkMax master;
+  CANSparkMax leader;
   CANEncoder encoder;
 
   Supplier<Double> encoderPosition;
@@ -51,24 +51,24 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    master = new CANSparkMax(${ports[0]}, MotorType.kBrushless);
+    leader = new CANSparkMax(${ports[0]}, MotorType.kBrushless);
     % if inverted[0]:
-    master.setInverted(true);
+    leader.setInverted(true);
     % else:
-    master.setInverted(false);
+    leader.setInverted(false);
     % endif
-    master.setIdleMode(IdleMode.kBrake);
+    leader.setIdleMode(IdleMode.kBrake);
 
-    encoder = master.getEncoder();
+    encoder = leader.getEncoder();
 
     % for port in ports[1:]:
-    CANSparkMax slave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
+    CANSparkMax follower${loop.index} = new CANSparkMax(${port}, MotorType.kBrushless);
     % if inverted[loop.index+1]:
-    slave${loop.index}.follow(master, true);
+    follower${loop.index}.follow(leader, true);
     % else:
-    slave${loop.index}.follow(master);
+    follower${loop.index}.follow(leader);
     % endif
-    slave${loop.index}.setIdleMode(IdleMode.kBrake);
+    follower${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
 
     //
@@ -100,7 +100,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    master.set(0);
+    leader.set(0);
   }
 
   @Override
@@ -120,7 +120,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    master.set(-stick.getY());
+    leader.set(-stick.getY());
   }
 
   @Override
@@ -147,14 +147,14 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double motorVolts = master.getBusVoltage() * master.getAppliedOutput();
+    double motorVolts = leader.getBusVoltage() * leader.getAppliedOutput();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
 
     // command motors to do things
-    master.set(autospeed);
+    leader.set(autospeed);
 
     // send telemetry data array back to NT
     numberArray[0] = now;

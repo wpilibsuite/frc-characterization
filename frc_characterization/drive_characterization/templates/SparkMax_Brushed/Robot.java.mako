@@ -47,8 +47,8 @@ public class Robot extends TimedRobot {
   Joystick stick;
   DifferentialDrive drive;
 
-  CANSparkMax leftMaster;
-  CANSparkMax rightMaster;
+  CANSparkMax leftLeader;
+  CANSparkMax rightLeader;
 
   Supplier<Double> leftEncoderPosition;
   Supplier<Double> leftEncoderRate;
@@ -72,40 +72,40 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    leftMaster = new CANSparkMax(${lports[0]}, MotorType.kBrushed);
+    leftLeader = new CANSparkMax(${lports[0]}, MotorType.kBrushed);
     % if linverted[0]:
-    leftMaster.setInverted(true);
+    leftLeader.setInverted(true);
     % else:
-    leftMaster.setInverted(false);
+    leftLeader.setInverted(false);
     % endif
-    leftMaster.setIdleMode(IdleMode.kBrake);
+    leftLeader.setIdleMode(IdleMode.kBrake);
 
-    rightMaster = new CANSparkMax(${rports[0]}, MotorType.kBrushed);
+    rightLeader = new CANSparkMax(${rports[0]}, MotorType.kBrushed);
     % if rinverted[0]:
-    rightMaster.setInverted(true);
+    rightLeader.setInverted(true);
     % else:
-    rightMaster.setInverted(false);
+    rightLeader.setInverted(false);
     % endif
-    rightMaster.setIdleMode(IdleMode.kBrake);
+    rightLeader.setIdleMode(IdleMode.kBrake);
 
     % for port in lports[1:]:
-    CANSparkMax leftSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
+    CANSparkMax leftFollower${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
     % if linverted[loop.index+1]:
-    leftSlave${loop.index}.follow(leftMaster, true);
+    leftFollower${loop.index}.follow(leftLeader, true);
     % else:
-    leftSlave${loop.index}.follow(leftMaster);
+    leftFollower${loop.index}.follow(leftLeader);
     % endif
-    leftSlave${loop.index}.setIdleMode(IdleMode.kBrake);
+    leftFollower${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
 
     % for port in rports[1:]:
-    CANSparkMax rightSlave${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
+    CANSparkMax rightFollower${loop.index} = new CANSparkMax(${port}, MotorType.kBrushed);
     % if rinverted[loop.index+1]:
-    rightSlave${loop.index}.follow(rightMaster, true);
+    rightFollower${loop.index}.follow(rightLeader, true);
     % else:
-    rightSlave${loop.index}.follow(rightMaster);
+    rightFollower${loop.index}.follow(rightLeader);
     % endif
-    rightSlave${loop.index}.setIdleMode(IdleMode.kBrake);
+    rightFollower${loop.index}.setIdleMode(IdleMode.kBrake);
     % endfor
 
     //
@@ -140,7 +140,7 @@ public class Robot extends TimedRobot {
     // Configure drivetrain movement
     //
 
-    drive = new DifferentialDrive(leftMaster, rightMaster);
+    drive = new DifferentialDrive(leftLeader, rightLeader);
 
     drive.setDeadband(0);
 
@@ -152,8 +152,8 @@ public class Robot extends TimedRobot {
     double encoderConstant =
         (1 / GEARING) * WHEEL_DIAMETER * Math.PI;
 
-    CANEncoder leftEncoder = leftMaster.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
-    CANEncoder rightEncoder = rightMaster.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
+    CANEncoder leftEncoder = leftLeader.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
+    CANEncoder rightEncoder = rightLeader.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
 
     % if lencoderinv:
     leftEncoder.setInverted(true);
@@ -237,8 +237,8 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double leftMotorVolts = leftMaster.getBusVoltage() * leftMaster.getAppliedOutput();
-    double rightMotorVolts = rightMaster.getBusVoltage() * rightMaster.getAppliedOutput();
+    double leftMotorVolts = leftLeader.getBusVoltage() * leftLeader.getAppliedOutput();
+    double rightMotorVolts = rightLeader.getBusVoltage() * rightLeader.getAppliedOutput();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);

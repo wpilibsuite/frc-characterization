@@ -34,7 +34,7 @@ public class Robot extends TimedRobot {
 
   Joystick stick;
 
-  ${controllers[0]} elevatorMaster;
+  ${controllers[0]} elevatorLeader;
 
   Supplier<Double> encoderPosition;
   Supplier<Double> encoderRate;
@@ -53,28 +53,28 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    elevatorMaster = new ${controllers[0]}(${ports[0]});
+    elevatorLeader = new ${controllers[0]}(${ports[0]});
     % if inverted[0]:
-    elevatorMaster.setInverted(true);
+    elevatorLeader.setInverted(true);
     % else:
-    elevatorMaster.setInverted(false);
+    elevatorLeader.setInverted(false);
     % endif
     % if encoderinv:
-    elevatorMaster.setSensorPhase(true);
+    elevatorLeader.setSensorPhase(true);
     % else:
-    elevatorMaster.setSensorPhase(false);
+    elevatorLeader.setSensorPhase(false);
     % endif
-    elevatorMaster.setNeutralMode(NeutralMode.Brake);
+    elevatorLeader.setNeutralMode(NeutralMode.Brake);
 
     % for port in ports[1:]:
-    ${controllers[loop.index+1]} elevatorSlave${loop.index} = new ${controllers[loop.index+1]}(${port});
+    ${controllers[loop.index+1]} elevatorFollower${loop.index} = new ${controllers[loop.index+1]}(${port});
     % if inverted[loop.index+1]:
-    elevatorSlave${loop.index}.setInverted(true);
+    elevatorFollower${loop.index}.setInverted(true);
     % else:
-    elevatorSlave${loop.index}.setInverted(false);
+    elevatorFollower${loop.index}.setInverted(false);
     % endif
-    elevatorSlave${loop.index}.setNeutralMode(NeutralMode.Brake);
-    elevatorSlave${loop.index}.follow(elevatorMaster);
+    elevatorFollower${loop.index}.setNeutralMode(NeutralMode.Brake);
+    elevatorFollower${loop.index}.follow(elevatorLeader);
     % endfor
 
     //
@@ -85,7 +85,7 @@ public class Robot extends TimedRobot {
     double encoderConstant =
         (1 / ENCODER_EDGES_PER_REV) * PULLEY_DIAMETER * Math.PI;
 
-    elevatorMaster.configSelectedFeedbackSensor(
+    elevatorLeader.configSelectedFeedbackSensor(
         % if controllers[0] == "WPI_TalonFX":
         FeedbackDevice.IntegratedSensor,
         % else:
@@ -94,12 +94,12 @@ public class Robot extends TimedRobot {
         PIDIDX, 10
     );
     encoderPosition = ()
-        -> elevatorMaster.getSelectedSensorPosition(PIDIDX) * encoderConstant;
+        -> elevatorLeader.getSelectedSensorPosition(PIDIDX) * encoderConstant;
     encoderRate =
-        () -> elevatorMaster.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
+        () -> elevatorLeader.getSelectedSensorVelocity(PIDIDX) * encoderConstant * 10;
 
     // Reset encoders
-    elevatorMaster.setSelectedSensorPosition(0);
+    elevatorLeader.setSelectedSensorPosition(0);
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
@@ -109,7 +109,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     System.out.println("Robot disabled");
-    elevatorMaster.set(0);
+    elevatorLeader.set(0);
   }
 
   @Override
@@ -129,7 +129,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    elevatorMaster.set(-stick.getY());
+    elevatorLeader.set(-stick.getY());
   }
 
   @Override
@@ -156,14 +156,14 @@ public class Robot extends TimedRobot {
 
     double battery = RobotController.getBatteryVoltage();
 
-    double motorVolts = elevatorMaster.getMotorOutputVoltage();
+    double motorVolts = elevatorLeader.getMotorOutputVoltage();
 
     // Retrieve the commanded speed from NetworkTables
     double autospeed = autoSpeedEntry.getDouble(0);
     priorAutospeed = autospeed;
 
     // command motors to do things
-    elevatorMaster.set(autospeed);
+    elevatorLeader.set(autospeed);
 
     // send telemetry data array back to NT
     numberArray[0] = now;
