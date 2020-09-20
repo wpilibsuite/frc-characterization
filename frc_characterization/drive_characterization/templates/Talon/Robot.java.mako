@@ -69,6 +69,7 @@ public class Robot extends TimedRobot {
     stick = new Joystick(0);
 
     leftMaster = new ${lcontrollers[0]}(${lports[0]});
+    leftMaster.configFactoryDefault();
     % if linverted[0]:
     leftMaster.setInverted(true);
     % else:
@@ -82,6 +83,7 @@ public class Robot extends TimedRobot {
     leftMaster.setNeutralMode(NeutralMode.Brake);
 
     rightMaster = new ${rcontrollers[0]}(${rports[0]});
+    rightMaster.configFactoryDefault();
     % if rinverted[0]:
     rightMaster.setInverted(true);
     % else:
@@ -96,6 +98,7 @@ public class Robot extends TimedRobot {
 
     % for port in lports[1:]:
     ${lcontrollers[loop.index+1]} leftSlave${loop.index} = new ${lcontrollers[loop.index+1]}(${port});
+    leftSlave${loop.index}.configFactoryDefault();
     % if linverted[loop.index+1]:
     leftSlave${loop.index}.setInverted(true);
     % else:
@@ -107,6 +110,7 @@ public class Robot extends TimedRobot {
 
     % for port in rports[1:]:
     ${rcontrollers[loop.index+1]} rightSlave${loop.index} = new ${rcontrollers[loop.index+1]}(${port});
+    rightSlave${loop.index}.configFactoryDefault();
     % if rinverted[loop.index+1]:
     rightSlave${loop.index}.setInverted(true);
     % else:

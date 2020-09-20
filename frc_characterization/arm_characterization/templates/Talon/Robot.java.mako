@@ -56,6 +56,7 @@ public class Robot extends TimedRobot {
     stick = new Joystick(0);
 
     armMaster = new ${controllers[0]}(${ports[0]});
+    armMaster.configFactoryDefault();
     % if inverted[0]:
     armMaster.setInverted(true);
     % else:
@@ -70,6 +71,7 @@ public class Robot extends TimedRobot {
 
     % for port in ports[1:]:
     ${controllers[loop.index+1]} armSlave${loop.index} = new ${controllers[loop.index+1]}(${port});
+    armSlave${loop.index}.configFactoryDefault();
     % if inverted[loop.index+1]:
     armSlave${loop.index}.setInverted(true);
     % else:
