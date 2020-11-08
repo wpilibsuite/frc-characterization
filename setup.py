@@ -10,16 +10,7 @@ version_file = join(setup_dir, "version.py")
 if exists(git_dir):
     # See https://www.python.org/dev/peps/pep-0440/#pre-releases for tag format
     version = (
-        subprocess.check_output(
-            [
-                "git",
-                "for-each-ref",
-                "refs/tags",
-                "--sort=-taggerdate",
-                "--format=%(refname:short)",
-                "--count=1",
-            ]
-        )
+        subprocess.check_output(["git", "describe", "--tags", "--abbrev=0"])
         .decode()
         .rstrip()
     )
