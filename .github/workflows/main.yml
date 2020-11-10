@@ -28,4 +28,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@v1.4.1
         with:
           password: ${{ secrets.PYPI_PASSWORD }}
-        if: ${{ github.repository_owner == 'wpilibsuite' && startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ github.repository_owner == 'wpilibsuite' && startsWith(github.ref, 'refs/tags') }}

@@ -1,6 +1,6 @@
+from distutils.version import StrictVersion
 import setuptools
-import sys, subprocess
-from datetime import date
+import subprocess
 from os.path import dirname, exists, join
 
 setup_dir = dirname(__file__)
@@ -9,27 +9,17 @@ version_file = join(setup_dir, "version.py")
 
 # Automatically generate a version.py based on the git version
 if exists(git_dir):
-    proc = subprocess.run(
-        [
-            "git",
-            "rev-list",
-            "--count",
-            # Includes previous year's commits in case one was merged after the
-            # year incremented. Otherwise, the version wouldn't increment.
-            '--after="master@{' + str(date.today().year - 1) + '-01-01}"',
-            "HEAD",
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+    # See https://www.python.org/dev/peps/pep-0440/#pre-releases for the version
+    # number format the tag should follow. If there's no tag, "git describe"
+    # will fail with exit status 128.
+    version = (
+        subprocess.check_output(["git", "describe", "--tags", "--abbrev=0"])
+        .decode()
+        .rstrip()
     )
-    # If there is no master branch, the commit count defaults to 0
-    if proc.returncode:
-        commit_count = "0"
-    else:
-        commit_count = proc.stdout.decode("utf-8")
 
-    # Version number: <year>.<# commits on master>
-    version = str(date.today().year) + "." + commit_count.strip()
+    # Verify tag follows version number format
+    StrictVersion(version)
 
     # Create the version.py file
     with open(version_file, "w") as fp:
