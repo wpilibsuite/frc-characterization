@@ -1,3 +1,4 @@
+from distutils.version import StrictVersion
 import setuptools
 import subprocess
 from os.path import dirname, exists, join
@@ -8,12 +9,17 @@ version_file = join(setup_dir, "version.py")
 
 # Automatically generate a version.py based on the git version
 if exists(git_dir):
-    # See https://www.python.org/dev/peps/pep-0440/#pre-releases for tag format
+    # See https://www.python.org/dev/peps/pep-0440/#pre-releases for the version
+    # number format the tag should follow. If there's no tag, "git describe"
+    # will fail with exit status 128.
     version = (
         subprocess.check_output(["git", "describe", "--tags", "--abbrev=0"])
         .decode()
         .rstrip()
     )
+
+    # Verify tag follows version number format
+    StrictVersion(version)
 
     # Create the version.py file
     with open(version_file, "w") as fp:
