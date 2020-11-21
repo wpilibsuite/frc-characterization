@@ -64,6 +64,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
+        "numpy==1.19.3;platform_system=='Windows'",
         "control",
         "frccontrol",
         "matplotlib",
