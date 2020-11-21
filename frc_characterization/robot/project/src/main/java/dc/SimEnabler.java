@@ -1,6 +1,6 @@
 package dc;
 
-import edu.wpi.first.hal.sim.DriverStationSim;
+import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Sendable;
 import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
