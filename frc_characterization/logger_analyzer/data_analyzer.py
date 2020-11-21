@@ -587,8 +587,6 @@ class Analyzer:
             "Backward Left",
             "Backward Right",
             "Backward Combined",
-            "Left Combined",
-            "Right Combined",
         }
         directions = {"Combined", "Forward", "Backward"}
         dirMenu = OptionMenu(topFrame, self.subset, *sorted(directions))
@@ -996,7 +994,7 @@ class Analyzer:
                 return False
         return True
 
-    def prepare_dataDrive(self, data, window):
+    def prepare_data_drivetrain(self, data, window):
         """
         Firstly, data should be 'trimmed' to exclude any data points at which the
         robot was not being commanded to do anything.
@@ -1086,9 +1084,9 @@ class Analyzer:
                 np.concatenate((sb_l, sb_r), axis=1),
                 np.concatenate((fb_l, fb_r), axis=1),
             ],
-            "Combined": [
+            "All Combined": [
                 np.concatenate((sf_l, sb_l, sf_r, sb_r), axis=1),
-                np.concatentate((ff_l, fb_l, ff_r, ff_r), axis=1),
+                np.concatenate((ff_l, fb_l, ff_r, ff_r), axis=1),
             ],
             "Valid": self.is_valid(sf_l, sb_l, ff_l, fb_l, sf_r, sb_r, ff_r, fb_r),
         }
@@ -1131,7 +1129,7 @@ class Analyzer:
 
         test = Tests(self.test.get())
         if test == Tests.DRIVETRAIN:
-            return self.prepare_dataDrive(data, window)
+            return self.prepare_data_drivetrain(data, window)
         else:
             # Ensure voltage points in same direction as velocity
             for x in JSON_DATA_KEYS:
