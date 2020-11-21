@@ -320,23 +320,23 @@ public class Robot extends TimedRobot {
     leaderMotor = new SpeedControllerGroup(leftMotor, leftMotorControllers);
       % endif
     % endif
+
     //
     // Configure gyro
     //
 
-    % if gyroType:
-      // Note that the angle from the NavX and all implementors of wpilib Gyro
-      // must be negated because getAngle returns a clockwise positive angle
-      % if gyroType == "ADXRS450":
+    // Note that the angle from the NavX and all implementors of WPILib Gyro
+    // must be negated because getAngle returns a clockwise positive angle
+    % if gyroType == "ADXRS450":
     Gyro gyro = new ADXRS450_Gyro(${gyroPort});
     gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
-      % elif gyroType == "AnalogGyro":
+    % elif gyroType == "AnalogGyro":
     Gyro gyro = new AnalogGyro(${gyroPort});
     gyroAngleRadians = () -> -1 * Math.toRadians(gyro.getAngle());
-      % elif gyroType == "NavX":
+    % elif gyroType == "NavX":
     AHRS navx = new AHRS(${gyroPort});
     gyroAngleRadians = () -> -1 * Math.toRadians(navx.getAngle());
-      % elif gyroType == "Pigeon":
+    % elif gyroType == "Pigeon":
     // Uncomment for Pigeon
     PigeonIMU pigeon = new PigeonIMU(${gyroPort});
     gyroAngleRadians = () -> {
@@ -345,10 +345,10 @@ public class Robot extends TimedRobot {
       pigeon.getAccumGyro(xyz);
       return Math.toRadians(xyz[2]);
     };
-      % else:
+    % else:
     gyroAngleRadians = () -> 0.0;
-      % endif
     % endif
+
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
     NetworkTableInstance.getDefault().setUpdateRate(0.010);
