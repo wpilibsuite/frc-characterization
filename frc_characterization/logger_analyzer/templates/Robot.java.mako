@@ -31,6 +31,7 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.CANEncoder;
 import com.revrobotics.EncoderType;
+import com.revrobotics.AlternateEncoderType;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -53,7 +54,7 @@ import java.util.ArrayList;
 
 public class Robot extends TimedRobot {
 
-  % if "SparkMax" in controlType:
+  % if controlType == "SparkMax":
   static private int ENCODER_EDGES_PER_REV = ${encoderEPR} / 4;
   % else:
   static private double ENCODER_EDGES_PER_REV = ${encoderEPR} / 4.;
@@ -62,7 +63,7 @@ public class Robot extends TimedRobot {
   static private int ENCODER_EPR = ${encoderEPR};
   static private double GEARING = ${gearing};
   
-  % if "SparkMax" in controlType:
+  % if controlType == "SparkMax":
   private double encoderConstant = (1 / GEARING);
   % else:
   private double encoderConstant = (1 / GEARING) * (1 / ENCODER_EDGES_PER_REV);
@@ -108,21 +109,19 @@ public class Robot extends TimedRobot {
     FOLLOWER
   }
 
-  // TODO add a method to invert encoders for motor:
-
   // methods to create and setup motors (reduce redundancy)
   % for motor in list(dict.fromkeys(controllerTypes + rightControllerTypes)):
   public ${motor} setup${motor}(int port, Sides side, boolean inverted) {
     // create new motor and set neutral modes (if needed)
-    % if "SparkMax" not in controlType:
+    % if controlType != "SparkMax":
     ${motor} motor = new ${motor}(port);
-        % if controlType == "Talon":
+        % if controlType == "CTRE":
     // setup talon
     motor.configFactoryDefault();
     motor.setNeutralMode(NeutralMode.Brake);
         % endif    
     % else:
-          % if "Brushed" in controlType:
+          % if brushed:
     // setup Brushed spark
     CANSparkMax motor = new CANSparkMax(port, MotorType.kBrushed);
           % else:
@@ -136,9 +135,12 @@ public class Robot extends TimedRobot {
     
     // setup encoder if motor isn't a follower
     if (side != Sides.FOLLOWER) {
-    % if "SparkMax" not in controlType:
-        
-      % if controlType == "Talon":
+    
+    % if encoderPorts or controlType == "Simple":
+      Encoder encoder;
+    % else:
+      
+      % if controlType == "CTRE":
       motor.configSelectedFeedbackSensor(
           % if controllerTypes[0] == "WPI_TalonFX":
             FeedbackDevice.IntegratedSensor,
@@ -146,17 +148,17 @@ public class Robot extends TimedRobot {
             FeedbackDevice.QuadEncoder,
           % endif
             PIDIDX, 10
-      );
+      );    
       % else:
-      
-      Encoder encoder;
-      % endif
-            
-    % else:
-      % if useIntegrated and "Brushless" in controlType:
-    CANEncoder encoder = motor.getEncoder();
-      % else:
-    CANEncoder encoder = motor.getEncoder(EncoderType.kQuadrature, ENCODER_EDGES_PER_REV);
+        % if not useDataPort:
+          % if not brushed:
+      CANEncoder encoder = motor.getEncoder();
+          % else:
+      CANEncoder encoder = motor.getEncoder(EncoderType.kQuadrature, ENCODER_EDGES_PER_REV);
+          % endif
+        % else:
+      CANEncoder encoder = motor.getAlternateEncoder(AlternateEncoderType.kQuadrature, ENCODER_EDGES_PER_REV);
+        % endif
       % endif
     % endif
 
@@ -169,14 +171,17 @@ public class Robot extends TimedRobot {
       case RIGHT:
         // set right side methods = encoder methods
 
-        % if "SparkMax" not in controlType:
+        % if encoderPorts or controlType == "Simple":
+        encoder = new Encoder(${rightEncoderPorts[0]}, ${rightEncoderPorts[1]});
+        encoder.setReverseDirection(${str(rightEncoderInverted).lower()});
 
-          % if controlType == "Talon":
+        encoder.setDistancePerPulse(encoderConstant);
+        rightEncoderPosition = encoder::getDistance;
+        rightEncoderRate = encoder::getRate;
+        % else:
+          % if controlType == "CTRE":
           
         motor.setSensorPhase(${str(rightEncoderInverted).lower()});
-          
-          
-        
         rightEncoderPosition = ()
           -> motor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
         rightEncoderRate = ()
@@ -184,32 +189,29 @@ public class Robot extends TimedRobot {
                10;
 
           % else:
-        
-        encoder = new Encoder(${rightEncoderPorts[0]}, ${rightEncoderPorts[1]});
-        encoder.setReverseDirection(${str(rightEncoderInverted).lower()});
 
-        encoder.setDistancePerPulse(encoderConstant);
-        rightEncoderPosition = encoder::getDistance;
-        rightEncoderRate = encoder::getRate;
-
-          % endif
-        % else:
-          % if "Brushless" in controlType and not useIntegrated:
+            % if brushed or useDataPort:
         encoder.setInverted(${str(rightEncoderInverted).lower()});
-          % endif
+            % endif
         rightEncoderPosition = ()
           -> encoder.getPosition() * encoderConstant;
         rightEncoderRate = ()
           -> encoder.getVelocity() * encoderConstant / 60.;
-
+          % endif
         % endif
 
         break;
       % endif
       case LEFT:
-         % if "SparkMax" not in controlType:
+        % if encoderPorts or controlType == "Simple":
+        encoder = new Encoder(${encoderPorts[0]}, ${encoderPorts[1]});
+        encoder.setReverseDirection(${str(encoderInverted).lower()});
+        encoder.setDistancePerPulse(encoderConstant);
+        leftEncoderPosition = encoder::getDistance;
+        leftEncoderRate = encoder::getRate;
 
-          % if controlType == "Talon":
+        % else:
+          % if controlType == "CTRE":
         motor.setSensorPhase(${str(encoderInverted).lower()});
         
         leftEncoderPosition = ()
@@ -217,24 +219,16 @@ public class Robot extends TimedRobot {
         leftEncoderRate = ()
           -> motor.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
                10;
-
+        
           % else:
-        encoder = new Encoder(${encoderPorts[0]}, ${encoderPorts[1]});
-        encoder.setReverseDirection(${str(encoderInverted).lower()});
-        encoder.setDistancePerPulse(encoderConstant);
-        leftEncoderPosition = encoder::getDistance;
-        leftEncoderRate = encoder::getRate;
-
-          % endif
-        % else:
-          % if "Brushless" in controlType and not useIntegrated:
+            % if brushed or useDataPort:
         encoder.setInverted(${str(encoderInverted).lower()});
-          % endif
+            % endif
         leftEncoderPosition = ()
           -> encoder.getPosition() * encoderConstant;
         leftEncoderRate = ()
           -> encoder.getVelocity() * encoderConstant / 60.;
-
+          % endif
         % endif
 
         break;
@@ -263,11 +257,14 @@ public class Robot extends TimedRobot {
 
     % if controlType != "Simple":
       % for port in motorPorts[1:]: # add followers if there are any
+        % if controlType != "SparkMax":
     ${controllerTypes[loop.index + 1]} leftFollowerID${port} = setup${controllerTypes[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(motorsInverted[loop.index + 1]).lower()});
-        % if "SparkMax" in controlType:
-    leftFollowerID${port}.follow(leftMotor, ${str(motorsInverted[loop.index + 1]).lower()});
-        % else: 
     leftFollowerID${port}.follow(leftMotor);
+        % else:
+    CANSparkMax leftFollowerID${port} = setupCANSparkMax(${port}, Sides.FOLLOWER, ${str(motorsInverted[loop.index + 1]).lower()});
+    leftFollowerID${port}.follow(leftMotor, ${str(motorsInverted[loop.index + 1]).lower()});
+        
+    
         % endif
       % endfor
     % else:
@@ -288,19 +285,20 @@ public class Robot extends TimedRobot {
     ${rightControllerTypes[0]} rightMotor = setup${rightControllerTypes[0]}(${rightMotorPorts[0]}, Sides.RIGHT, ${str(rightMotorsInverted[0]).lower()});
       % if controlType != "Simple":
         % for port in rightMotorPorts[1:]:
-    ${rightControllerTypes[loop.index + 1]} rightFollowerID${port} = setup${rightControllerTypes[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(rightMotorsInverted[loop.index + 1]).lower()});
-          % if "SparkMax" in controlType:
-    rightFollowerID${port}.follow(rightMotor, ${str(rightMotorsInverted[loop.index + 1]).lower()});
-          % else:      
+          % if controlType != "SparkMax":
+    ${rightControllerTypes[loop.index + 1]} rightFollowerID${port} = setup${rightControllerTypes[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(rightMotorsInverted[loop.index + 1]).lower()});    
     rightFollowerID${port}.follow(rightMotor);
+          % else:      
+    CANSparkMax rightFollowerID${port} = setupCANSparkMax(${port}, Sides.FOLLOWER, ${str(rightMotorsInverted[loop.index + 1]).lower()});
+    rightFollowerID${port}.follow(rightMotor, ${str(rightMotorsInverted[loop.index + 1]).lower()});
           % endif  
         % endfor
     drive = new DifferentialDrive(leftMotor, rightMotor);
       % else:
-        % if rightMotorPorts:
+        % if len(rightMotorPorts) > 1:
     ArrayList<SpeedController> rightMotors = new ArrayList<SpeedController>();
           % for port in rightMotorPorts[1:]:
-    rightMotors.add(setup${rightcontrollerTypes[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(rightMotorsInverted[loop.index + 1]).lower()}));
+    rightMotors.add(setup${rightControllerTypes[loop.index + 1]}(${port}, Sides.FOLLOWER, ${str(rightMotorsInverted[loop.index + 1]).lower()}));
           % endfor
     SpeedController[] rightMotorControllers = new SpeedController[rightMotors.size()];
     rightMotorControllers = rightMotors.toArray(rightMotorControllers);
@@ -317,7 +315,7 @@ public class Robot extends TimedRobot {
       % if controlType != "Simple":
     leaderMotor = leftMotor;
       % else:
-    leaderMotor = new SpeedControllerGroup(leftMotor, leftMotorControllers);
+    leaderMotor = leftGroup;
       % endif
     % endif
 
