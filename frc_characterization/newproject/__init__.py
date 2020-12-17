@@ -12,6 +12,8 @@ import importlib.resources as resources
 import os
 import shutil
 import tkinter
+import threading
+import time
 import glob
 from datetime import datetime
 from enum import Enum
@@ -22,6 +24,7 @@ from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
 import logging
 import math
+import queue
 
 import frc_characterization
 from frc_characterization.utils import IntEntry, TextExtension, FloatEntry
@@ -181,7 +184,7 @@ class NewProjectGUI:
                 )
                 shutil.rmtree(dst)
 
-        def deployProject():
+        def deployProject(queue):
             if self.team_number.get() == 0:
                 cmd = "simulatejava"
             else:
@@ -193,10 +196,11 @@ class NewProjectGUI:
                 )
 
                 if len(possible_jdk_paths) <= 0:
-                    messagebox.showwarning(
-                        "Warning!",
-                        "You do not appear to have any wpilib JDK installed. "
-                        + "If your system JDK is the wrong version then the deploy will fail.",
+                    queue.put(
+                        (
+                            "Warning!",
+                            "You not appear to have any wpilib JDK installed. If your system JDK is the wrong version then the deploy will fail.",
+                        )
                     )
                     return
 
@@ -207,9 +211,11 @@ class NewProjectGUI:
                 )
 
                 if int(year) != datetime.now().year:
-                    messagebox.showwarning(
-                        "Warning!",
-                        f"Your latest wpilib JDK's year ({year}) doesn't match the current year ({datetime.now().year}). Your deploy may fail.",
+                    queue.put(
+                        (
+                            "Warning!",
+                            f"Your latest wpilib JDK's year ({year}) doesn't match the current year ({datetime.now().year}). Your deploy may fail.",
+                        )
                     )
 
             if os.name == "nt":
@@ -242,9 +248,11 @@ class NewProjectGUI:
                         ),
                     )
                 except Exception as e:
-                    messagebox.showerror(
-                        "Error!",
-                        "Could not call gradlew deploy.\n" + "Details:\n" + repr(e),
+                    queue.put(
+                        (
+                            "Error!",
+                            "Could not call gradlew deploy.\n" + "Details:\n" + repr(e),
+                        )
                     )
                     return
             else:
@@ -271,14 +279,70 @@ class NewProjectGUI:
                         ),
                     )
                 except Exception as e:
-                    messagebox.showerror(
-                        "Error!",
-                        "Could not call gradlew deploy.\n" + "Details:\n" + repr(e),
+                    queue.put(
+                        (
+                            "Error!",
+                            "Could not call gradlew deploy.\n" + "Details:\n" + repr(e),
+                        )
                     )
                     return
 
-            window = stdoutWindow()
-            self.mainGUI.after(10, lambda: updateStdout(process, window))
+            while process.poll() is None:
+                time.sleep(0.1)
+                queue.put(("Console", process.stdout.readline()))
+
+            if process.poll() != 0:
+                queue.put(
+                    (
+                        "Error!",
+                        "Deployment failed!\n" + "Check the console for more details.",
+                    )
+                )
+
+            # finish adding any outputs
+            out = process.stdout.readline()
+            while out:
+                queue.put(("Console", out))
+                out = process.stdout.readline()
+
+        def processError(message):
+            if "Warning!" == message[0]:
+                messagebox.showwarning(
+                    message[0], message[1], parent=self.deploy_window
+                )
+            else:
+                messagebox.showerror(message[0], message[1], parent=self.deploy_window)
+
+        def threadedDeploy():
+            logger.info("Starting Deploy")
+            self.queue = queue.Queue()
+            self.deploy_window = stdoutWindow()
+
+            ThreadedTask(self.queue).start()
+            self.mainGUI.after(10, processQueue)
+
+        def processQueue():
+            try:
+                msg = self.queue.get_nowait()
+                if msg != "Task Finished":
+                    if msg[0] != "Console":
+                        processError(msg)
+                    else:
+                        updateStdout(msg[1])
+
+                    self.mainGUI.after(10, processQueue)
+            except queue.Empty:
+                self.mainGUI.after(10, processQueue)
+
+        class ThreadedTask(threading.Thread):
+            def __init__(self, queue):
+                threading.Thread.__init__(self)
+                self.queue = queue
+
+            def run(self):
+                deployProject(self.queue)
+                self.queue.put("Task Finished")
+                logger.info("Finished Deploy")
 
         class stdoutWindow(tkinter.Toplevel):
             def __init__(self, *args, **kwargs):
@@ -288,20 +352,10 @@ class NewProjectGUI:
                 self.stdoutText = ScrolledText(self, width=60, height=15)
                 self.stdoutText.grid(row=0, column=0)
 
-        def updateStdout(process, window):
-            if window.winfo_exists():
-                out = process.stdout.readline()
+        def updateStdout(out):
+            if self.deploy_window.winfo_exists():
                 if out != "":
-                    window.stdoutText.insert(END, out)
-
-                if process.poll() is None:
-                    self.mainGUI.after(10, lambda: updateStdout(process, window))
-                elif process.poll() != 0:
-                    messagebox.showerror(
-                        "Error!",
-                        "Deployment failed!\n" + "Check the console for more details.",
-                        parent=window,
-                    )
+                    self.deploy_window.stdoutText.insert(END, out)
 
         def runLogger():
             mech.data_logger.main(
@@ -420,7 +474,7 @@ class NewProjectGUI:
         genProjButton = Button(bodyFrame, text="Generate Project", command=genProject)
         genProjButton.grid(row=1, column=0, sticky="ew")
 
-        deployButton = Button(bodyFrame, text="Deploy Project", command=deployProject)
+        deployButton = Button(bodyFrame, text="Deploy Project", command=threadedDeploy)
         deployButton.grid(row=2, column=0, sticky="ew")
 
         loggerButton = Button(bodyFrame, text="Launch Data Logger", command=runLogger)
