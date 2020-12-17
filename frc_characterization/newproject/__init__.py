@@ -86,6 +86,9 @@ class NewProjectGUI:
         self.units_per_rot = DoubleVar(self.mainGUI)
         self.units_per_rot.set(1)
 
+        self.control_type = StringVar(self.mainGUI)
+        self.control_type.set("Simple")
+
     def configureGUI(self):
         mech = frc_characterization.logger_analyzer
 
@@ -126,8 +129,13 @@ class NewProjectGUI:
             )
             configEntry.configure(state="readonly")
 
-        def getDefaultConfig():
-            with open(os.path.join(templatePath, "robotconfig.py"), "r") as config:
+        def getDefaultConfig(*args):
+            with open(
+                os.path.join(
+                    templatePath, f"configs/{self.control_type.get().lower()}config.py"
+                ),
+                "r",
+            ) as config:
                 self.config.set(config.read())
 
         def readConfig():
@@ -139,6 +147,12 @@ class NewProjectGUI:
                 return
 
         def genProject():
+            config = ast.literal_eval(self.config.get())
+            config["controlType"] = self.control_type.get()
+            if self.control_type.get() == "SparkMax":
+                config["controllerTypes"] = ["CANSparkMax"]
+                config["rightControllerTypes"] = ["CANSparkMax"]
+            logger.info(f"Config: {config}")
             dst = os.path.join(self.project_path.get(), "characterization-project")
             try:
                 with resources.path(res, "project") as path:
@@ -147,11 +161,7 @@ class NewProjectGUI:
                         os.path.join(dst, "src", "main", "java", "dc", "Robot.java"),
                         "w+",
                     ) as robot:
-                        robot.write(
-                            mech.gen_robot_code(
-                                ast.literal_eval(self.config.get()),
-                            )
-                        )
+                        robot.write(mech.gen_robot_code(config))
                     with open(os.path.join(dst, "build.gradle"), "w+") as build:
                         build.write(
                             mech.gen_build_gradle(
@@ -441,6 +451,17 @@ class NewProjectGUI:
         unitsRotationEntry = FloatEntry(topFrame, textvariable=self.units_per_rot)
         unitsRotationEntry.grid(row=2, column=5, sticky="ew")
         unitsRotationEntry.configure(state="readonly")
+
+        Label(topFrame, text="Control Type:", anchor="e").grid(
+            row=2, column=11, sticky="ew"
+        )
+
+        controlMenu = OptionMenu(
+            topFrame, self.control_type, *["Simple", "CTRE", "SparkMax"]
+        )
+        controlMenu.configure(width=25)
+        controlMenu.grid(row=2, column=12, sticky="ew")
+        self.control_type.trace_add("write", getDefaultConfig)
 
         for child in topFrame.winfo_children():
             child.grid_configure(padx=1, pady=1)
