@@ -48,6 +48,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import java.util.ArrayList; 
@@ -101,6 +102,7 @@ public class Robot extends TimedRobot {
   ArrayList<Double> entries = new ArrayList<Double>();
   public Robot() {
     super(.005);
+    LiveWindow.disableAllTelemetry();
   }
 
   public enum Sides {
