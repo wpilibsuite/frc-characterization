@@ -116,6 +116,12 @@ class NewProjectGUI:
             with open(self.config_path.get(), "w+") as config:
                 config.write(self.config.get())
 
+        def updateTemplatePath(*args):
+            nonlocal templatePath
+            with resources.path(mech, "templates") as path:
+                templatePath = path
+            getDefaultConfig()
+
         def updateConfigPath(*args):
             configEntry.configure(state="normal")
             self.config_path.set(
@@ -124,9 +130,11 @@ class NewProjectGUI:
             configEntry.configure(state="readonly")
 
         def getDefaultConfig(*args):
-            with resources.open_text(
-                "frc_characterization.logger_analyzer.templates.configs",
-                f"{self.control_type.get().lower()}config.py",
+            with open(
+                os.path.join(
+                    templatePath, f"configs/{self.control_type.get().lower()}config.py"
+                ),
+                "r",
             ) as config:
                 self.config.set(config.read())
 
@@ -376,6 +384,9 @@ class NewProjectGUI:
 
         def isRotation(units):
             return Units(units) in (Units.ROTATIONS, Units.RADIANS, Units.DEGREES)
+
+        templatePath = None
+        updateTemplatePath()
 
         getDefaultConfig()
 
