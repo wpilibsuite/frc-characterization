@@ -8,15 +8,17 @@
 # individual project packages all have the same structure.
 
 import ast
-import importlib.resources as resources
 import os
+import pathlib
 import shutil
 import tkinter
 import threading
 import time
 import glob
+import zipfile
 from datetime import datetime
 from enum import Enum
+from importlib import import_module
 from subprocess import PIPE, Popen, STDOUT
 from tkinter import *
 from tkinter import messagebox
@@ -116,6 +118,29 @@ class NewProjectGUI:
             with open(self.config_path.get(), "w+") as config:
                 config.write(self.config.get())
 
+        # TODO: Replace with Python 3.9's resources.files() when it becomes min version
+        def files(package):
+            if hasattr(package, "__spec__"):
+                spec = package.__spec__
+            else:
+                spec = import_module(package).__spec__
+            if spec.submodule_search_locations is None:
+                raise TypeError("{!r} is not a package".format(package))
+
+            package_directory = pathlib.Path(spec.origin).parent
+            try:
+                archive_path = spec.loader.archive
+                rel_path = package_directory.relative_to(archive_path)
+                return zipfile.Path(archive_path, str(rel_path) + "/")
+            except Exception:
+                pass
+            return package_directory
+
+        def updateTemplatePath(*args):
+            nonlocal templatePath
+            templatePath = files(mech).joinpath("templates")
+            getDefaultConfig()
+
         def updateConfigPath(*args):
             configEntry.configure(state="normal")
             self.config_path.set(
@@ -124,9 +149,11 @@ class NewProjectGUI:
             configEntry.configure(state="readonly")
 
         def getDefaultConfig(*args):
-            with resources.open_text(
-                "frc_characterization.logger_analyzer.templates.configs",
-                f"{self.control_type.get().lower()}config.py",
+            with open(
+                os.path.join(
+                    templatePath, f"configs/{self.control_type.get().lower()}config.py"
+                ),
+                "r",
             ) as config:
                 self.config.set(config.read())
 
@@ -147,19 +174,19 @@ class NewProjectGUI:
             logger.info(f"Config: {config}")
             dst = os.path.join(self.project_path.get(), "characterization-project")
             try:
-                with resources.path(res, "project") as path:
-                    shutil.copytree(src=path, dst=dst)
-                    with open(
-                        os.path.join(dst, "src", "main", "java", "dc", "Robot.java"),
-                        "w+",
-                    ) as robot:
-                        robot.write(mech.gen_robot_code(config))
-                    with open(os.path.join(dst, "build.gradle"), "w+") as build:
-                        build.write(
-                            mech.gen_build_gradle(
-                                self.team_number.get(),
-                            )
+                path = files(res).joinpath("project")
+                shutil.copytree(src=path, dst=dst)
+                with open(
+                    os.path.join(dst, "src", "main", "java", "dc", "Robot.java"),
+                    "w+",
+                ) as robot:
+                    robot.write(mech.gen_robot_code(config))
+                with open(os.path.join(dst, "build.gradle"), "w+") as build:
+                    build.write(
+                        mech.gen_build_gradle(
+                            self.team_number.get(),
                         )
+                    )
             except FileExistsError:
                 if messagebox.askyesno(
                     "Warning!",
@@ -376,6 +403,9 @@ class NewProjectGUI:
 
         def isRotation(units):
             return Units(units) in (Units.ROTATIONS, Units.RADIANS, Units.DEGREES)
+
+        templatePath = None
+        updateTemplatePath()
 
         getDefaultConfig()
 
