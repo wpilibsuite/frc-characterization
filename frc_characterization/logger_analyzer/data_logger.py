@@ -259,10 +259,10 @@ class TestRunner:
                 time.sleep(0.1)
 
             if not self.data:
-                logger.info("could not recieve data")
+                logger.info("could not receive data")
                 self.STATE.postTask(
                     lambda: messagebox.showerror(
-                        "Timed out while trying to recieve NT data",
+                        "Timed out while trying to receive NT data",
                         "Maybe try running the test again?",
                         parent=self.STATE.mainGUI,
                     )
