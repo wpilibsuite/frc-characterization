@@ -304,7 +304,7 @@ class TestRunner:
                         + "\n"
                         + "Right: %.3f %s" % (right_distance, self.STATE.units.get())
                         + "\n"
-                        + "If that seems wrong, you should change the encoder calibration"
+                        + "If that seems wrong, you should change the encoder calibration "
                         + "in the robot program or fix your encoders!",
                         parent=self.STATE.mainGUI,
                     )
