@@ -56,9 +56,9 @@ import java.util.ArrayList;
 public class Robot extends TimedRobot {
 
   % if controlType == "SparkMax":
-  static private int ENCODER_EDGES_PER_REV = ${encoderEPR} / 4;
+  static private int ENCODER_COUNTS_PER_REV = ${encoderEPR} / 4;
   % else:
-  static private double ENCODER_EDGES_PER_REV = ${encoderEPR} / 4.;
+  static private double ENCODER_COUNTS_PER_REV = ${encoderEPR} / 4.;
   % endif
   static private int PIDIDX = 0;
   static private int ENCODER_EPR = ${encoderEPR};
@@ -67,7 +67,7 @@ public class Robot extends TimedRobot {
   % if controlType == "SparkMax":
   private double encoderConstant = (1 / GEARING);
   % else:
-  private double encoderConstant = (1 / GEARING) * (1 / ENCODER_EDGES_PER_REV);
+  private double encoderConstant = (1 / GEARING) * (1 / ENCODER_COUNTS_PER_REV);
   % endif
 
   Joystick stick;
@@ -156,10 +156,10 @@ public class Robot extends TimedRobot {
           % if not brushed:
       CANEncoder encoder = motor.getEncoder();
           % else:
-      CANEncoder encoder = motor.getEncoder(EncoderType.kQuadrature, ENCODER_EDGES_PER_REV);
+      CANEncoder encoder = motor.getEncoder(EncoderType.kQuadrature, ENCODER_COUNTS_PER_REV);
           % endif
         % else:
-      CANEncoder encoder = motor.getAlternateEncoder(AlternateEncoderType.kQuadrature, ENCODER_EDGES_PER_REV);
+      CANEncoder encoder = motor.getAlternateEncoder(AlternateEncoderType.kQuadrature, ENCODER_COUNTS_PER_REV);
         % endif
       % endif
     % endif

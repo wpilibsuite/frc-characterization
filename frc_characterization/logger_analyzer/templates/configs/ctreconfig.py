@@ -19,6 +19,7 @@
     "rightMotorsInverted": [],
     # Encoder edges-per-revolution (*NOT* cycles per revolution!)
     # For the CTRE Mag Encoder, use 16384 (4 * 4096 = 16384)
+    # For the Falcon 500 Integrated Encoder, use 8192 (4 * 2048 = 8192)
     "encoderEPR": 16384,
     # Gearing accounts for the gearing between the encoder and the output shaft
     "gearing": 1,
