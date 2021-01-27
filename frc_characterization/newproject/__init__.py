@@ -7,14 +7,19 @@
 # odd pattern, but allows none of this code to be duplicated so long as the
 # individual project packages all have the same structure.
 
-import ast
+import glob
+import json
+import logging
+import math
 import os
 import pathlib
+import pint
+import queue
+import re
 import shutil
-import tkinter
 import threading
+import tkinter
 import time
-import glob
 import zipfile
 from datetime import datetime
 from enum import Enum
@@ -24,15 +29,10 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
-import logging
-import math
-import queue
 
 import frc_characterization
 from frc_characterization.utils import IntEntry, TextExtension, FloatEntry
 import frc_characterization.robot as res
-
-import pint
 
 logger = logging.getLogger("logger")
 log_format = "%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s"
@@ -166,7 +166,29 @@ class NewProjectGUI:
                 return
 
         def genProject():
-            config = ast.literal_eval(self.config.get())
+            # Load project file. We'll need to preprocess it before we load it
+            # as JSON so we handle legacy Python-like config files correctly.
+            content = self.config.get()
+
+            # Remove Python-style comments
+            content = "\n".join(
+                x[: x.find("#")] if x.find("#") != -1 else x
+                for x in content.split("\n")
+            )
+
+            # Replace Python bools with JSON bools and single quotes with double
+            # quotes because JSON doesn't accept single quotes for strings
+            content = (
+                content.replace("True", "true")
+                .replace("False", "false")
+                .replace("'", '"')
+            )
+
+            # Strip commas at end of JSON dictionary block
+            content = re.sub(r",(\s+})", r"\1", content)
+
+            config = json.loads(content)
+
             config["controlType"] = self.control_type.get()
             if self.control_type.get() == "SparkMax":
                 config["controllerTypes"] = ["CANSparkMax"]
