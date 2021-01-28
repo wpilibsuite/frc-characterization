@@ -299,7 +299,7 @@ class TestRunner:
                         lambda: messagebox.showinfo(
                             name + " Complete",
                             f"The robot reported rotating the following angle:\n{gyro_distance}\n"
-                            + "If that seems wrong, you should change the gyro calibration"
+                            + "If that seems wrong, you should change the gyro calibration "
                             + "in the robot program or check your gyro setup",
                             parent=self.STATE.mainGUI,
                         )
@@ -321,7 +321,7 @@ class TestRunner:
                             + "Right: %.3f %s"
                             % (right_distance, self.STATE.units.get())
                             + "\n"
-                            + "If that seems wrong, you should change the encoder calibration"
+                            + "If that seems wrong, you should change the encoder calibration "
                             + "in the robot program or fix your encoders!",
                             parent=self.STATE.mainGUI,
                         )
