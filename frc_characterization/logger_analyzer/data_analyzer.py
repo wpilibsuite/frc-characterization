@@ -317,8 +317,9 @@ class Analyzer:
 
             # Get correct conversion factor for rotations
             units = Units(self.units.get())
+            rotation = 0
             if isRotation(units.value):
-                rotation = (1 * units.ROTATIONS.unit).to(units.unit)
+                rotation = (1 * Units.ROTATIONS.unit).to(units.unit)
             else:
                 rotation = self.units_per_rot.get()
 
@@ -339,11 +340,43 @@ class Analyzer:
             self.kd.set(float("%.3g" % kd))
 
         def calcTrackWidth(table):
+
+            units = Units(self.units.get())
+
+            # Doesn't run calculations if the units are rotational
+            if isRotation(units.value):
+                return "N/A"
+
+            # Get conversion factor
+            conversion_factor = 1
+
+            initial_units = Units(self.stored_data["units"])
+
+            # handle the case where data recorded only rotational
+            if isRotation(self.stored_data["units"]):
+                # Convert to Rotations
+                units_per_rotation = (
+                    (self.stored_data["unitsPerRotation"] * initial_units)
+                    .to(Units.ROTATIONS.unit)
+                    .magnitude
+                )
+
+                # Convert to distance
+                conversion_factor = round(
+                    units_per_rotation * self.units_per_rot.get(), 3
+                )
+            else:
+                conversion_factor = self.units_per_rot.get()
+
             # Note that this assumes the gyro angle is not modded (i.e. on [0, +infinity)),
             # and that a positive angle travels in the counter-clockwise direction
 
-            d_left = table[-1][R_ENCODER_P_COL] - table[0][R_ENCODER_P_COL]
-            d_right = table[-1][L_ENCODER_P_COL] - table[0][L_ENCODER_P_COL]
+            d_left = (
+                table[-1][R_ENCODER_P_COL] - table[0][R_ENCODER_P_COL]
+            ) * conversion_factor
+            d_right = (
+                table[-1][L_ENCODER_P_COL] - table[0][L_ENCODER_P_COL]
+            ) * conversion_factor
             d_angle = table[-1][GYRO_ANGLE_COL] - table[0][GYRO_ANGLE_COL]
 
             if d_angle == 0:
