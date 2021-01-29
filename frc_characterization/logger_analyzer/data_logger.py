@@ -32,6 +32,7 @@ from frc_characterization.logger_analyzer.data_analyzer import (
     AUTOSPEED_COL,
     L_ENCODER_P_COL,
     R_ENCODER_P_COL,
+    GYRO_ANGLE_COL,
 )
 
 from networktables import NetworkTables
@@ -289,26 +290,42 @@ class TestRunner:
                     )
                 )
             else:
-                left_distance = (
-                    data[-1][L_ENCODER_P_COL] - data[0][L_ENCODER_P_COL]
-                ) * self.STATE.units_per_rot.get()
-                right_distance = (
-                    data[-1][R_ENCODER_P_COL] - data[0][R_ENCODER_P_COL]
-                ) * self.STATE.units_per_rot.get()
-
-                self.STATE.postTask(
-                    lambda: messagebox.showinfo(
-                        name + " Complete",
-                        "The robot reported traveling the following distance:\n"
-                        + "Left:  %.3f %s" % (left_distance, self.STATE.units.get())
-                        + "\n"
-                        + "Right: %.3f %s" % (right_distance, self.STATE.units.get())
-                        + "\n"
-                        + "If that seems wrong, you should change the encoder calibration"
-                        + "in the robot program or fix your encoders!",
-                        parent=self.STATE.mainGUI,
+                if name == "track-width":
+                    gyro_distance = data[-1][GYRO_ANGLE_COL] - data[0][GYRO_ANGLE_COL]
+                    gyro_distance = round(
+                        (gyro_distance * Units.RADIANS.unit).to(Units.DEGREES.unit), 3
                     )
-                )
+                    self.STATE.postTask(
+                        lambda: messagebox.showinfo(
+                            name + " Complete",
+                            f"The robot reported rotating the following angle:\n{gyro_distance}\n"
+                            + "If that seems wrong, you should change the gyro calibration "
+                            + "in the robot program or check your gyro setup",
+                            parent=self.STATE.mainGUI,
+                        )
+                    )
+                else:
+                    left_distance = (
+                        data[-1][L_ENCODER_P_COL] - data[0][L_ENCODER_P_COL]
+                    ) * self.STATE.units_per_rot.get()
+                    right_distance = (
+                        data[-1][R_ENCODER_P_COL] - data[0][R_ENCODER_P_COL]
+                    ) * self.STATE.units_per_rot.get()
+
+                    self.STATE.postTask(
+                        lambda: messagebox.showinfo(
+                            name + " Complete",
+                            "The robot reported traveling the following distance:\n"
+                            + "Left:  %.3f %s" % (left_distance, self.STATE.units.get())
+                            + "\n"
+                            + "Right: %.3f %s"
+                            % (right_distance, self.STATE.units.get())
+                            + "\n"
+                            + "If that seems wrong, you should change the encoder calibration "
+                            + "in the robot program or fix your encoders!",
+                            parent=self.STATE.mainGUI,
+                        )
+                    )
 
             self.stored_data[name] = data
 
