@@ -7,7 +7,6 @@
 # odd pattern, but allows none of this code to be duplicated so long as the
 # individual project packages all have the same structure.
 
-import ast
 import os
 import pathlib
 import shutil
@@ -28,6 +27,8 @@ import logging
 import math
 import queue
 
+from ruamel.yaml import YAML
+
 import frc_characterization
 from frc_characterization.utils import IntEntry, TextExtension, FloatEntry
 import frc_characterization.robot as res
@@ -36,6 +37,7 @@ import pint
 
 logger = logging.getLogger("logger")
 log_format = "%(asctime)s:%(msecs)03d %(levelname)-8s: %(name)-20s: %(message)s"
+yaml = YAML(typ="safe")
 
 
 class Tests(Enum):
@@ -166,7 +168,7 @@ class NewProjectGUI:
                 return
 
         def genProject():
-            config = ast.literal_eval(self.config.get())
+            config = yaml.load(self.config.get())
             config["controlType"] = self.control_type.get()
             if self.control_type.get() == "SparkMax":
                 config["controllerTypes"] = ["CANSparkMax"]

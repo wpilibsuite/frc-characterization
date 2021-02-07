@@ -74,6 +74,7 @@ setuptools.setup(
         "console-menu",
         "mako",
         "pint",
+        "ruamel.yaml>=0.15",
     ],
     python_requires=">=3.7",
     include_package_data=True,
