@@ -7,7 +7,6 @@
 # odd pattern, but allows none of this code to be duplicated so long as the
 # individual project packages all have the same structure.
 
-import ast
 import os
 import pathlib
 import shutil
@@ -166,7 +165,10 @@ class NewProjectGUI:
                 return
 
         def genProject():
-            config = ast.literal_eval(self.config.get())
+            config = eval(
+                compile(self.config.get(), self.config_path.get(), "eval"),
+                {"__builtins__": {}},
+            )
             config["controlType"] = self.control_type.get()
             if self.control_type.get() == "SparkMax":
                 config["controllerTypes"] = ["CANSparkMax"]
