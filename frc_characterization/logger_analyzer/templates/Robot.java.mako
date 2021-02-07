@@ -55,11 +55,7 @@ import java.util.ArrayList;
 
 public class Robot extends TimedRobot {
 
-  % if controlType == "SparkMax":
-  static private int ENCODER_EDGES_PER_REV = ${encoderEPR} / 4;
-  % else:
-  static private double ENCODER_EDGES_PER_REV = ${encoderEPR} / 4.;
-  % endif
+  static private int ENCODER_EDGES_PER_REV = ${encoderEPR};
   static private int PIDIDX = 0;
   static private int ENCODER_EPR = ${encoderEPR};
   static private double GEARING = ${gearing};
