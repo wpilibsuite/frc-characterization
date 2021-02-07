@@ -173,7 +173,7 @@ public class Robot extends TimedRobot {
         encoder = new Encoder(${rightEncoderPorts[0]}, ${rightEncoderPorts[1]});
         encoder.setReverseDirection(${str(rightEncoderInverted).lower()});
 
-        encoder.setDistancePerPulse(encoderConstant);
+        encoder.setDistancePerPulse((double) encoderConstant / 4);
         rightEncoderPosition = encoder::getDistance;
         rightEncoderRate = encoder::getRate;
         % else:
@@ -204,7 +204,7 @@ public class Robot extends TimedRobot {
         % if encoderPorts or controlType == "Simple":
         encoder = new Encoder(${encoderPorts[0]}, ${encoderPorts[1]});
         encoder.setReverseDirection(${str(encoderInverted).lower()});
-        encoder.setDistancePerPulse(encoderConstant);
+        encoder.setDistancePerPulse((double) encoderConstant / 4);
         leftEncoderPosition = encoder::getDistance;
         leftEncoderRate = encoder::getRate;
 
