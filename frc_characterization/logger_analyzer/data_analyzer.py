@@ -356,7 +356,7 @@ class Analyzer:
             if isRotation(self.stored_data["units"]):
                 # Convert to Rotations
                 units_per_rotation = (
-                    (self.stored_data["unitsPerRotation"] * initial_units)
+                    (self.stored_data["unitsPerRotation"] * initial_units.unit)
                     .to(Units.ROTATIONS.unit)
                     .magnitude
                 )
