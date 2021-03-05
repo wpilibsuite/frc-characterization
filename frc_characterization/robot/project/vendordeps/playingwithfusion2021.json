@@ -1,0 +1,58 @@
+{
+    "fileName": "playingwithfusion2021.json",
+    "name": "PlayingWithFusion",
+    "version": "2021.03.06",
+    "uuid": "14b8ad04-24df-11ea-978f-2e728ce88125",
+    "jsonUrl": "https://www.playingwithfusion.com/frc/playingwithfusion2021.json",
+    "mavenUrls": [
+        "https://www.playingwithfusion.com/frc/maven/"
+    ],
+    "javaDependencies": [
+        {
+            "groupId": "com.playingwithfusion.frc",
+            "artifactId": "PlayingWithFusion-java",
+            "version": "2021.03.06"
+        }
+    ],
+    "jniDependencies": [
+        {
+            "groupId": "com.playingwithfusion.frc",
+            "artifactId": "PlayingWithFusion-driver",
+            "version": "2021.03.06",
+            "isJar": false,
+            "skipInvalidPlatforms": true,
+            "validPlatforms": [
+                "linuxathena",
+                "windowsx86-64"
+            ]
+        }
+    ],
+    "cppDependencies": [
+        {
+            "groupId": "com.playingwithfusion.frc",
+            "artifactId": "PlayingWithFusion-cpp",
+            "version": "2021.03.06",
+            "headerClassifier": "headers",
+            "sharedLibrary": false,
+            "libName": "PlayingWithFusion",
+            "skipInvalidPlatforms": true,
+            "binaryPlatforms": [
+                "linuxathena",
+                "windowsx86-64"
+            ]
+        },
+        {
+            "groupId": "com.playingwithfusion.frc",
+            "artifactId": "PlayingWithFusion-driver",
+            "version": "2021.03.06",
+            "headerClassifier": "headers",
+            "sharedLibrary": true,
+            "libName": "PlayingWithFusionDriver",
+            "skipInvalidPlatforms": true,
+            "binaryPlatforms": [
+                "linuxathena",
+                "windowsx86-64"
+            ]
+        }
+    ]
+}
