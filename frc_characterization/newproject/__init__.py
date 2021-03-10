@@ -179,16 +179,11 @@ class NewProjectGUI:
                 path = files(res).joinpath("project")
                 shutil.copytree(src=path, dst=dst)
                 with open(
-                    os.path.join(dst, "src", "main", "java", "dc", "Robot.java"),
-                    "w+",
+                    os.path.join(dst, "src", "main", "java", "dc", "Robot.java"), "w+",
                 ) as robot:
                     robot.write(mech.gen_robot_code(config))
                 with open(os.path.join(dst, "build.gradle"), "w+") as build:
-                    build.write(
-                        mech.gen_build_gradle(
-                            self.team_number.get(),
-                        )
-                    )
+                    build.write(mech.gen_build_gradle(self.team_number.get(),))
             except FileExistsError:
                 if messagebox.askyesno(
                     "Warning!",

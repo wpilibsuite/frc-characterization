@@ -324,12 +324,7 @@ def configure_gui(STATE, RUNNER):
 
 class GuiState:
     def __init__(
-        self,
-        team,
-        dir,
-        unit=Units.ROTATIONS,
-        units_per_rot=1,
-        test=Tests.SIMPLE_MOTOR,
+        self, team, dir, unit=Units.ROTATIONS, units_per_rot=1, test=Tests.SIMPLE_MOTOR,
     ):
         self.mainGUI = tkinter.Tk()
 
@@ -398,12 +393,7 @@ class GuiState:
 
 
 def main(
-    team,
-    dir,
-    runner,
-    unit=Units.ROTATIONS,
-    units_per_rot=1,
-    test=Tests.SIMPLE_MOTOR,
+    team, dir, runner, unit=Units.ROTATIONS, units_per_rot=1, test=Tests.SIMPLE_MOTOR,
 ):
 
     STATE = GuiState(team, dir, unit, units_per_rot, test)

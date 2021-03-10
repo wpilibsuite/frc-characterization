@@ -1119,7 +1119,7 @@ class Analyzer:
             ],
             "All Combined": [
                 np.concatenate((sf_l, sb_l, sf_r, sb_r), axis=1),
-                np.concatenate((ff_l, fb_l, ff_r, ff_r), axis=1),
+                np.concatenate((ff_l, ff_r, fb_l, fb_r), axis=1)
             ],
             "Valid": self.is_valid(sf_l, sb_l, ff_l, fb_l, sf_r, sb_r, ff_r, fb_r),
         }
