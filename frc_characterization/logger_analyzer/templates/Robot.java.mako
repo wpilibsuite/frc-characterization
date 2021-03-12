@@ -149,7 +149,7 @@ public class Robot extends TimedRobot {
           % endif
             PIDIDX, 10
       );    
-      % elif controlType != "Venom":
+      % elif controlType == "SparkMax":
         % if not useDataPort:
           % if not brushed:
       CANEncoder encoder = motor.getEncoder();
