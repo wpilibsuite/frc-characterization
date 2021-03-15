@@ -55,7 +55,7 @@ import java.util.ArrayList;
 
 public class Robot extends TimedRobot {
 
-  static private int ENCODER_EDGES_PER_REV = ${encoderEPR};
+  static private double ENCODER_EDGES_PER_REV = ${encoderEPR};
   static private int PIDIDX = 0;
   static private int ENCODER_EPR = ${encoderEPR};
   static private double GEARING = ${gearing};
@@ -152,10 +152,10 @@ public class Robot extends TimedRobot {
           % if not brushed:
       CANEncoder encoder = motor.getEncoder();
           % else:
-      CANEncoder encoder = motor.getEncoder(EncoderType.kQuadrature, ENCODER_EDGES_PER_REV);
+      CANEncoder encoder = motor.getEncoder(EncoderType.kQuadrature, ENCODER_EPR);
           % endif
         % else:
-      CANEncoder encoder = motor.getAlternateEncoder(AlternateEncoderType.kQuadrature, ENCODER_EDGES_PER_REV);
+      CANEncoder encoder = motor.getAlternateEncoder(AlternateEncoderType.kQuadrature, ENCODER_EPR);
         % endif
       % endif
     % endif
