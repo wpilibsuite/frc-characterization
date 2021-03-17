@@ -478,7 +478,7 @@ class NewProjectGUI:
         )
 
         controlMenu = OptionMenu(
-            topFrame, self.control_type, *["Simple", "CTRE", "SparkMax"]
+            topFrame, self.control_type, *["Simple", "CTRE", "SparkMax", "Venom"]
         )
         controlMenu.configure(width=25)
         controlMenu.grid(row=2, column=12, sticky="ew")
