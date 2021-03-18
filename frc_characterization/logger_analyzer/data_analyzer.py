@@ -70,6 +70,13 @@ class Analyzer:
         self.motion_threshold = DoubleVar(self.mainGUI)
         self.motion_threshold.set(0.2)
 
+        self.test_duration = DoubleVar(self.mainGUI)
+        self.test_duration.set(4)
+
+        self.max_test_duration = 8.0
+
+        self.min_test_duration = 0.0
+
         self.subset = StringVar(self.mainGUI)
 
         self.units = StringVar(self.mainGUI)
@@ -145,6 +152,27 @@ class Analyzer:
 
     def configure_gui(self):
         def getFile():
+            def getMaxAccelIdx(data):
+                return np.argmax(np.abs(np.diff(data[L_ENCODER_V_COL])))
+
+            def getDefaultSliderValue(data):
+                rough_max_accel_idx = getMaxAccelIdx(data)
+
+                rough_nonzero_accel_idx = (
+                    np.argmax(
+                        np.abs(np.diff(data[L_ENCODER_V_COL][rough_max_accel_idx:]))
+                        == 0
+                    )
+                    + rough_max_accel_idx
+                )
+
+                if rough_nonzero_accel_idx == rough_max_accel_idx:
+                    rough_nonzero_accel_idx += 5
+                logger.info(
+                    f"Min accel idx: {rough_max_accel_idx}, Default idx: {rough_nonzero_accel_idx}"
+                )
+                return data[TIME_COL][rough_nonzero_accel_idx] - data[TIME_COL][0]
+
             dataFile = tkinter.filedialog.askopenfile(
                 parent=self.mainGUI,
                 mode="rb",
@@ -177,8 +205,55 @@ class Analyzer:
                         self.test.get(),
                         self.units_per_rot.get(),
                     )
+
+                    # Get the longest dynamic test duration
+                    self.max_test_duration = round(
+                        max(
+                            [
+                                data[test][TIME_COL][-1] - data[test][TIME_COL][0]
+                                for test in JSON_DATA_KEYS
+                                if "fast" in test
+                            ]
+                        )
+                    )
+
+                    # Get the smallest dynamic test acceleration event
+                    self.min_test_duration = round(
+                        min(
+                            [
+                                data[test][TIME_COL][getMaxAccelIdx(data[test])]
+                                - data[test][TIME_COL][0]
+                                for test in JSON_DATA_KEYS
+                                if "fast" in test
+                            ]
+                        ),
+                        2,
+                    )
+
+                    # Get an estimate for the duration where acceleration != 0 and > min_test_duration
+                    self.test_duration.set(
+                        round(
+                            min(
+                                [
+                                    getDefaultSliderValue(data[test])
+                                    for test in JSON_DATA_KEYS
+                                    if "fast" in test
+                                ]
+                            ),
+                            2,
+                        )
+                    )
+
+                    stepDurationScale.configure(
+                        from_=self.min_test_duration, to=self.max_test_duration
+                    )
                     initialUnitEnable()
                     enableUnitsPerRot()
+
+                    # Log key times
+                    logger.info(
+                        f"Max Duration: {self.max_test_duration}, Min: {self.min_test_duration} Default: {self.test_duration.get()}"
+                    )
                 except Exception as e:
                     messagebox.showerror(
                         "Error!",
@@ -693,6 +768,20 @@ class Analyzer:
         )
         thresholdEntry.grid(row=2, column=2)
 
+        Label(ffFrame, text="Dynamic Test Duration (s):", anchor="e").grid(
+            row=3, column=1, sticky="ew"
+        )
+        stepDurationScale = Scale(
+            ffFrame,
+            variable=self.test_duration,
+            from_=self.min_test_duration,
+            to=self.max_test_duration,
+            orient=HORIZONTAL,
+            resolution=0.25,
+            digits=3,
+        )
+        stepDurationScale.grid(row=3, column=2)
+
         Label(ffFrame, text="kS:", anchor="e").grid(row=1, column=3, sticky="ew")
         kSEntry = FloatEntry(ffFrame, textvariable=self.ks, width=10)
         kSEntry.grid(row=1, column=4)
@@ -950,8 +1039,23 @@ class Analyzer:
 
     def trim_step_testdata(self, data):
         # removes anything before the max acceleration
-        max_accel_idx = np.argmax(np.abs(data[PREPARED_ACC_COL]))
-        return data[:, max_accel_idx + 1 :]
+        max_accel_idx = np.argmax(np.abs(data[PREPARED_ACC_COL])) + 1
+
+        # removes anything after the max time limit
+        max_time_idx = np.argmax(
+            data[PREPARED_TM_COL] > data[PREPARED_TM_COL][0] + self.test_duration.get()
+        )
+
+        # if nothing comes after the max time limit, set it to the last element
+        if max_time_idx == 0:
+            max_time_idx = -1
+
+        return data[
+            :,
+            max_accel_idx : max_time_idx
+            if max_time_idx > max_accel_idx
+            else max_accel_idx,
+        ]
 
     def compute_accelDrive(self, data, window):
         """
