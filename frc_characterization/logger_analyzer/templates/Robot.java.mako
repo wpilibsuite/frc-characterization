@@ -26,6 +26,8 @@ import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.SPI;
 
+import com.playingwithfusion.CANVenom;
+
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -147,7 +149,7 @@ public class Robot extends TimedRobot {
           % endif
             PIDIDX, 10
       );    
-      % else:
+      % elif controlType == "SparkMax":
         % if not useDataPort:
           % if not brushed:
       CANEncoder encoder = motor.getEncoder();
@@ -184,8 +186,13 @@ public class Robot extends TimedRobot {
           -> motor.getSelectedSensorPosition(PIDIDX) * encoderConstant;
         rightEncoderRate = ()
           -> motor.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
-               10;
+               10;          
+          %elif controlType == "Venom":
 
+        rightEncoderPosition = ()
+          -> motor.getPosition();     // Revolutions
+        rightEncoderRate = ()
+          -> motor.getSpeed() / 60.;  // Convert RPM to Rev/second
           % else:
 
             % if brushed or useDataPort:
@@ -218,6 +225,12 @@ public class Robot extends TimedRobot {
           -> motor.getSelectedSensorVelocity(PIDIDX) * encoderConstant *
                10;
         
+          %elif controlType == "Venom":
+
+        leftEncoderPosition = ()
+          -> motor.getPosition();     // Revolutions
+        leftEncoderRate = ()
+          -> motor.getSpeed() / 60.;  // Convert RPM to Rev/second
           % else:
             % if brushed or useDataPort:
         encoder.setInverted(${str(encoderInverted).lower()});
