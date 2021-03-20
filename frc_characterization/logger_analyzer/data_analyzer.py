@@ -23,6 +23,7 @@ matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
 import numpy as np
 import statsmodels.api as sm
+from scipy.signal import medfilt
 from frc_characterization.newproject import Tests, Units
 from frc_characterization.utils import FloatEntry, IntEntry
 from mpl_toolkits.mplot3d import Axes3D
@@ -65,7 +66,7 @@ class Analyzer:
         self.project_path.set(dir)
 
         self.window_size = IntVar(self.mainGUI)
-        self.window_size.set(8)
+        self.window_size.set(7)
 
         self.motion_threshold = DoubleVar(self.mainGUI)
         self.motion_threshold.set(0.2)
@@ -202,6 +203,10 @@ class Analyzer:
                 Tests.ARM: runAnalysisArm,
                 Tests.SIMPLE_MOTOR: runAnalysisSimple,
             }
+
+            if self.window_size.get() % 2 == 0:
+                self.window_size.set(self.window_size.get() + 1)
+            windowEntry.configure(textvariable=self.window_size)
 
             self.prepared_data = self.prepare_data(
                 self.stored_data, window=self.window_size.get()
@@ -897,7 +902,7 @@ class Analyzer:
 
     # From 449's R script (note: R is 1-indexed)
 
-    def smoothDerivative(self, tm, value, n):
+    def secantDerivative(self, tm, value, n):
         """
         :param tm: time column
         :param value: Value to take the derivative of
@@ -968,8 +973,8 @@ class Analyzer:
             return None
 
         # Compute left/right acceleration
-        l_acc = self.smoothDerivative(data[TIME_COL], data[L_ENCODER_V_COL], window)
-        r_acc = self.smoothDerivative(data[TIME_COL], data[R_ENCODER_V_COL], window)
+        l_acc = self.secantDerivative(data[TIME_COL], data[L_ENCODER_V_COL], window)
+        r_acc = self.secantDerivative(data[TIME_COL], data[R_ENCODER_V_COL], window)
 
         l = np.vstack(
             (
@@ -1007,7 +1012,7 @@ class Analyzer:
             return None
 
         # Compute left/right acceleration
-        acc = self.smoothDerivative(data[TIME_COL], data[L_ENCODER_V_COL], window)
+        acc = self.secantDerivative(data[TIME_COL], data[L_ENCODER_V_COL], window)
 
         dat = np.vstack(
             (
@@ -1066,12 +1071,18 @@ class Analyzer:
             data[x][R_VOLTS_COL] = np.copysign(
                 data[x][R_VOLTS_COL], data[x][R_ENCODER_V_COL]
             )
-            data[x][R_ENCODER_V_COL] = (
-                np.array(data[x][R_ENCODER_V_COL]) * self.units_per_rot.get()
-            ).tolist()
-            data[x][L_ENCODER_V_COL] = (
-                np.array(data[x][L_ENCODER_V_COL]) * self.units_per_rot.get()
-            ).tolist()
+            data[x][R_ENCODER_V_COL] = medfilt(
+                (
+                    np.array(data[x][R_ENCODER_V_COL]) * self.units_per_rot.get()
+                ).tolist(),
+                window,
+            )
+            data[x][L_ENCODER_V_COL] = medfilt(
+                (
+                    np.array(data[x][L_ENCODER_V_COL]) * self.units_per_rot.get()
+                ).tolist(),
+                window,
+            )
             data[x][R_ENCODER_P_COL] = (
                 np.array(data[x][R_ENCODER_V_COL]) * self.units_per_rot.get()
             ).tolist()
@@ -1169,9 +1180,12 @@ class Analyzer:
                 data[x][L_VOLTS_COL] = np.copysign(
                     data[x][L_VOLTS_COL], data[x][L_ENCODER_V_COL]
                 )
-                data[x][L_ENCODER_V_COL] = (
-                    np.array(data[x][L_ENCODER_V_COL]) * self.units_per_rot.get()
-                ).tolist()
+                data[x][L_ENCODER_V_COL] = medfilt(
+                    (
+                        np.array(data[x][L_ENCODER_V_COL]) * self.units_per_rot.get()
+                    ).tolist(),
+                    window,
+                )
                 data[x][L_ENCODER_P_COL] = (
                     np.array(data[x][L_ENCODER_V_COL]) * self.units_per_rot.get()
                 ).tolist()
