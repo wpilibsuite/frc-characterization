@@ -1,7 +1,7 @@
 {
     "fileName": "playingwithfusion2021.json",
     "name": "PlayingWithFusion",
-    "version": "2021.03.06",
+    "version": "2021.03.22",
     "uuid": "14b8ad04-24df-11ea-978f-2e728ce88125",
     "jsonUrl": "https://www.playingwithfusion.com/frc/playingwithfusion2021.json",
     "mavenUrls": [
@@ -11,18 +11,22 @@
         {
             "groupId": "com.playingwithfusion.frc",
             "artifactId": "PlayingWithFusion-java",
-            "version": "2021.03.06"
+            "version": "2021.03.22"
         }
     ],
     "jniDependencies": [
         {
             "groupId": "com.playingwithfusion.frc",
             "artifactId": "PlayingWithFusion-driver",
-            "version": "2021.03.06",
+            "version": "2021.03.22",
             "isJar": false,
             "skipInvalidPlatforms": true,
             "validPlatforms": [
+                "linuxaarch64bionic",
                 "linuxathena",
+                "linuxraspbian",
+                "linuxx86-64",
+                "osxx86-64",
                 "windowsx86-64"
             ]
         }
@@ -31,26 +35,34 @@
         {
             "groupId": "com.playingwithfusion.frc",
             "artifactId": "PlayingWithFusion-cpp",
-            "version": "2021.03.06",
+            "version": "2021.03.22",
             "headerClassifier": "headers",
             "sharedLibrary": false,
             "libName": "PlayingWithFusion",
             "skipInvalidPlatforms": true,
             "binaryPlatforms": [
+                "linuxaarch64bionic",
                 "linuxathena",
+                "linuxraspbian",
+                "linuxx86-64",
+                "osxx86-64",
                 "windowsx86-64"
             ]
         },
         {
             "groupId": "com.playingwithfusion.frc",
             "artifactId": "PlayingWithFusion-driver",
-            "version": "2021.03.06",
+            "version": "2021.03.22",
             "headerClassifier": "headers",
             "sharedLibrary": true,
             "libName": "PlayingWithFusionDriver",
             "skipInvalidPlatforms": true,
             "binaryPlatforms": [
+                "linuxaarch64bionic",
                 "linuxathena",
+                "linuxraspbian",
+                "linuxx86-64",
+                "osxx86-64",
                 "windowsx86-64"
             ]
         }
