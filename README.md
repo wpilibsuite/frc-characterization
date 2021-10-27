@@ -1,4 +1,4 @@
-frc-characterization has been archived. The features it provided are now a part of [sysid](https://github.com/wpilibsuite/sysid)
+frc-characterization has been archived. The features it provided are now a part of [sysid](https://github.com/wpilibsuite/sysid).
 
 # Robot Characterization Toolsuite
 
