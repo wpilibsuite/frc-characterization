@@ -1,3 +1,5 @@
+frc-characterization has been archived. The features it provided are now a part of sysid - https://github.com/AustinShalit/frc-characterization.git
+
 # Robot Characterization Toolsuite
 
 This is a toolsuite for characterization of FRC robot mechanisms.  The characterization tools consist of a python application that runs on the user's PC, and matching robot code that runs on the user's robot.  The PC application will send control signals to the robot over network tables, while the robot sends data back to the application.  The application then processes the data and determines  characterization parameters for the user's robot mechanism, as well as producing diagnostic plots.  Data can be saved (in JSON format) for future use, if desired.
